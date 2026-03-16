@@ -76,7 +76,7 @@ Drag balls • Double click/tap to spawn
 
 <div class="gui-row">
   <label>Gravity strength: <span id="gravityStrengthValue">1.00</span></label>
-  <input type="range" id="gravityStrengthSlider" min="0" max="3" step="0.01" value="1">
+  <input type="range" id="gravityStrengthSlider" min="0" max="1" step="0.01" value="0.2">
 </div>
 <div class="gui-row">
     <label>Friction: <span id="frictionValue">0.995</span></label>
@@ -165,6 +165,9 @@ const MOTION_TIMEOUT_MS = 500; // if no motion data received recently, fall back
 
 const gravityToggle = document.getElementById("gravityToggle");
 const gravityHint = document.getElementById("gravityHint");
+const physicsSteps = 3;
+const orbitRadius = 120;
+const orbitSpeed = 0.03;
 
 function setGravityHint(text){
     if(gravityHint){
@@ -668,6 +671,29 @@ draggedBall.vy=velocity.y;
 draggedBall=null;
 
 });
+function applyOrbit(){
+
+if(!draggedBall) return;
+
+let index = 0;
+
+for(let b of balls){
+
+if(b === draggedBall) continue;
+
+let angle = performance.now() * orbitSpeed + index;
+
+b.x = draggedBall.x + Math.cos(angle) * orbitRadius;
+b.y = draggedBall.y + Math.sin(angle) * orbitRadius;
+
+b.vx = 0;
+b.vy = 0;
+
+index++;
+
+}
+
+}
 
 function animate(){
 
@@ -685,6 +711,8 @@ b.update();
 }
 
 }
+
+applyOrbit();
 
 }
 
