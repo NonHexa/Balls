@@ -165,9 +165,7 @@ const MOTION_TIMEOUT_MS = 500; // if no motion data received recently, fall back
 
 const gravityToggle = document.getElementById("gravityToggle");
 const gravityHint = document.getElementById("gravityHint");
-const physicsSteps = 3;
-const orbitRadius = 120;
-const orbitSpeed = 0.03;
+
 
 function setGravityHint(text){
     if(gravityHint){
@@ -339,7 +337,8 @@ if(fixedColorInput){
 }
 
 const physicsSteps = 3;
-
+const orbitRadius = 120;
+const orbitSpeed = 0.03;
 class Ball{
 
 constructor(x,y,r){
