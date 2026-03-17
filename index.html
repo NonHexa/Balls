@@ -83,10 +83,9 @@ canvas {
     display: block; /* default desktop GUI visible */
 }
 
-/* Mobile GUI */
 @media (max-width: 600px) {
 
-    /* Hide desktop GUI on small screens */
+    /* Hide desktop GUI */
     .gui.desktop {
         display: none;
     }
@@ -99,30 +98,22 @@ canvas {
         transform: translateX(-50%);
         width: 90%;
         max-width: 400px;
-        font-size: 18px;  /* bigger for touch */
-        padding: 16px;
+        font-size: 16px;
         border-radius: 16px;
         display: block;
-        cursor: move; /* make draggable */
     }
 
-    /* Bigger settings button */
+    /* Bigger settings button for mobile */
     #settingsToggle {
-        bottom: 10px;
+        bottom: 80px;
         top: auto;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 20px;
-        padding: 14px 20px;
-        border-radius: 12px;
-    }
-
-    /* Make sliders bigger for mobile */
-    .gui input[type="range"] {
-        height: 18px;
+        font-size: 18px;
+        padding: 12px 18px;
+        border-radius: 10px;
     }
 }
-
 </style>
 </head>
 
@@ -197,39 +188,7 @@ canvas {
 <canvas id="canvas"></canvas>
 
 <script>
-let isDraggingGUI = false;
-let offsetX = 0, offsetY = 0;
 
-function startDrag(e){
-    if(!e.target.closest('input') && !e.target.closest('button') && !e.target.closest('select')){
-        isDraggingGUI = true;
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        offsetX = clientX - gui.offsetLeft;
-        offsetY = clientY - gui.offsetTop;
-    }
-}
-
-function dragMove(e){
-    if(!isDraggingGUI) return;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    gui.style.left = (clientX - offsetX) + "px";
-    gui.style.top = (clientY - offsetY) + "px";
-}
-
-function stopDrag(){
-    isDraggingGUI = false;
-}
-
-gui.addEventListener("mousedown", startDrag);
-gui.addEventListener("touchstart", startDrag);
-
-window.addEventListener("mousemove", dragMove);
-window.addEventListener("touchmove", dragMove);
-
-window.addEventListener("mouseup", stopDrag);
-window.addEventListener("touchend", stopDrag);
 // Toggle GUI visibility
 const settingsToggleBtn = document.getElementById("settingsToggle");
 const guiBox = document.querySelector(".gui");
@@ -238,6 +197,9 @@ settingsToggleBtn.addEventListener("click", () => {
     guiBox.style.display = guiBox.style.display === "block" ? "none" : "block";
 });
 
+// Make desktop GUI draggable
+let isDraggingGUI = false;
+let offsetX = 0, offsetY = 0;
 
 guiBox.addEventListener("mousedown", e => {
     if (!e.target.closest('input') && !e.target.closest('button') && !e.target.closest('select')) {
