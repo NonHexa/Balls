@@ -9,13 +9,7 @@ body {
     overflow: hidden;
     background: black;
 }
-canvas {
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 1; /* below GUI */
-}
+canvas { display: block; }
 .info {
     position: fixed;
     top: 10px;
@@ -24,6 +18,7 @@ canvas {
     font-family: sans-serif;
     opacity: 0.8;
 }
+
 #settingsToggle {
     position: fixed;
     top: 10px;
@@ -37,6 +32,7 @@ canvas {
     cursor: pointer;
     font-size: 16px;
 }
+
 .gui {
     box-sizing: border-box;
     background: rgba(0,0,0,0.95);
@@ -44,35 +40,29 @@ canvas {
     border-radius: 12px;
     color: white;
     font-family: sans-serif;
-    display: none; /* hidden by default */
     z-index: 100;
+    display: block;
     position: fixed;
     top: 80px;
     right: 10px;
     max-width: 260px;
     cursor: move;
 }
-.gui-row {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin-top: 8px;
-}
-.gui-row label {
-    margin-top: 4px;
-}
-.gui input[type="range"] {
-    width: 100%;
-    margin-top: 6px;
-}
-.hint {
-    font-size: 12px;
-    opacity: 0.8;
-    margin-top: 4px;
-    color: #ddd;
-}
-/* Mobile GUI */
+
+.gui-row { display: flex; flex-direction: column; margin-top: 8px; }
+.gui-row label { margin-top: 4px; }
+.gui-row input[type="range"] { width: 100%; margin-top: 6px; }
+
 @media (max-width: 600px) {
+    #settingsToggle {
+        bottom: 10px;
+        top: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 20px;
+        padding: 14px 20px;
+        border-radius: 12px;
+    }
     .gui {
         bottom: 10px;
         left: 50%;
@@ -85,65 +75,58 @@ canvas {
         padding: 16px;
         border-radius: 16px;
     }
-    #settingsToggle {
-        bottom: 10px;
-        top: auto;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 20px;
-        padding: 14px 20px;
-        border-radius: 12px;
-    }
-    .gui input[type="range"] {
-        height: 18px;
-    }
 }
 </style>
 </head>
 <body>
-<div class="info">
-    Drag balls • Double click/tap to spawn
-</div>
+<div class="info">Drag balls • Double click/tap to spawn</div>
 
 <button id="settingsToggle">⚙ Settings</button>
 
-<div class="gui">
-
+<div class="gui" id="guiBox">
+    <!-- Gravity -->
     <div class="gui-row">
-        <label><input type="checkbox" id="gravityToggle"> Gravity</label>
+        <label>
+            <input type="checkbox" class="gui-control" data-type="gravity" data-hint-id="gravityHint"> Gravity
+        </label>
         <div id="gravityHint" class="hint">Tap Gravity to enable motion on mobile</div>
 
-        <label><input type="checkbox" id="orbitToggle" checked> Orbit</label>
-        <label>Orbit spacing: <span id="orbitSpacingValue">120</span></label>
-        <input type="range" id="orbitSpacingSlider" min="50" max="300" step="5" value="120">
-    </div>
-
-    <div class="gui-row">
         <label>Gravity strength: <span id="gravityStrengthValue">0.2</span></label>
-        <input type="range" id="gravityStrengthSlider" min="0" max="1" step="0.01" value="0.2">
+        <input type="range" class="gui-control" data-type="gravityStrength" data-value-id="gravityStrengthValue" min="0" max="1" step="0.01" value="0.2">
     </div>
 
+    <!-- Orbit -->
+    <div class="gui-row">
+        <label><input type="checkbox" class="gui-control" data-type="orbit" checked> Orbit</label>
+        <label>Orbit spacing: <span id="orbitSpacingValue">120</span></label>
+        <input type="range" class="gui-control" data-type="orbitSpacing" data-value-id="orbitSpacingValue" min="50" max="300" step="5" value="120">
+    </div>
+
+    <!-- Friction & Vibrate -->
     <div class="gui-row">
         <label>Friction: <span id="frictionValue">0.995</span></label>
-        <input type="range" id="frictionSlider" min="0.95" max="1.1" step="0.005" value="0.995">
-        <label><input type="checkbox" id="vibrateToggle" checked> Vibrate on collision</label>
+        <input type="range" class="gui-control" data-type="friction" data-value-id="frictionValue" min="0.95" max="1.1" step="0.005" value="0.995">
+        <label><input type="checkbox" class="gui-control" data-type="vibrate" checked> Vibrate on collision</label>
     </div>
 
+    <!-- Trail -->
     <div class="gui-row">
-        <label><input type="checkbox" id="trailToggle" checked> Trail</label>
+        <label><input type="checkbox" class="gui-control" data-type="trail" checked> Trail</label>
         <label>Trail opacity: <span id="trailAlphaValue">0.15</span></label>
-        <input type="range" id="trailAlphaSlider" min="0" max="1" step="0.01" value="0.15">
+        <input type="range" class="gui-control" data-type="trailAlpha" data-value-id="trailAlphaValue" min="0" max="1" step="0.01" value="0.15">
     </div>
 
+    <!-- Glow -->
     <div class="gui-row">
-        <label><input type="checkbox" id="glowToggle" checked> Glow</label>
+        <label><input type="checkbox" class="gui-control" data-type="glow" checked> Glow</label>
         <label>Glow strength: <span id="glowValue">20</span></label>
-        <input type="range" id="glowSlider" min="0" max="60" step="1" value="20">
+        <input type="range" class="gui-control" data-type="glowStrength" data-value-id="glowValue" min="0" max="60" step="1" value="20">
     </div>
 
+    <!-- Color -->
     <div class="gui-row">
         <label>Color mode:</label>
-        <select id="colorMode">
+        <select class="gui-control" data-type="colorMode" data-fixed-row-id="fixedColorRow">
             <option value="random">Random</option>
             <option value="fixed">Fixed</option>
             <option value="hueCycle">Hue cycle</option>
@@ -151,140 +134,58 @@ canvas {
     </div>
 
     <div id="fixedColorRow" class="gui-row" style="display:none;">
-        <label>Fixed color: <input type="color" id="fixedColor" value="#ff0000"></label>
+        <label>Fixed color: <input type="color" class="gui-control" data-type="fixedColor" value="#ff0000"></label>
     </div>
 
+    <!-- Spawn Balls -->
     <button onclick="spawnBalls(10)">Spawn Balls</button>
-
 </div>
 
 <canvas id="canvas"></canvas>
 
 <script>
-// ----------- Canvas setup -----------
+// ==== Canvas Setup ====
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
 resize();
 window.addEventListener("resize", resize);
 
-// ----------- GUI Drag & Toggle -----------
-const gui = document.querySelector(".gui");
-const settingsToggleBtn = document.getElementById("settingsToggle");
-let isDraggingGUI = false;
-let offsetX = 0, offsetY = 0;
-
-function startDrag(e){
-    if(e.target.closest('input') || e.target.closest('button') || e.target.closest('select')) return;
-    isDraggingGUI = true;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    offsetX = clientX - gui.offsetLeft;
-    offsetY = clientY - gui.offsetTop;
-}
-
-function dragMove(e){
-    if(!isDraggingGUI) return;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    gui.style.left = (clientX - offsetX) + "px";
-    gui.style.top = (clientY - offsetY) + "px";
-    gui.style.right = "auto";
-}
-
-function stopDrag(){ isDraggingGUI = false; }
-
-gui.addEventListener("mousedown", startDrag);
-gui.addEventListener("touchstart", startDrag);
-window.addEventListener("mousemove", dragMove);
-window.addEventListener("touchmove", dragMove);
-window.addEventListener("mouseup", stopDrag);
-window.addEventListener("touchend", stopDrag);
-
-// Show/hide GUI
-settingsToggleBtn.addEventListener("click", e => {
-    e.stopPropagation();
-    gui.style.display = gui.style.display === "block" ? "none" : "block";
-});
-window.addEventListener("click", e => {
-    if(!gui.contains(e.target) && e.target !== settingsToggleBtn){
-        gui.style.display = "none";
-    }
-});
-
-// ----------- Physics & Balls -----------
-let balls = [];
-const frictionSlider = document.getElementById("frictionSlider");
-const frictionValue = document.getElementById("frictionValue");
-let friction = parseFloat(frictionSlider.value);
-const gravityToggle = document.getElementById("gravityToggle");
-let gravityEnabled = false;
-let gravityX=0, gravityY=0, gravityStrength=0.2;
-const gravityStrengthSlider = document.getElementById("gravityStrengthSlider");
-const gravityStrengthValue = document.getElementById("gravityStrengthValue");
-const orbitToggle = document.getElementById("orbitToggle");
-let orbitEnabled = orbitToggle.checked;
-const orbitSpacingSlider = document.getElementById("orbitSpacingSlider");
-let orbitSpacing = parseFloat(orbitSpacingSlider.value);
-const orbitSpacingValue = document.getElementById("orbitSpacingValue");
-const trailToggle = document.getElementById("trailToggle");
-let trailEnabled = trailToggle.checked;
-const trailAlphaSlider = document.getElementById("trailAlphaSlider");
-let trailAlpha = parseFloat(trailAlphaSlider.value);
-const glowToggle = document.getElementById("glowToggle");
-let glowEnabled = glowToggle.checked;
-const glowSlider = document.getElementById("glowSlider");
-let glowStrength = parseFloat(glowSlider.value);
-const colorModeSelect = document.getElementById("colorMode");
-let colorMode = colorModeSelect.value;
-const fixedColorInput = document.getElementById("fixedColor");
-let fixedColor = fixedColorInput.value;
-const vibrateToggle = document.getElementById("vibrateToggle");
-let vibrateEnabled = vibrateToggle.checked;
-
-const wallBounce = 0.9;
-const physicsSteps = 3;
-const orbitSpeed = 0.005;
-let lastMotionAt = 0;
-const MOTION_TIMEOUT_MS = 500;
-let motionListenerAdded = false;
+// ==== Simulation Variables ====
+let balls = [], draggedBall = null, lastMouse = {x:0,y:0}, velocity = {x:0,y:0};
+let gravityEnabled = false, gravityX=0, gravityY=0, gravityStrength=0.2, orbitEnabled=true, orbitSpacing=120;
+let friction=0.995, trailEnabled=true, trailAlpha=0.15, glowEnabled=true, glowStrength=20, vibrateEnabled=true;
+let colorMode="random", fixedColor="#ff0000";
+const wallBounce = 0.9, physicsSteps = 3, orbitSpeed=0.005;
+let lastMotionAt = 0, MOTION_TIMEOUT_MS=500;
 const supportsDeviceMotion = typeof DeviceMotionEvent !== "undefined";
 const supportsDeviceOrientation = typeof DeviceOrientationEvent !== "undefined";
 const requiresPermission = supportsDeviceMotion && typeof DeviceMotionEvent.requestPermission === "function";
+const guiBox = document.getElementById("guiBox");
 
-class Ball{
-    constructor(x,y,r){
-        this.x=x; this.y=y; this.radius=r;
-        this.vx=(Math.random()-0.5)*6;
-        this.vy=(Math.random()-0.5)*6;
-        this.mass=r*r;
-        this.hue=Math.random()*360;
-    }
+// ==== Balls Class ====
+class Ball {
+    constructor(x,y,r){ this.x=x; this.y=y; this.radius=r; this.vx=(Math.random()-0.5)*6; this.vy=(Math.random()-0.5)*6; this.mass=r*r; this.hue=Math.random()*360; }
     draw(){
         ctx.beginPath();
         ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
-        let fillColor = colorMode==="fixed"?fixedColor:`hsl(${this.hue},100%,60%)`;
-        ctx.fillStyle=fillColor;
-        ctx.shadowBlur = glowEnabled?glowStrength:0;
-        ctx.shadowColor = glowEnabled?fillColor:"";
+        let fillColor = (colorMode==="fixed") ? fixedColor : `hsl(${this.hue},100%,60%)`;
+        ctx.fillStyle = fillColor;
+        ctx.shadowBlur = glowEnabled ? glowStrength : 0;
+        ctx.shadowColor = fillColor;
         ctx.fill();
-        ctx.shadowBlur=0;
+        ctx.shadowBlur = 0;
     }
     applyForces(){
         if(gravityEnabled){
             const now = performance.now();
             const hasRecentMotion = now - lastMotionAt < MOTION_TIMEOUT_MS;
-            if(!supportsDeviceMotion || !hasRecentMotion){
-                this.vy += gravityStrength*0.5;
-            } else {
-                this.vx += gravityX;
-                this.vy += gravityY;
-            }
+            if(!supportsDeviceMotion || !hasRecentMotion){ this.vy += gravityStrength*0.5; }
+            else { this.vx += gravityX; this.vy += gravityY; }
         }
-        this.vx *= friction;
-        this.vy *= friction;
+        this.vx *= friction; this.vy *= friction;
     }
-    integrate(){ this.x+=this.vx; this.y+=this.vy; }
+    integrate(){ this.x += this.vx; this.y += this.vy; }
     walls(){
         if(this.x+this.radius>canvas.width){ this.x=canvas.width-this.radius; this.vx*=-wallBounce; }
         if(this.x-this.radius<0){ this.x=this.radius; this.vx*=-wallBounce; }
@@ -292,68 +193,20 @@ class Ball{
         if(this.y-this.radius<0){ this.y=this.radius; this.vy*=-wallBounce; }
     }
     update(){
-        this.applyForces();
-        this.integrate();
-        this.walls();
-        if(colorMode==="hueCycle"){ this.hue +=1; if(this.hue>=360) this.hue-=360; }
+        this.applyForces(); this.integrate(); this.walls();
+        if(colorMode==="hueCycle"){ this.hue += 1; if(this.hue>=360) this.hue-=360; }
     }
 }
 
-// Spawn initial balls
+// ==== Spawn Balls ====
 function spawnBalls(n){
-    for(let i=0;i<n;i++){
-        balls.push(new Ball(Math.random()*canvas.width, Math.random()*canvas.height, 6+Math.random()*14));
-    }
+    for(let i=0;i<n;i++){ balls.push(new Ball(Math.random()*canvas.width, Math.random()*canvas.height, 6+Math.random()*14)); }
 }
-spawnBalls(20); // initial spawn
+// initial balls
+spawnBalls(20);
 window.spawnBalls = spawnBalls;
 
-// ----------- Input listeners for sliders and toggles -----------
-frictionSlider.oninput = ()=>{ friction=parseFloat(frictionSlider.value); frictionValue.textContent=friction.toFixed(3); };
-gravityStrengthSlider.oninput = ()=>{ gravityStrength=parseFloat(gravityStrengthSlider.value); gravityStrengthValue.textContent=gravityStrength.toFixed(2); };
-orbitSpacingSlider.oninput = ()=>{ orbitSpacing=parseFloat(orbitSpacingSlider.value); orbitSpacingValue.textContent=orbitSpacing; };
-trailToggle.onchange = ()=>{ trailEnabled=trailToggle.checked; };
-trailAlphaSlider.oninput = ()=>{ trailAlpha=parseFloat(trailAlphaSlider.value); trailAlphaValue.textContent=trailAlpha.toFixed(2); };
-glowToggle.onchange = ()=>{ glowEnabled=glowToggle.checked; };
-glowSlider.oninput = ()=>{ glowStrength=parseFloat(glowSlider.value); glowValue.textContent=glowStrength; };
-colorModeSelect.onchange = ()=>{ colorMode=colorModeSelect.value; fixedColorRow.style.display=colorMode==="fixed"?"flex":"none"; };
-fixedColorInput.oninput = ()=>{ fixedColor=fixedColorInput.value; };
-vibrateToggle.onchange = ()=>{ vibrateEnabled=vibrateToggle.checked; };
-orbitToggle.onchange = ()=>{ orbitEnabled=orbitToggle.checked; };
-
-// ----------- Drag balls -----------
-let draggedBall = null;
-let lastMouse = {x:0,y:0};
-let velocity = {x:0,y:0};
-
-canvas.addEventListener("mousedown", e=>{
-    const mx=e.clientX, my=e.clientY;
-    for(let b of balls){ if(Math.hypot(mx-b.x,my-b.y)<b.radius){ draggedBall=b; lastMouse={x:mx,y:my}; break; } }
-});
-canvas.addEventListener("mousemove", e=>{
-    if(draggedBall){ velocity.x=e.clientX-lastMouse.x; velocity.y=e.clientY-lastMouse.y; draggedBall.x=e.clientX; draggedBall.y=e.clientY; lastMouse={x:e.clientX,y:e.clientY}; }
-});
-canvas.addEventListener("mouseup", e=>{
-    if(draggedBall){ draggedBall.vx=velocity.x; draggedBall.vy=velocity.y; }
-    draggedBall=null;
-});
-
-// Touch events
-let lastTap=0;
-canvas.addEventListener("touchstart", e=>{
-    const t=e.touches[0];
-    const mx=t.clientX, my=t.clientY;
-    const now=Date.now();
-    if(now-lastTap<300){ balls.push(new Ball(mx,my,14)); }
-    lastTap=now;
-    for(let b of balls){ if(Math.hypot(mx-b.x,my-b.y)<b.radius){ draggedBall=b; lastMouse={x:mx,y:my}; break; } }
-});
-canvas.addEventListener("touchmove", e=>{
-    const t=e.touches[0]; if(draggedBall){ velocity.x=t.clientX-lastMouse.x; velocity.y=t.clientY-lastMouse.y; draggedBall.x=t.clientX; draggedBall.y=t.clientY; lastMouse={x:t.clientX,y:t.clientY}; }
-});
-canvas.addEventListener("touchend", e=>{ if(draggedBall){ draggedBall.vx=velocity.x; draggedBall.vy=velocity.y; } draggedBall=null; });
-
-// ----------- Collisions & Orbit -----------
+// ==== Collisions ====
 function resolveCollisions(){
     for(let i=0;i<balls.length;i++){
         for(let j=i+1;j<balls.length;j++){
@@ -362,112 +215,112 @@ function resolveCollisions(){
             let dist=Math.hypot(dx,dy), minDist=b1.radius+b2.radius;
             if(dist===0){ dx=0.01; dy=0; dist=0.01; }
             if(dist<minDist){
-                const nx=dx/dist, ny=dy/dist, overlap=minDist-dist;
-                const m1=b1.mass, m2=b2.mass, total=m1+m2;
-                b1.x-=nx*(overlap*(m2/total)); b1.y-=ny*(overlap*(m2/total));
-                b2.x+=nx*(overlap*(m1/total)); b2.y+=ny*(overlap*(m1/total));
-                const rvx=b2.vx-b1.vx, rvy=b2.vy-b1.vy;
-                const velAlongNormal=rvx*nx+rvy*ny;
+                let nx=dx/dist, ny=dy/dist, overlap=minDist-dist;
+                const totalMass=b1.mass+b2.mass;
+                b1.x-=nx*(overlap*(b2.mass/totalMass)); b1.y-=ny*(overlap*(b2.mass/totalMass));
+                b2.x+=nx*(overlap*(b1.mass/totalMass)); b2.y+=ny*(overlap*(b1.mass/totalMass));
+                let rvx=b2.vx-b1.vx, rvy=b2.vy-b1.vy;
+                let velAlongNormal=rvx*nx+rvy*ny;
                 if(velAlongNormal>0) continue;
-                const restitution=1;
-                const impulse=-(1+restitution)*velAlongNormal/(1/m1+1/m2);
-                const ix=impulse*nx, iy=impulse*ny;
-                if(vibrateEnabled && navigator.vibrate){ navigator.vibrate(5); }
-                b1.vx-=ix/m1; b1.vy-=iy/m1;
-                b2.vx+=ix/m2; b2.vy+=iy/m2;
+                let restitution=1, impulse=-(1+restitution)*velAlongNormal/(1/b1.mass + 1/b2.mass);
+                let ix=impulse*nx, iy=impulse*ny;
+                if(vibrateEnabled && navigator.vibrate) navigator.vibrate(5);
+                b1.vx-=ix/b1.mass; b1.vy-=iy/b1.mass;
+                b2.vx+=ix/b2.mass; b2.vy+=iy/b2.mass;
             }
         }
     }
 }
 
-// ----------- Gravity / Motion -----------
-const gravityHint = document.getElementById("gravityHint");
-
-async function requestMotionPermission(){
-    if(typeof DeviceMotionEvent !== "undefined" &&
-       typeof DeviceMotionEvent.requestPermission === "function"){
-        try{
-            const response = await DeviceMotionEvent.requestPermission();
-            if(response === "granted"){
-                addMotionListener();
-                gravityHint.textContent = "Gravity enabled. Tilt your device.";
-            } else {
-                gravityEnabled = false;
-                gravityToggle.checked = false;
-                gravityHint.textContent = "Motion denied. Gravity disabled.";
-            }
-        }catch(e){ console.log(e); }
-    } else {
-        // no permission needed
-        addMotionListener();
-        gravityHint.textContent = "Gravity enabled. Tilt your device.";
-    }
-}
-
-function handleMotion(event){
-    const acc = event.accelerationIncludingGravity || event.acceleration;
-    if(!acc) return;
-    gravityX = (-acc.x / 9.8) * gravityStrength;
-    gravityY = (acc.y / 9.8) * gravityStrength;
-    lastMotionAt = performance.now();
-}
-
-function handleOrientation(event){
-    if(event.beta===null || event.gamma===null) return;
-    let tiltX = Math.max(-45, Math.min(45, event.gamma))/45;
-    let tiltY = Math.max(-45, Math.min(45, event.beta))/45;
-    gravityX = tiltX * gravityStrength;
-    gravityY = tiltY * gravityStrength;
-    lastMotionAt = performance.now();
-}
-
-function addMotionListener(){
-    if(motionListenerAdded) return;
-    if(typeof DeviceMotionEvent !== "undefined"){
-        window.addEventListener("devicemotion", handleMotion);
-        window.addEventListener("deviceorientation", handleOrientation);
-    }
-    motionListenerAdded = true;
-}
-
-// Gravity toggle
-gravityToggle.onchange = async e => {
-    gravityEnabled = e.target.checked;
-    if(gravityEnabled) await requestMotionPermission();
-    else gravityHint.textContent = "Tap Gravity to enable motion on mobile";
+// ==== Dragging ====
+canvas.onmousedown = canvas.ontouchstart = e => {
+    const t = e.touches ? e.touches[0] : e;
+    const mx = t.clientX, my = t.clientY;
+    for(let b of balls){ if(Math.hypot(mx-b.x,my-b.y)<b.radius){ draggedBall=b; lastMouse={x:mx,y:my}; break; } }
 };
+canvas.onmousemove = canvas.ontouchmove = e => {
+    const t = e.touches ? e.touches[0] : e;
+    const mx = t.clientX, my = t.clientY;
+    if(draggedBall){ velocity.x=mx-lastMouse.x; velocity.y=my-lastMouse.y; draggedBall.x=mx; draggedBall.y=my; lastMouse={x:mx,y:my}; }
+};
+canvas.onmouseup = canvas.ontouchend = e => { if(draggedBall){ draggedBall.vx=velocity.x; draggedBall.vy=velocity.y; } draggedBall=null; };
+canvas.ondblclick = e => balls.push(new Ball(e.clientX,e.clientY,14+Math.random()*16));
 
+// ==== Orbit ====
 function applyOrbit(){
     if(!draggedBall || !orbitEnabled) return;
     let index=0, ballsPerLayer=8;
-    for(let b of balls){
-        if(b===draggedBall) continue;
+    for(let b of balls){ if(b===draggedBall) continue;
         let layer=Math.floor(index/ballsPerLayer);
         let pos=index%ballsPerLayer;
-        let radius=orbitSpacing*(layer+1);
-        let angle=performance.now()*orbitSpeed+(Math.PI*2/ballsPerLayer)*pos;
-        let newX=draggedBall.x+Math.cos(angle)*radius;
-        let newY=draggedBall.y+Math.sin(angle)*radius;
-        b.vx=newX-b.x; b.vy=newY-b.y;
-        b.x=newX; b.y=newY;
-        index++;
+        let radius = orbitSpacing*(layer+1);
+        let angle = performance.now()*orbitSpeed + (Math.PI*2/ballsPerLayer)*pos;
+        let newX = draggedBall.x+Math.cos(angle)*radius;
+        let newY = draggedBall.y+Math.sin(angle)*radius;
+        b.vx=newX-b.x; b.vy=newY-b.y; b.x=newX; b.y=newY; index++; 
     }
 }
 
-// ----------- Animation Loop -----------
+// ==== Animation ====
 function animate(){
-    ctx.fillStyle = `rgba(0,0,0,${trailEnabled?trailAlpha:1})`;
+    ctx.fillStyle=`rgba(0,0,0,${trailEnabled?trailAlpha:1})`;
     ctx.fillRect(0,0,canvas.width,canvas.height);
-
     for(let s=0;s<physicsSteps;s++){
         if(!(draggedBall && orbitEnabled)) resolveCollisions();
-        for(let b of balls){ if(b!==draggedBall) b.update(); }
+        for(let b of balls) if(b!==draggedBall) b.update();
         applyOrbit();
     }
     for(let b of balls) b.draw();
     requestAnimationFrame(animate);
 }
 animate();
+
+// ==== Device Motion ====
+async function requestMotionPermission(){
+    if(typeof DeviceMotionEvent.requestPermission==='function'){
+        try{
+            const res = await DeviceMotionEvent.requestPermission();
+            if(res==='granted'){ window.addEventListener("devicemotion", handleMotion); window.addEventListener("deviceorientation", handleOrientation); }
+        }catch(e){ console.log(e); }
+    } else { window.addEventListener("devicemotion", handleMotion); window.addEventListener("deviceorientation", handleOrientation); }
+}
+function handleMotion(e){ const acc = e.accelerationIncludingGravity||e.acceleration; if(!acc) return; gravityX=(-acc.x/9.8)*gravityStrength; gravityY=(acc.y/9.8)*gravityStrength; lastMotionAt=performance.now(); }
+function handleOrientation(e){ if(e.beta===null||e.gamma===null) return; gravityX = Math.max(-45,Math.min(45,e.gamma))/45*gravityStrength; gravityY = Math.max(-45,Math.min(45,e.beta))/45*gravityStrength; lastMotionAt=performance.now(); }
+if(supportsDeviceMotion && !requiresPermission) requestMotionPermission();
+
+// ==== GUI Controls ====
+document.querySelectorAll(".gui-control").forEach(control=>{
+    control.oninput=control.onchange=async e=>{
+        const type=e.target.dataset.type;
+        const val=e.target.type==='checkbox'?e.target.checked:e.target.value;
+        switch(type){
+            case "gravity": gravityEnabled=val; if(val) await requestMotionPermission(); break;
+            case "gravityStrength": gravityStrength=parseFloat(val); if(e.target.dataset.valueId) document.getElementById(e.target.dataset.valueId).textContent=gravityStrength.toFixed(2); break;
+            case "orbit": orbitEnabled=val; break;
+            case "orbitSpacing": orbitSpacing=parseFloat(val); if(e.target.dataset.valueId) document.getElementById(e.target.dataset.valueId).textContent=orbitSpacing; break;
+            case "friction": friction=parseFloat(val); if(e.target.dataset.valueId) document.getElementById(e.target.dataset.valueId).textContent=friction.toFixed(3); break;
+            case "trail": trailEnabled=val; break;
+            case "trailAlpha": trailAlpha=parseFloat(val); if(e.target.dataset.valueId) document.getElementById(e.target.dataset.valueId).textContent=trailAlpha.toFixed(2); break;
+            case "glow": glowEnabled=val; break;
+            case "glowStrength": glowStrength=parseFloat(val); if(e.target.dataset.valueId) document.getElementById(e.target.dataset.valueId).textContent=glowStrength.toFixed(0); break;
+            case "colorMode": colorMode=val; if(e.target.dataset.fixedRowId){document.getElementById(e.target.dataset.fixedRowId).style.display=(val==="fixed")?"flex":"none";} break;
+            case "fixedColor": fixedColor=val; break;
+            case "vibrate": vibrateEnabled=val; break;
+        }
+    };
+});
+
+// ==== GUI Drag ====
+let isDraggingGUI=false, guiOffsetX=0, guiOffsetY=0;
+guiBox.addEventListener("mousedown", e=>{ if(!e.target.closest("input,button,select")){ isDraggingGUI=true; guiOffsetX=e.clientX-guiBox.offsetLeft; guiOffsetY=e.clientY-guiBox.offsetTop; }});
+window.addEventListener("mousemove", e=>{ if(isDraggingGUI){ guiBox.style.left=(e.clientX-guiOffsetX)+"px"; guiBox.style.top=(e.clientY-guiOffsetY)+"px"; guiBox.style.right="auto"; guiBox.style.transform="none"; }});
+window.addEventListener("mouseup", ()=>{ isDraggingGUI=false; });
+guiBox.addEventListener("touchstart", e=>{ if(!e.target.closest("input,button,select")){ const t=e.touches[0]; isDraggingGUI=true; guiOffsetX=t.clientX-guiBox.offsetLeft; guiOffsetY=t.clientY-guiBox.offsetTop; }});
+window.addEventListener("touchmove", e=>{ if(isDraggingGUI){ const t=e.touches[0]; guiBox.style.left=(t.clientX-guiOffsetX)+"px"; guiBox.style.top=(t.clientY-guiOffsetY)+"px"; guiBox.style.right="auto"; guiBox.style.transform="none"; }});
+window.addEventListener("touchend", ()=>{ isDraggingGUI=false; });
+
+// ==== Toggle GUI ====
+document.getElementById("settingsToggle").addEventListener("click", ()=>{ guiBox.style.display=(guiBox.style.display==="none")?"block":"none"; });
 </script>
 </body>
 </html>
