@@ -2,61 +2,117 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Bouncy Physics Playground</title>
+<title>Bouncy Balls</title>
 
 <style>
-body{
-    margin:0;
-    overflow:hidden;
-    background:black;
+body {
+    margin: 0;
+    overflow: hidden;
+    background: black;
 }
 
-canvas{
-    display:block;
+canvas {
+    display: block;
 }
 
-.info{
-    position:fixed;
-    top:10px;
-    left:10px;
-    color:white;
-    font-family:sans-serif;
-    opacity:0.8;
+.info {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-family: sans-serif;
+    opacity: 0.8;
 }
 
-.gui{
-    position:fixed;
-    top:10px;
-    right:10px;
-    background:rgba(0,0,0,0.6);
-    padding:12px;
-    border-radius:8px;
-    color:white;
-    font-family:sans-serif;
+
+#settingsToggle {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 101;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background: #222;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
 }
 
-.gui label{
-display:block;
-margin-top:6px;
-font-size:14px;
+
+.gui {
+    box-sizing: border-box;
+    background: rgba(0,0,0,0.95);
+    padding: 12px;
+    border-radius: 12px;
+    color: white;
+    font-family: sans-serif;
+    display: none;
+    z-index: 100;
 }
 
-.gui-row{
-display:flex;
-align-items:center;
-flex-wrap:wrap;
-margin-top:8px;
+.gui-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 8px;
 }
 
-.gui-row label{
-    margin-right:10px;
+.gui-row label {
+    margin-top: 4px;
 }
 
-.hint{
-    font-size:12px;
-    opacity:0.8;
-    margin:4px 0 0 0;
-    color:#ddd;
+.gui input[type="range"] {
+    width: 100%;
+    margin-top: 6px;
+}
+
+.hint {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-top: 4px;
+    color: #ddd;
+}
+
+.gui.desktop {
+    position: fixed;
+    top: 80px;
+    right: 10px;
+    max-width: 260px;
+    cursor: move;
+    display: block; /* default desktop GUI visible */
+}
+
+@media (max-width: 600px) {
+
+    /* Hide desktop GUI */
+    .gui.desktop {
+        display: none;
+    }
+
+    /* Mobile GUI styling */
+    .gui.mobile {
+        position: fixed;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 400px;
+        font-size: 16px;
+        border-radius: 16px;
+        display: block;
+    }
+
+    /* Bigger settings button for mobile */
+    #settingsToggle {
+        bottom: 80px;
+        top: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 18px;
+        padding: 12px 18px;
+        border-radius: 10px;
+    }
 }
 </style>
 </head>
@@ -64,52 +120,68 @@ margin-top:8px;
 <body>
 
 <div class="info">
-Drag balls • Double click/tap to spawn
+    Drag balls • Double click/tap to spawn
 </div>
 
-<div class="gui">
+<!-- Settings Toggle Button -->
+<button id="settingsToggle">⚙ Settings</button>
 
-<div class="gui-row">
-  <label><input type="checkbox" id="gravityToggle"> Gravity</label>
-  <div id="gravityHint" class="hint">Tap Gravity to enable motion on mobile</div>
-</div>
+<!-- GUI Container -->
+<div class="gui desktop mobile">
 
-<div class="gui-row">
-  <label>Gravity strength: <span id="gravityStrengthValue">0.2</span></label>
-  <input type="range" id="gravityStrengthSlider" min="0" max="1" step="0.01" value="0.2">
-</div>
-<div class="gui-row">
-    <label>Friction: <span id="frictionValue">0.995</span></label>
-    <input type="range" id="frictionSlider" min="0.95" max="1.1" step="0.005" value="0.995"> 
-    <label><input type="checkbox" id="vibrateToggle" checked> Vibrate on collision</label>
-</div>
+    <!-- Gravity & Orbit -->
+    <div class="gui-row">
+        <label><input type="checkbox" id="gravityToggle"> Gravity</label>
+        <div id="gravityHint" class="hint">Tap Gravity to enable motion on mobile</div>
 
-<div class="gui-row">
-  <label><input type="checkbox" id="trailToggle" checked> Trail</label>
-  <label>Trail opacity: <span id="trailAlphaValue">0.15</span></label>
-  <input type="range" id="trailAlphaSlider" min="0" max="1" step="0.01" value="0.15">
-</div>
+        <label><input type="checkbox" id="orbitToggle" checked> Orbit</label>
+        <label>Orbit spacing: <span id="orbitSpacingValue">120</span></label>
+        <input type="range" id="orbitSpacingSlider" min="50" max="300" step="5" value="120">
+    </div>
 
-<div class="gui-row">
-  <label><input type="checkbox" id="glowToggle" checked> Glow</label>
-  <label>Glow strength: <span id="glowValue">20</span></label>
-  <input type="range" id="glowSlider" min="0" max="60" step="1" value="20">
-</div>
+    <!-- Gravity Strength -->
+    <div class="gui-row">
+        <label>Gravity strength: <span id="gravityStrengthValue">0.2</span></label>
+        <input type="range" id="gravityStrengthSlider" min="0" max="1" step="0.01" value="0.2">
+    </div>
 
-<div class="gui-row">
-  <label>Color mode:</label>
-  <select id="colorMode">
-    <option value="random">Random</option>
-    <option value="fixed">Fixed</option>
-    <option value="hueCycle">Hue cycle</option>
-  </select>
-</div>
+    <!-- Friction & Vibrate -->
+    <div class="gui-row">
+        <label>Friction: <span id="frictionValue">0.995</span></label>
+        <input type="range" id="frictionSlider" min="0.95" max="1.1" step="0.005" value="0.995">
+        <label><input type="checkbox" id="vibrateToggle" checked> Vibrate on collision</label>
+    </div>
 
-<div id="fixedColorRow" class="gui-row" style="display:none;">
-  <label>Fixed color: <input type="color" id="fixedColor" value="#ff0000"></label>
-</div>
+    <!-- Trail -->
+    <div class="gui-row">
+        <label><input type="checkbox" id="trailToggle" checked> Trail</label>
+        <label>Trail opacity: <span id="trailAlphaValue">0.15</span></label>
+        <input type="range" id="trailAlphaSlider" min="0" max="1" step="0.01" value="0.15">
+    </div>
 
-<button onclick="spawnBalls(5)">Spawn Balls</button>
+    <!-- Glow -->
+    <div class="gui-row">
+        <label><input type="checkbox" id="glowToggle" checked> Glow</label>
+        <label>Glow strength: <span id="glowValue">20</span></label>
+        <input type="range" id="glowSlider" min="0" max="60" step="1" value="20">
+    </div>
+
+    <!-- Color -->
+    <div class="gui-row">
+        <label>Color mode:</label>
+        <select id="colorMode">
+            <option value="random">Random</option>
+            <option value="fixed">Fixed</option>
+            <option value="hueCycle">Hue cycle</option>
+        </select>
+    </div>
+
+    <div id="fixedColorRow" class="gui-row" style="display:none;">
+        <label>Fixed color: <input type="color" id="fixedColor" value="#ff0000"></label>
+    </div>
+
+    <!-- Spawn Button -->
+    <button onclick="spawnBalls(1)">Spawn Balls</button>
 
 </div>
 
@@ -117,8 +189,43 @@ Drag balls • Double click/tap to spawn
 
 <script>
 
+// Toggle GUI visibility
+const settingsToggleBtn = document.getElementById("settingsToggle");
+const guiBox = document.querySelector(".gui");
+
+settingsToggleBtn.addEventListener("click", () => {
+    guiBox.style.display = guiBox.style.display === "block" ? "none" : "block";
+});
+
+// Make desktop GUI draggable
+let isDraggingGUI = false;
+let offsetX = 0, offsetY = 0;
+
+guiBox.addEventListener("mousedown", e => {
+    if (!e.target.closest('input') && !e.target.closest('button') && !e.target.closest('select')) {
+        isDraggingGUI = true;
+        offsetX = e.clientX - guiBox.offsetLeft;
+        offsetY = e.clientY - guiBox.offsetTop;
+    }
+});
+
+window.addEventListener("mousemove", e => {
+    if (!isDraggingGUI) return;
+    guiBox.style.left = (e.clientX - offsetX) + "px";
+    guiBox.style.top = (e.clientY - offsetY) + "px";
+});
+
+window.addEventListener("mouseup", () => { isDraggingGUI = false; });
+
+// Is just a whole bunch of constants as um need them :)
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+
+const gravityToggle = document.getElementById("gravityToggle");
+const gravityHint = document.getElementById("gravityHint");
+
+const settingsToggle = document.getElementById("settingsToggle");
+const gui = document.querySelector(".gui");
 
 function resize(){
 canvas.width = window.innerWidth;
@@ -135,8 +242,9 @@ let gravityEnabled = false;
 
 let gravityX = 0;
 let gravityY = 0;
-let gravityStrength = 1;
+let gravityStrength = 0.2;
 let motionListenerAdded = false;
+let orbitSpacing = 120;
 
 const supportsDeviceMotion = typeof DeviceMotionEvent !== "undefined";
 const supportsDeviceOrientation = typeof DeviceOrientationEvent !== "undefined";
@@ -160,12 +268,61 @@ if(vibrateToggle){
 let colorMode = "random";
 let fixedColor = "#ff0000";
 
+// Make it so the Setting window is moveable :)
+let guiOffsetX = 0;
+let guiOffsetY = 0;
+
+gui.addEventListener("mousedown", (e) => {
+
+    if("ontouchstart" in window) return;
+
+    if(e.target.tagName === "INPUT" || e.target.tagName === "BUTTON" || e.target.tagName === "SELECT"){
+        return;
+    }
+
+    isDraggingGUI = true;
+    guiOffsetX = e.clientX - gui.offsetLeft;
+    guiOffsetY = e.clientY - gui.offsetTop;
+});
+// window events just for gui stuff dont worry
+window.addEventListener("mousemove", (e) => {
+    if(!isDraggingGUI) return;
+
+    gui.style.left = (e.clientX - guiOffsetX) + "px";
+    gui.style.top = (e.clientY - guiOffsetY) + "px";
+    gui.style.right = "auto"; // important so it doesn't snap back
+});
+
+window.addEventListener("mouseup", () => {
+    isDraggingGUI = false;
+});
+
+window.addEventListener("click", (e) => {
+    if(!gui.contains(e.target) && e.target !== settingsToggle){
+        gui.classList.remove("open");
+    }
+});
+
+// orbit toggle listener :) Bethan this make is so the code can check if it is toggled incase you wondered
+const orbitToggle = document.getElementById("orbitToggle");
+let orbitEnabled = true;
+
+if(orbitToggle){
+    orbitToggle.onchange = () => {
+        orbitEnabled = orbitToggle.checked;
+    };
+}
+
+const orbitSpacingSlider = document.getElementById("orbitSpacingSlider");
+const orbitSpacingValue = document.getElementById("orbitSpacingValue");
+
+
 let lastMotionAt = 0;
 const MOTION_TIMEOUT_MS = 500; // if no motion data received recently, fall back to downward gravity
 
-const gravityToggle = document.getElementById("gravityToggle");
-const gravityHint = document.getElementById("gravityHint");
-
+settingsToggle.onclick = () => {
+    gui.classList.toggle("open");
+};
 
 function setGravityHint(text){
     if(gravityHint){
@@ -288,6 +445,13 @@ if(frictionSlider){
     };
 }
 
+if(orbitSpacingSlider){
+    orbitSpacingSlider.oninput = () => {
+        orbitSpacing = parseFloat(orbitSpacingSlider.value);
+        orbitSpacingValue.textContent = orbitSpacing;
+    };
+}
+
 if(gravityStrengthSlider){
     gravityStrengthSlider.oninput = () => {
         gravityStrength = parseFloat(gravityStrengthSlider.value);
@@ -337,8 +501,8 @@ if(fixedColorInput){
 }
 
 const physicsSteps = 3;
-const orbitRadius = 120;
-const orbitSpeed = 0.03;
+const orbitRadius = 200;
+const orbitSpeed = 0.005;
 class Ball{
 
 constructor(x,y,r){
@@ -670,28 +834,37 @@ draggedBall.vy=velocity.y;
 draggedBall=null;
 
 });
+
 function applyOrbit(){
 
-if(!draggedBall) return;
+    if(!draggedBall || !orbitEnabled) return;
 
-let index = 0;
+    let index = 0;
+    const ballsPerLayer = 8;
 
-for(let b of balls){
+    for(let b of balls){
 
-if(b === draggedBall) continue;
+        if(b === draggedBall) continue;
 
-let angle = performance.now() * orbitSpeed + index;
+        let layer = Math.floor(index / ballsPerLayer);
+        let positionInLayer = index % ballsPerLayer;
 
-b.x = draggedBall.x + Math.cos(angle) * orbitRadius;
-b.y = draggedBall.y + Math.sin(angle) * orbitRadius;
+        let radius = (isFinite(orbitSpacing) ? orbitSpacing : 120) * (layer + 1);
 
-b.vx = 0;
-b.vy = 0;
+        let angleOffset = (Math.PI * 2 / ballsPerLayer) * positionInLayer;
+        let angle = performance.now() * orbitSpeed + angleOffset;
 
-index++;
+        let newX = draggedBall.x + Math.cos(angle) * radius;
+        let newY = draggedBall.y + Math.sin(angle) * radius;
 
-}
+        b.vx = newX - b.x;
+        b.vy = newY - b.y;
 
+        b.x = newX;
+        b.y = newY;
+
+        index++;
+    }
 }
 
 function animate(){
@@ -701,17 +874,19 @@ ctx.fillRect(0,0,canvas.width,canvas.height);
 
 for(let s=0;s<physicsSteps;s++){
 
-resolveCollisions();
 
-for(let b of balls){
-
-if(b!==draggedBall){
-b.update();
+if(!(draggedBall && orbitEnabled)){
+    resolveCollisions();
 }
 
+for(let b of balls){
+    if(b !== draggedBall){
+        b.update();
+    }
 }
 
 applyOrbit();
+
 
 }
 
