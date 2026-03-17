@@ -26,16 +26,28 @@ canvas{
 
 .gui{
     position:fixed;
-    top:80px;
-    right:10px;
-    background:rgba(0,0,0,0.85);
-    padding:12px;
-    border-radius:8px;
+    left:0;
+    bottom:0;
+    width:100%;
+    max-height:70vh;
+    overflow-y:auto;
+
+    background:rgba(0,0,0,0.95);
+    padding:16px;
+    border-radius:16px 16px 0 0;
+
     color:white;
     font-family:sans-serif;
-    max-width:260px;
+
     display:none;
-    cursor:move; 
+
+    transform:translateY(100%);
+    transition:transform 0.3s ease;
+}
+
+.gui.open{
+    display:block;
+    transform:translateY(0);
 }
 
 .gui label{
@@ -53,6 +65,23 @@ margin-top:8px;
 
 .gui-row label{
     margin-right:10px;
+}
+
+.gui input[type="range"]{
+    width:100%;
+    margin-top:6px;
+}
+
+.gui input,
+.gui button,
+.gui select{
+    font-size:16px;
+    padding:6px;
+}
+
+.gui-row{
+    flex-direction:column;
+    align-items:flex-start;
 }
 
 .hint{
@@ -89,6 +118,8 @@ cursor:pointer;
   <label><input type="checkbox" id="gravityToggle"> Gravity</label>
   <div id="gravityHint" class="hint">Tap Gravity to enable motion on mobile</div>
   <label><input type="checkbox" id="orbitToggle" checked> Orbit</label>
+  <label>Orbit spacing: <span id="orbitSpacingValue">120</span></label>
+  <input type="range" id="orbitSpacingSlider" min="50" max="300" step="5" value="120">
 </div>
 
 <div class="gui-row">
@@ -126,6 +157,7 @@ cursor:pointer;
   <label>Fixed color: <input type="color" id="fixedColor" value="#ff0000"></label>
 </div>
 
+
 <button onclick="spawnBalls(1)">Spawn Balls</button>
 
 </div>
@@ -160,6 +192,7 @@ let gravityX = 0;
 let gravityY = 0;
 let gravityStrength = 0.2;
 let motionListenerAdded = false;
+let orbitSpacing = 120;
 
 const supportsDeviceMotion = typeof DeviceMotionEvent !== "undefined";
 const supportsDeviceOrientation = typeof DeviceOrientationEvent !== "undefined";
@@ -189,11 +222,18 @@ let guiOffsetX = 0;
 let guiOffsetY = 0;
 
 gui.addEventListener("mousedown", (e) => {
+
+    if("ontouchstart" in window) return;
+
+    if(e.target.tagName === "INPUT" || e.target.tagName === "BUTTON" || e.target.tagName === "SELECT"){
+        return;
+    }
+
     isDraggingGUI = true;
     guiOffsetX = e.clientX - gui.offsetLeft;
     guiOffsetY = e.clientY - gui.offsetTop;
 });
-
+// window events just for gui stuff dont worry
 window.addEventListener("mousemove", (e) => {
     if(!isDraggingGUI) return;
 
@@ -206,6 +246,12 @@ window.addEventListener("mouseup", () => {
     isDraggingGUI = false;
 });
 
+window.addEventListener("click", (e) => {
+    if(!gui.contains(e.target) && e.target !== settingsToggle){
+        gui.classList.remove("open");
+    }
+});
+
 // orbit toggle listener :) Bethan this make is so the code can check if it is toggled incase you wondered
 const orbitToggle = document.getElementById("orbitToggle");
 let orbitEnabled = true;
@@ -216,12 +262,17 @@ if(orbitToggle){
     };
 }
 
+const orbitSpacingSlider = document.getElementById("orbitSpacingSlider");
+const orbitSpacingValue = document.getElementById("orbitSpacingValue");
+
+
 let lastMotionAt = 0;
 const MOTION_TIMEOUT_MS = 500; // if no motion data received recently, fall back to downward gravity
 
 settingsToggle.onclick = () => {
-    gui.style.display = gui.style.display === "none" ? "block" : "none";
+    gui.classList.toggle("open");
 };
+
 function setGravityHint(text){
     if(gravityHint){
         gravityHint.textContent = text;
@@ -340,6 +391,13 @@ if(frictionSlider){
     frictionSlider.oninput = () => {
         friction = parseFloat(frictionSlider.value);
         frictionValue.textContent = friction.toFixed(3);
+    };
+}
+
+if(orbitSpacingSlider){
+    orbitSpacingSlider.oninput = () => {
+        orbitSpacing = parseFloat(orbitSpacingSlider.value);
+        orbitSpacingValue.textContent = orbitSpacing;
     };
 }
 
@@ -731,9 +789,7 @@ function applyOrbit(){
     if(!draggedBall || !orbitEnabled) return;
 
     let index = 0;
-
-    const ballsPerLayer = 6;   // how many per ring
-    const layerSpacing = 70;   // distance between rings
+    const ballsPerLayer = 6;
 
     for(let b of balls){
 
@@ -742,7 +798,7 @@ function applyOrbit(){
         let layer = Math.floor(index / ballsPerLayer);
         let positionInLayer = index % ballsPerLayer;
 
-        let radius = orbitRadius + layer * layerSpacing;
+        let radius = (isFinite(orbitSpacing) ? orbitSpacing : 120) * (layer + 1);
 
         let angleOffset = (Math.PI * 2 / ballsPerLayer) * positionInLayer;
         let angle = performance.now() * orbitSpeed + angleOffset;
@@ -750,7 +806,6 @@ function applyOrbit(){
         let newX = draggedBall.x + Math.cos(angle) * radius;
         let newY = draggedBall.y + Math.sin(angle) * radius;
 
-        // preserve velocity after release
         b.vx = newX - b.x;
         b.vy = newY - b.y;
 
@@ -768,16 +823,16 @@ ctx.fillRect(0,0,canvas.width,canvas.height);
 
 for(let s=0;s<physicsSteps;s++){
 
-resolveCollisions();
+
+if(!(draggedBall && orbitEnabled)){
+    resolveCollisions();
+}
 
 for(let b of balls){
-
-if(b!==draggedBall){
-b.update();
+    if(b !== draggedBall){
+        b.update();
+    }
 }
-
-}
-
 
 applyOrbit();
 
