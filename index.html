@@ -264,9 +264,9 @@ if(vibrateToggle){
 }
 
 // Sound for collisions
-const collisionSound = new Audio();
-collisionSound.src = "https://freesound.org/data/previews/256/256113_3263906-lq.mp3"; // free ping sound
+const collisionSound = new Audio("https://www.orangefreesounds.com/wp-content/uploads/2016/06/Ping-sound.mp3");
 collisionSound.volume = 0.2;
+
 
 let colorMode = "random";
 let fixedColor = "#ff0000";
@@ -842,31 +842,61 @@ draggedBall=null;
 
 });
 
-function applyOrbit(){
-    if(!draggedBall || !orbitEnabled) return;
+function applyOrbit() {
+    if (!draggedBall || !orbitEnabled) return;
 
-    for(let b of balls){
-        if(b === draggedBall) continue;
+    const springStrength = 1; // springiness
+    const minOrbitSpeed = 2;     // base orbital speed
 
-        if(!b.orbitData){
+    for (let b of balls) {
+        if (b === draggedBall) continue;
+
+        if (!b.orbitData) {
             let dx = b.x - draggedBall.x;
             let dy = b.y - draggedBall.y;
-
-            b.orbitData = {
-                radius: Math.sqrt(dx * dx + dy * dy),
-                angle: Math.atan2(dy, dx)
-            };
+            let radius = Math.sqrt(dx * dx + dy * dy);
+            let angle = Math.atan2(dy, dx);
+            b.orbitData = { radius, angle };
         }
 
+        // Compute vector toward orbit position
+        let dx = b.x - draggedBall.x;
+        let dy = b.y - draggedBall.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance === 0) continue;
+
+        // Desired position on orbit
+        let targetX = draggedBall.x + Math.cos(b.orbitData.angle) * b.orbitData.radius;
+        let targetY = draggedBall.y + Math.sin(b.orbitData.angle) * b.orbitData.radius;
+
+        // Spring pull
+        let pullX = (targetX - b.x) * springStrength;
+        let pullY = (targetY - b.y) * springStrength;
+
+        // Update velocity
+        b.vx += pullX;
+        b.vy += pullY;
+
+        // Compute tangential direction
+        let tangentX = -dy / distance;
+        let tangentY = dx / distance;
+
+        let tangentialSpeed = b.vx * tangentX + b.vy * tangentY;
+
+        if (Math.abs(tangentialSpeed) < minOrbitSpeed) {
+            // Give a random boost in tangential direction
+            let boost = minOrbitSpeed * (0.5 + Math.random() * 0.5);
+            b.vx += tangentX * boost;
+            b.vy += tangentY * boost;
+        }
+
+        // Increment orbit angle for visual reference
         b.orbitData.angle += orbitSpeed;
 
-        let angle = b.orbitData.angle;
-
-        let newX = draggedBall.x + Math.cos(angle) * b.orbitData.radius;
-        let newY = draggedBall.y + Math.sin(angle) * b.orbitData.radius;
-
-        b.x += (newX - b.x) * 0.2;
-        b.y += (newY - b.y) * 0.2;
+        // **Integrate position with velocity**
+        b.x += b.vx;
+        b.y += b.vy;
     }
 }
 
