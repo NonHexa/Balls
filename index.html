@@ -135,8 +135,6 @@ canvas {
         <div id="gravityHint" class="hint">Tap Gravity to enable motion on mobile</div>
 
         <label><input type="checkbox" id="orbitToggle" checked> Orbit</label>
-        <label>Orbit spacing: <span id="orbitSpacingValue">120</span></label>
-        <input type="range" id="orbitSpacingSlider" min="50" max="300" step="5" value="120">
     </div>
 
     <!-- Gravity Strength -->
@@ -244,7 +242,6 @@ let gravityX = 0;
 let gravityY = 0;
 let gravityStrength = 0.2;
 let motionListenerAdded = false;
-let orbitSpacing = 120;
 
 const supportsDeviceMotion = typeof DeviceMotionEvent !== "undefined";
 const supportsDeviceOrientation = typeof DeviceOrientationEvent !== "undefined";
@@ -255,6 +252,7 @@ let trailAlpha = 0.15;
 
 let glowEnabled = true;
 let glowStrength = 20;
+let orbitStartTime = 0;
 
 let vibrateEnabled = true;
 const vibrateToggle = document.getElementById("vibrateToggle");
@@ -264,6 +262,11 @@ if(vibrateToggle){
         vibrateEnabled = vibrateToggle.checked;
     };
 }
+
+// Sound for collisions
+const collisionSound = new Audio();
+collisionSound.src = "https://freesound.org/data/previews/256/256113_3263906-lq.mp3"; // free ping sound
+collisionSound.volume = 0.2;
 
 let colorMode = "random";
 let fixedColor = "#ff0000";
@@ -312,10 +315,6 @@ if(orbitToggle){
         orbitEnabled = orbitToggle.checked;
     };
 }
-
-const orbitSpacingSlider = document.getElementById("orbitSpacingSlider");
-const orbitSpacingValue = document.getElementById("orbitSpacingValue");
-
 
 let lastMotionAt = 0;
 const MOTION_TIMEOUT_MS = 500; // if no motion data received recently, fall back to downward gravity
@@ -442,13 +441,6 @@ if(frictionSlider){
     frictionSlider.oninput = () => {
         friction = parseFloat(frictionSlider.value);
         frictionValue.textContent = friction.toFixed(3);
-    };
-}
-
-if(orbitSpacingSlider){
-    orbitSpacingSlider.oninput = () => {
-        orbitSpacing = parseFloat(orbitSpacingSlider.value);
-        orbitSpacingValue.textContent = orbitSpacing;
     };
 }
 
@@ -690,6 +682,16 @@ const restitution=1;
 
 const impulse=-(1+restitution)*velAlongNormal/(1/m1+1/m2);
 
+// Temporarily change color for collision flash
+b1.hue = Math.random() * 360;
+b2.hue = Math.random() * 360;
+
+// Play collision sound
+if(collisionSound){
+    collisionSound.currentTime = 0;
+    collisionSound.play();
+}
+
 const ix=impulse*nx;
 const iy=impulse*ny;
 
@@ -715,23 +717,26 @@ let draggedBall=null;
 let lastMouse={x:0,y:0};
 let velocity={x:0,y:0};
 
-canvas.onmousedown=e=>{
+canvas.onmousedown = e => {
 
-const mx=e.clientX;
-const my=e.clientY;
+    const mx = e.clientX;
+    const my = e.clientY;
 
-for(let b of balls){
+    for(let b of balls){
 
-if(Math.hypot(mx-b.x,my-b.y)<b.radius){
+        if(Math.hypot(mx - b.x, my - b.y) < b.radius){
 
-draggedBall=b;
-lastMouse={x:mx,y:my};
-break;
+            draggedBall = b;
+            lastMouse = {x: mx, y: my};
 
-}
+            orbitStartTime = performance.now();
+            for(let other of balls){
+                delete other.orbitData;
+            }
 
-}
-
+            break;
+        }
+    }
 };
 
 canvas.onmousemove=e=>{
@@ -772,33 +777,35 @@ balls.push(new Ball(e.clientX,e.clientY,14+Math.random()*16));
 
 let lastTap=0;
 
-canvas.addEventListener("touchstart",e=>{
+canvas.addEventListener("touchstart", e => {
 
-const t=e.touches[0];
+    const t = e.touches[0];
+    const mx = t.clientX;
+    const my = t.clientY;
 
-const mx=t.clientX;
-const my=t.clientY;
+    const now = Date.now();
 
-const now=Date.now();
+    if(now - lastTap < 300){
+        balls.push(new Ball(mx, my, 14));
+    }
 
-if(now-lastTap<300){
-balls.push(new Ball(mx,my,14));
-}
+    lastTap = now;
 
-lastTap=now;
+    for(let b of balls){
 
-for(let b of balls){
+        if(Math.hypot(mx - b.x, my - b.y) < b.radius){
 
-if(Math.hypot(mx-b.x,my-b.y)<b.radius){
+            draggedBall = b;
+            lastMouse = {x: mx, y: my};
 
-draggedBall=b;
-lastMouse={x:mx,y:my};
-break;
+            orbitStartTime = performance.now();
+            for(let other of balls){
+                delete other.orbitData;
+            }
 
-}
-
-}
-
+            break;
+        }
+    }
 });
 
 canvas.addEventListener("touchmove",e=>{
@@ -836,37 +843,37 @@ draggedBall=null;
 });
 
 function applyOrbit(){
-
     if(!draggedBall || !orbitEnabled) return;
 
-    let index = 0;
-    const ballsPerLayer = 8;
-
     for(let b of balls){
-
         if(b === draggedBall) continue;
 
-        let layer = Math.floor(index / ballsPerLayer);
-        let positionInLayer = index % ballsPerLayer;
+        // Initialize ONCE when drag starts
+        if(!b.orbitData){
+            let dx = b.x - draggedBall.x;
+            let dy = b.y - draggedBall.y;
 
-        let radius = (isFinite(orbitSpacing) ? orbitSpacing : 120) * (layer + 1);
+            b.orbitData = {
+                radius: Math.sqrt(dx * dx + dy * dy),
+                angle: Math.atan2(dy, dx)
+            };
+        }
 
-        let angleOffset = (Math.PI * 2 / ballsPerLayer) * positionInLayer;
-        let angle = performance.now() * orbitSpeed + angleOffset;
+        // ✅ THIS is the key: increment angle every frame
+        b.orbitData.angle += orbitSpeed;
 
-        let newX = draggedBall.x + Math.cos(angle) * radius;
-        let newY = draggedBall.y + Math.sin(angle) * radius;
+        let angle = b.orbitData.angle;
+
+        let newX = draggedBall.x + Math.cos(angle) * b.orbitData.radius;
+        let newY = draggedBall.y + Math.sin(angle) * b.orbitData.radius;
 
         b.vx = newX - b.x;
         b.vy = newY - b.y;
 
-        b.x = newX;
-        b.y = newY;
-
-        index++;
+        b.x = newX * 0.2;
+        b.y = newY * 0.2;
     }
 }
-
 function animate(){
 
 ctx.fillStyle = `rgba(0,0,0,${trailEnabled ? trailAlpha : 1})`;
