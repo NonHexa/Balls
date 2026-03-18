@@ -848,7 +848,6 @@ function applyOrbit(){
     for(let b of balls){
         if(b === draggedBall) continue;
 
-        // Initialize ONCE when drag starts
         if(!b.orbitData){
             let dx = b.x - draggedBall.x;
             let dy = b.y - draggedBall.y;
@@ -859,7 +858,6 @@ function applyOrbit(){
             };
         }
 
-        // ✅ THIS is the key: increment angle every frame
         b.orbitData.angle += orbitSpeed;
 
         let angle = b.orbitData.angle;
@@ -867,13 +865,11 @@ function applyOrbit(){
         let newX = draggedBall.x + Math.cos(angle) * b.orbitData.radius;
         let newY = draggedBall.y + Math.sin(angle) * b.orbitData.radius;
 
-        b.vx = newX - b.x;
-        b.vy = newY - b.y;
-
-        b.x = newX * 0.2;
-        b.y = newY * 0.2;
+        b.x += (newX - b.x) * 0.2;
+        b.y += (newY - b.y) * 0.2;
     }
 }
+
 function animate(){
 
 ctx.fillStyle = `rgba(0,0,0,${trailEnabled ? trailAlpha : 1})`;
@@ -887,6 +883,11 @@ if(!(draggedBall && orbitEnabled)){
 }
 
 for(let b of balls){
+
+    if(orbitEnabled && draggedBall && b !== draggedBall){
+        continue;
+    }
+
     if(b !== draggedBall){
         b.update();
     }
