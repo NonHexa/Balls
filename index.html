@@ -845,7 +845,7 @@ draggedBall=null;
 function applyOrbit() {
     if (!draggedBall || !orbitEnabled) return;
 
-    const BASE_MIN_SPEED = 0.01;  // minimum base angular speed
+    const BASE_MIN_SPEED = 0.02;  // minimum base angular speed
     const BASE_MAX_SPEED = 0.06;  // maximum base angular speed
 
     for (let b of balls) {
