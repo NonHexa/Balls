@@ -264,8 +264,8 @@ if(vibrateToggle){
 }
 
 // Sound for collisions
-const collisionSound = new Audio("https://www.orangefreesounds.com/wp-content/uploads/2016/06/Ping-sound.mp3");
-collisionSound.volume = 0.2;
+const collisionSound = new Audio("BallSounds.mp3")
+collisionSound.volume = 1;
 
 
 let colorMode = "random";
@@ -656,6 +656,11 @@ dist=0.01;
 
 if(dist<minDist){
 
+    if(collisionSound){
+    collisionSound.currentTime = 0;
+    collisionSound.play();
+}
+
 const nx=dx/dist;
 const ny=dy/dist;
 
@@ -685,12 +690,6 @@ const impulse=-(1+restitution)*velAlongNormal/(1/m1+1/m2);
 // Temporarily change color for collision flash
 b1.hue = Math.random() * 360;
 b2.hue = Math.random() * 360;
-
-// Play collision sound
-if(collisionSound){
-    collisionSound.currentTime = 0;
-    collisionSound.play();
-}
 
 const ix=impulse*nx;
 const iy=impulse*ny;
