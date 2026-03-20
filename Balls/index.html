@@ -2,294 +2,1156 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Orbit Defence Improved</title>
+<title>Orbit Defense</title>
+
+<!-- =============================
+     GLOBAL STYLES
+============================= -->
 <style>
-body { margin:0; overflow:hidden; background:black; font-family:sans-serif; user-select:none; }
-canvas { display:block; }
-.info { position:fixed; top:10px; left:10px; color:white; font-size:16px; }
-#upgradeMenu { position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background: rgba(15,15,15,0.95); padding:20px; border-radius:12px; display:none; color:white; }
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: black;
+        font-family: sans-serif;
+        user-select: none;
+    }
+
+    canvas {
+        display: block;
+    }
+
+    .info {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        color: white;
+        font-size: 16px;
+        z-index: 5;
+    }
+
+    /* =============================
+       FLOATING ORB BUTTON
+    ============================== */
+
+    #upgradeOrb {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%,
+                   #ff55ff 0%, #660066 70%, #220022 100%);
+        box-shadow: 0 0 25px #ff00ff, 0 0 60px #aa00aa;
+        cursor: pointer;
+        transition: 0.25s ease;
+        z-index: 20;
+    }
+
+    #upgradeOrb:hover {
+        transform: scale(1.15);
+        box-shadow: 0 0 35px #ff00ff, 0 0 100px #aa00aa;
+    }
+
+
+    /* =============================
+       GLASS OVERLAY
+    ============================== */
+
+    #upgradeGlass {
+        position: fixed;
+        inset: 0;
+        background: rgba(8,8,16,0.45);
+        backdrop-filter: blur(14px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 30;
+
+        opacity: 0;
+        transform: scale(0.90);
+        transition: opacity .35s ease, transform .35s ease;
+    }
+
+    #upgradeGlass.open {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+
+    /* =============================
+       UPGRADE STAR LAYOUT
+    ============================== */
+
+    #upgradeStarContainer {
+        position: relative;
+        width: 620px;
+        height: 620px;
+    }
+
+    .upgradeNode {
+        position: absolute;
+        width: 140px;
+        height: 180px;
+        padding-top: 10px;
+        border-radius: 22px;
+
+        background: rgba(255,255,255,0.12);
+        backdrop-filter: blur(14px);
+        border: 2px solid rgba(255,0,255,0.45);
+        box-shadow: 0 0 22px #ff00ff55;
+
+        text-align: center;
+        transition: 0.25s ease;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    .upgradeNode:hover {
+        transform: scale(1.08);
+        box-shadow: 0 0 30px #ff00ff88;
+    }
+
+    .uName {
+        color: white;
+        font-size: 18px;
+        margin-top: 8px;
+        letter-spacing: 1px;
+    }
+
+    .progressBar {
+        width: 80%;
+        height: 8px;
+        margin: 12px auto;
+        background: rgba(255,255,255,0.25);
+        border-radius: 4px;
+    }
+
+    .progressBar div {
+        height: 100%;
+        width: 0%;
+        background: #ff00ff;
+        border-radius: 4px;
+        transition: width 0.2s ease;
+    }
+
+
+    /* =============================
+       NODE POSITIONS
+       (Diamond Outer + Ring Inner)
+    ============================== */
+
+    #upOrbit  { top: 20px; left: 50%; transform: translateX(-50%); }
+    #upRadius { top: 50%; left: 20px;  transform: translateY(-50%); }
+    #upSpeed  { top: 50%; right: 20px; transform: translateY(-50%); }
+
+    #upLaser  { top: 170px; left: 50%; transform: translateX(-50%); }
+    #upShield { top: 290px; left: 130px; }
+    #upMagnet { top: 290px; right: 130px; }
+    #upDash   { top: 410px; left: 50%; transform: translateX(-50%); }
+
+
+    /* =============================
+       LINE CANVAS (BACKGROUND)
+    ============================== */
+
+    #lineCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+    }
+
+
+    /* =============================
+       CLOSE BUTTON
+    ============================== */
+
+    #closeGlass {
+        position: absolute;
+        top: -80px;
+        right: -80px;
+        font-size: 80px;
+        color: #ff00ff;
+        cursor: pointer;
+        transition: .25s ease;
+        z-index: 3;
+    }
+
+    #closeGlass:hover {
+        transform: scale(1.2);
+    }
+
+
+    /* =============================
+       DASH COOLDOWN WHEEL
+    ============================== */
+
+    .iconCanvas {
+        margin-top: 4px;
+        z-index: 3;
+    }
+
+
+    /* =============================
+       ORB DEATH PULSE
+    ============================== */
+
+    @keyframes orbDeathPulse {
+        0%   { transform: scale(1);   box-shadow: 0 0 60px #ff00ff; }
+        100% { transform: scale(1.4); box-shadow: 0 0 140px #ff00ff; }
+    }
 </style>
 </head>
 <body>
+
+<!-- Points HUD -->
 <div class="info" id="info">Points: 0</div>
+
+<!-- Main Game Canvas -->
 <canvas id="gameCanvas"></canvas>
 
-<div id="upgradeMenu">
-<h2>Upgrade Tree</h2>
-<canvas id="upgradeCanvas" width="400" height="300"></canvas>
-<br>
-<button id="playAgain">Play Again</button>
+<!-- Floating Neon Upgrade Orb -->
+<div id="upgradeOrb"></div>
+
+<!-- Full Glassmorphism Upgrade Menu -->
+<div id="upgradeGlass">
+    
+    <div id="upgradeStarContainer">
+
+        <!-- Outer Diamond Nodes -->
+        <div class="upgradeNode" id="upOrbit">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Orbit</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+
+        <div class="upgradeNode" id="upRadius">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Radius</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+
+        <div class="upgradeNode" id="upSpeed">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Speed</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+
+        <!-- Inner Ring Nodes -->
+        <div class="upgradeNode inner" id="upLaser">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Laser</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+
+        <div class="upgradeNode inner" id="upShield">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Shield</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+
+        <div class="upgradeNode inner" id="upMagnet">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Magnet</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+
+        <div class="upgradeNode inner" id="upDash">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Dash</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+
+        <!-- Connecting Lines Canvas -->
+        <canvas id="lineCanvas" width="620" height="620"></canvas>
+
+        <!-- Close Glass Menu Button -->
+        <div id="closeGlass">×</div>
+
+    </div>
 </div>
-
 <script>
-const canvas=document.getElementById("gameCanvas");
-const ctx=canvas.getContext("2d");
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
-let center={x:canvas.width/2,y:canvas.height/2};
+/* ================================
+   SEGMENT 3 — CORE GAME ENGINE JS
+   (All logic rebuilt cleanly)
+=================================== */
 
-let points=0;
-let gameOver=false;
-let particles=[];
-let shakeTime=0;
+/* --------------------------------
+   CANVAS + GLOBAL STATE
+-----------------------------------*/
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-const infoDiv=document.getElementById("info");
+canvas.width = innerWidth;
+canvas.height = innerHeight;
 
-window.addEventListener("resize",()=>{
- canvas.width=window.innerWidth;
- canvas.height=window.innerHeight;
- center={x:canvas.width/2,y:canvas.height/2};
+let center = { x: canvas.width / 2, y: canvas.height / 2 };
+
+window.addEventListener("resize", () => {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+    center = { x: canvas.width / 2, y: canvas.height / 2 };
 });
 
-function screenShake(){
- if(shakeTime>0){
-  const dx=(Math.random()-0.5)*10;
-  const dy=(Math.random()-0.5)*10;
-  ctx.translate(dx,dy);
-  shakeTime--;
- }
-}
+/* --------------------------------
+   GAME STATE
+-----------------------------------*/
+let points = 0;
+let gameOver = false;
+let isPaused = false;
 
-class Particle{
- constructor(x,y,color){
-  this.x=x; this.y=y;
-  this.vx=(Math.random()-0.5)*5;
-  this.vy=(Math.random()-0.5)*5;
-  this.life=30;
-  this.color=color;
- }
- update(){this.x+=this.vx; this.y+=this.vy; this.life--;}
- draw(){ctx.fillStyle=this.color; ctx.fillRect(this.x,this.y,3,3);} 
-}
-
-class PlayerBall{
- constructor(){this.orbitRadius=150; this.angle=0; this.size=16;}
- update(mx,my){
-  if(mx!==null){this.angle=Math.atan2(my-center.y,mx-center.x);} 
-  this.x=center.x+Math.cos(this.angle)*this.orbitRadius;
-  this.y=center.y+Math.sin(this.angle)*this.orbitRadius;
- }
- draw(){ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();}
-}
-
-class OrbitBall{
- constructor(angle){this.angle=angle; this.orbitRadius=60; this.size=14; this.angularSpeed=0.02;}
- update(centerAngle,i,total){
-  const target=centerAngle+i*(Math.PI*2/total);
-  this.angle+=(target-this.angle)*0.1+this.angularSpeed;
-  this.angle+=Math.sin(Date.now()*0.002+i)*0.01;
-  this.x=center.x+Math.cos(this.angle)*this.orbitRadius;
-  this.y=center.y+Math.sin(this.angle)*this.orbitRadius;
- }
- draw(){ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fillStyle="#0ff"; ctx.fill();}
-}
-
-const enemyTypes=[
- {color:"#f00", size:8, gravity:0.3, life:1, speedMultiplier:2}, // fast
- {color:"#ff8800", size:14, gravity:0.2, life:2, speedMultiplier:1.2}, // medium (starter)
- {color:"#8800ff", size:20, gravity:0.15, life:3, speedMultiplier:0.8} // slow tank
-];
-
+let particles = [];
+let enemies = [];
+let orbitBalls = [];
 let spawnCount = 0;
 
-class Enemy{
- constructor(typeOverride=null){
+let lastFrameTime = 0;
 
-  let t;
+/* --------------------------------
+   POINTS UI
+-----------------------------------*/
+const infoDiv = document.getElementById("info");
 
-  if(typeOverride){
-    t = typeOverride;
-  } else {
-    spawnCount++;
-
-    if(spawnCount < 5){
-      t = enemyTypes[1];
-    } else if(spawnCount < 15){
-      t = Math.random() < 0.7 ? enemyTypes[1] : enemyTypes[2];
-    } else {
-      const r = Math.random();
-      if(r < 0.5) t = enemyTypes[1];
-      else if(r < 0.8) t = enemyTypes[2];
-      else t = enemyTypes[0];
+/* --------------------------------
+   HELPER: SCREEN SHAKE
+-----------------------------------*/
+let shakeTime = 0;
+function screenShake() {
+    if (shakeTime > 0) {
+        const dx = (Math.random() - 0.5) * 10;
+        const dy = (Math.random() - 0.5) * 10;
+        ctx.translate(dx, dy);
+        shakeTime--;
     }
-  }
-
-  this.size = t.size;
-  this.color = t.color;
-  this.gravity = t.gravity;
-  this.life = t.life;
-  this.speedMultiplier = t.speedMultiplier;
-
-  const edge=Math.random();
-  this.edge = edge;
-
-  if(edge<0.25){this.x=0; this.y=Math.random()*canvas.height;}
-  else if(edge<0.5){this.x=canvas.width; this.y=Math.random()*canvas.height;}
-  else if(edge<0.75){this.x=Math.random()*canvas.width; this.y=0;}
-  else{this.x=Math.random()*canvas.width; this.y=canvas.height;}
-
-  this.vx=0;
-  this.vy=0;
- }
 }
 
-let player=new PlayerBall();
-let orbitBalls=[new OrbitBall(0)];
-let enemies=[];
-let mouse={x:null,y:null};
+/* --------------------------------
+   PARTICLE OBJECT
+-----------------------------------*/
+class Particle {
+    constructor(x, y, color) {
+        this.x = x; this.y = y;
+        this.vx = (Math.random() - 0.5) * 5;
+        this.vy = (Math.random() - 0.5) * 5;
+        this.life = 30;
+        this.color = color;
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life--;
+    }
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, 3, 3);
+    }
+}
 
-canvas.addEventListener("mousemove",e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+/* --------------------------------
+   PLAYER ORBIT BALL (main)
+-----------------------------------*/
+class PlayerBall {
+    constructor() {
+        this.orbitRadius = 150;
+        this.angle = 0;
+        this.size = 16;
+        this.blink = 0; // For dash warp blink
+    }
+    update(mx, my) {
+        if (mx !== null) {
+            this.angle = Math.atan2(my - center.y, mx - center.x);
+        }
+        this.x = center.x + Math.cos(this.angle) * this.orbitRadius;
+        this.y = center.y + Math.sin(this.angle) * this.orbitRadius;
+    }
+    draw() {
+        ctx.save();
 
-// Difficulty scaling
-let enemyInterval;
-function startEnemySpawn(){
- clearInterval(enemyInterval);
+        if (this.blink === 1) ctx.globalAlpha = 0.2;
+        else if (this.blink === 2) ctx.globalAlpha = 0.4;
 
- enemyInterval = setInterval(()=>{
-  if(gameOver) return;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
 
-  if(enemies.length < 100){
+        ctx.restore();
+    }
+}
 
-    // chance to spawn fast enemy with warning
-    if(spawnCount > 15 && Math.random() < 0.2){
-
-      const edge = Math.random();
-
-      // spawn warning particles
-      for(let i=0;i<50;i++){
-        let x,y;
-
-        if(edge<0.25){x=0; y=Math.random()*canvas.height;}
-        else if(edge<0.5){x=canvas.width; y=Math.random()*canvas.height;}
-        else if(edge<0.75){x=Math.random()*canvas.width; y=0;}
-        else{x=Math.random()*canvas.width; y=canvas.height;}
-
-        particles.push(new Particle(x,y,"#ff2222"));
-      }
-
-      // delay spawn (gives player reaction time)
-      setTimeout(()=>{
-        enemies.push(new Enemy(enemyTypes[0])); // fast enemy
-      }, 500);
-
-    } else {
-      enemies.push(new Enemy());
+/* --------------------------------
+   SECONDARY ORBIT BALLS
+-----------------------------------*/
+class OrbitBall {
+    constructor(angle) {
+        this.angle = angle;
+        this.orbitRadius = 60;
+        this.size = 14;
+        this.angularSpeed = 0.02;
     }
 
-  }
- },300);
+    update(centerAngle, i, total) {
+        // Base orbit
+        const baseTarget = centerAngle + i * (Math.PI * 2 / total);
+        this.angle += (baseTarget - this.angle) * 0.1 + this.angularSpeed;
+
+        // Subtle wobble
+        this.angle += Math.sin(Date.now() * 0.002 + i) * 0.01;
+
+        // Soft magnet attraction (initialized in Segment 5)
+        if (window.magnetLevel > 0 && enemies.length > 0) {
+            let nearest = null;
+            let nd = Infinity;
+            enemies.forEach(e => {
+                const d = Math.hypot(e.x - this.x, e.y - this.y);
+                if (d < nd) { nd = d; nearest = e; }
+            });
+
+            if (nearest) {
+                const desired = Math.atan2(nearest.y - this.y, nearest.x - this.x);
+                let diff = desired - this.angle;
+                diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+                this.angle += diff * window.magnetStrength;
+            }
+        }
+
+        // Final position
+        this.x = center.x + Math.cos(this.angle) * this.orbitRadius;
+        this.y = center.y + Math.sin(this.angle) * this.orbitRadius;
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = "#0ff";
+        ctx.fill();
+    }
 }
 
-
-function checkCollisions(){
- for(let e of enemies){
-  for(let b of [player,...orbitBalls]){
-   const dx=e.x-b.x;
-   const dy=e.y-b.y;
-   const dist=Math.hypot(dx,dy);
-   if(dist<e.size+b.size){
-    shakeTime=5;
-    e.life--;
-    points++;
-    infoDiv.textContent="Points: "+points;
-    for(let i=0;i<10;i++) particles.push(new Particle(e.x,e.y,e.color));
-   }
-  }
-  if(Math.hypot(e.x-center.x,e.y-center.y)<20){
-   gameOver=true;
-   document.getElementById("upgradeMenu").style.display="block";
-  }
- }
-}
-
-// Upgrade blocks
-const upgrades=[
- {name:"+Orbit", cost:5, level:0, max:5, x:80,y:80,color:"#0ff"},
- {name:"Radius", cost:10, level:0, max:5, x:200,y:80,color:"#0f0"},
- {name:"Speed", cost:15, level:0, max:5, x:320,y:80,color:"#ff0"}
-];
-
-const uctx=document.getElementById("upgradeCanvas").getContext("2d");
-
-function drawTree(){
- uctx.clearRect(0,0,400,300);
- for(let u of upgrades){
-  uctx.fillStyle=u.level>0?u.color:"#333";
-  uctx.fillRect(u.x-30,u.y-30,60,60);
-  uctx.fillStyle="#fff";
-  uctx.fillText(u.name,u.x,u.y+40);
- }
-}
-
-drawTree();
-
-upgradeCanvas.onclick=(e)=>{
- const rect=upgradeCanvas.getBoundingClientRect();
- const mx=e.clientX-rect.left;
- const my=e.clientY-rect.top;
-
- for(let u of upgrades){
-  if(mx>u.x-30 && mx<u.x+30 && my>u.y-30 && my<u.y+30){
-   if(points>=u.cost && u.level<u.max){
-    points=0;
-    u.level++;
-
-    for(let i=0;i<20;i++) particles.push(new Particle(u.x,u.y,u.color));
-
-    if(u.name=="+Orbit") orbitBalls.push(new OrbitBall(Math.random()*Math.PI*2));
-    if(u.name=="Radius") player.orbitRadius+=20;
-    if(u.name=="Speed") orbitBalls.forEach(o=>o.angularSpeed+=0.01);
-
-    drawTree();
-   }
-  }
- }
+/* --------------------------------
+   ENEMY TYPES
+-----------------------------------*/
+const enemyTypes = {
+    fast:   { color: "#ff0000",  size: 8,  gravity: 0.30, life: 1, speedMultiplier: 2.0 },
+    medium: { color: "#ff8800",  size: 14, gravity: 0.20, life: 2, speedMultiplier: 1.2 },
+    slow:   { color: "#8800ff",  size: 20, gravity: 0.15, life: 3, speedMultiplier: 0.8 }
 };
 
-function resetGame(){
- points = 0;
- infoDiv.textContent = "Points: 0";
- gameOver = false;
- enemies = [];
- particles = [];
- orbitBalls = [new OrbitBall(0)];
- player = new PlayerBall();
- document.getElementById("upgradeMenu").style.display = "none";
- startEnemySpawn();
- startEnemySpawn();
-animate();
+/* --------------------------------
+   STANDARD ENEMY CLASS
+-----------------------------------*/
+class Enemy {
+    constructor(forceType = null) {
+        spawnCount++;
+
+        // Choose type
+        let t;
+        if (forceType) t = forceType;
+        else if (spawnCount < 5) t = enemyTypes.medium;
+        else if (spawnCount < 15) t = Math.random() < 0.7 ? enemyTypes.medium : enemyTypes.slow;
+        else {
+            const r = Math.random();
+            if (r < 0.5)      t = enemyTypes.medium;
+            else if (r < 0.8) t = enemyTypes.slow;
+            else              t = enemyTypes.fast;
+        }
+
+        Object.assign(this, JSON.parse(JSON.stringify(t)));
+
+        // Spawn at edge
+        const e = Math.random();
+        if (e < 0.25)  { this.x = 0;            this.y = Math.random() * canvas.height; }
+        else if (e<.5) { this.x = canvas.width; this.y = Math.random() * canvas.height; }
+        else if (e<.75){ this.x = Math.random() * canvas.width; this.y = 0; }
+        else           { this.x = Math.random() * canvas.width; this.y = canvas.height; }
+
+        this.vx = 0;
+        this.vy = 0;
+    }
+
+    update() {
+        const dx = center.x - this.x;
+        const dy = center.y - this.y;
+        const dist = Math.hypot(dx, dy);
+
+        this.vx += dx / dist * this.gravity * this.speedMultiplier;
+        this.vy += dy / dist * this.gravity * this.speedMultiplier;
+
+        this.x += this.vx;
+        this.y += this.vy;
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+    }
 }
 
-document.getElementById("playAgain").onclick = resetGame;
+/* --------------------------------
+   BOSS ENEMY CLASS
+-----------------------------------*/
+class BossEnemy {
+    constructor() {
+        this.size = 40;
+        this.life = 20;
+        this.color = "#ff00ff";
 
-function animate(){
- ctx.save();
- screenShake();
+        this.x = Math.random() * canvas.width;
+        this.y = -50;
+        this.vx = 0;
+        this.vy = 1;
+        this.blink = 0;
+    }
 
- ctx.fillStyle="rgba(0,0,0,0.2)";
- ctx.fillRect(0,0,canvas.width,canvas.height);
+    update() {
+        const dx = center.x - this.x;
+        const dy = center.y - this.y;
+        const dist = Math.hypot(dx, dy);
 
- ctx.beginPath(); ctx.arc(center.x,center.y,20,0,Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();
+        this.vx += dx / dist * 0.05;
+        this.vy += dy / dist * 0.05;
 
- player.update(mouse.x,mouse.y);
- player.draw();
+        this.x += this.vx;
+        this.y += this.vy;
+    }
 
- orbitBalls.forEach((o,i)=>{o.update(player.angle,i,orbitBalls.length); o.draw();});
+    draw() {
+        ctx.save();
 
- enemies.forEach(e=>{e.update(); e.draw();});
+        if (this.blink === 1) ctx.globalAlpha = 0.2;
+        else if (this.blink === 2) ctx.globalAlpha = 0.4;
 
- particles.forEach(p=>{p.update(); p.draw();});
- particles=particles.filter(p=>p.life>0);
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = this.color;
+        ctx.fill();
 
- checkCollisions();
- enemies=enemies.filter(e=>e.life>0);
-
- ctx.restore();
-
- if(!gameOver) requestAnimationFrame(animate);
+        ctx.restore();
+    }
 }
 
-animate();
+/* --------------------------------
+   ENEMY SPAWNER
+-----------------------------------*/
+let enemyInterval = null;
+
+function startEnemySpawn() {
+    clearInterval(enemyInterval);
+
+    enemyInterval = setInterval(() => {
+
+        if (gameOver || isPaused) return;
+        if (enemies.length >= 100) return;
+
+        // Boss every 25 spawns
+        if (spawnCount > 0 && spawnCount % 25 === 0) {
+            enemies.push(new BossEnemy());
+            return;
+        }
+
+        // Fast enemy warning
+        if (spawnCount > 15 && Math.random() < 0.2) {
+            const edge = Math.random();
+
+            for (let i = 0; i < 50; i++) {
+                let x, y;
+                if (edge < 0.25)   { x = 0;            y = Math.random() * canvas.height; }
+                else if (edge<.5)  { x = canvas.width; y = Math.random() * canvas.height; }
+                else if (edge<.75) { x = Math.random() * canvas.width; y = 0; }
+                else               { x = Math.random() * canvas.width; y = canvas.height; }
+
+                particles.push(new Particle(x, y, "#ff2222"));
+            }
+
+            setTimeout(() => {
+                enemies.push(new Enemy(enemyTypes.fast));
+            }, 500);
+        }
+        else {
+            enemies.push(new Enemy());
+        }
+
+    }, 300);
+}
+
+/* --------------------------------
+   MOUSE TRACKING
+-----------------------------------*/
+let mouse = { x: null, y: null };
+canvas.addEventListener("mousemove", e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+});
+/* ================================
+   SEGMENT 4 — ABILITIES SYSTEM
+   Laser • Shield • Magnet • Dash
+   (All upgrades integrated cleanly)
+   Source: turn26search1
+=================================== */
+
+/* --------------------------------
+   GLOBAL UPGRADE STATE
+-----------------------------------*/
+let laserCooldown = 0;
+let laserFireDelay = 1600;   // ms base
+let laserDamage = 1;
+
+let shieldLevel = 0;
+let shieldRadius = 60;
+let shieldBounce = 4;
+let shieldDamage = 0;
+let shieldPulseTime = 0;
+
+let magnetLevel = 0;
+let magnetStrength = 0.04;
+
+let dashLevel = 0;
+let dashCooldown = 2500;
+let dashInvulTime = 300;
+let dashReady = true;
+let dashVulnerable = true;
+
+let dashCooldownProgress = 0;
+let dashTrail = [];
+
+/* --------------------------------
+   LASER SYSTEM
+   Auto‑aim thin magenta sniper beam
+-----------------------------------*/
+let activeLaserBeams = [];
+
+function updateLaserSystem(deltaTime) {
+    const lvl = upgrades.find(u => u.name === "Laser").level;
+    if (lvl === 0) return;
+    if (isPaused) return;
+
+    laserCooldown -= deltaTime;
+    if (laserCooldown > 0) return;
+
+    const delay = Math.max(300, laserFireDelay - lvl * 150);
+    const dmg   = laserDamage + lvl * 1;
+
+    let nearest = null;
+    let nd = Infinity;
+    for (let e of enemies) {
+        const d = Math.hypot(e.x - player.x, e.y - player.y);
+        if (d < nd) { nd = d; nearest = e; }
+    }
+    if (!nearest) return;
+
+    fireLaserAt(nearest, dmg);
+    laserCooldown = delay;
+}
+
+function fireLaserAt(enemy, dmg) {
+    enemy.life -= dmg;
+
+    activeLaserBeams.push({
+        x1: player.x, y1: player.y,
+        x2: enemy.x, y2: enemy.y,
+        alpha: 1
+    });
+
+    for (let i = 0; i < 12; i++)
+        particles.push(new Particle(enemy.x, enemy.y, "#ff00ff"));
+}
+
+function drawLaserBeams() {
+    for (let beam of activeLaserBeams) {
+        ctx.strokeStyle = `rgba(255,0,255,${beam.alpha})`;
+        ctx.lineWidth = 3;
+
+        ctx.beginPath();
+        ctx.moveTo(beam.x1, beam.y1);
+        ctx.lineTo(beam.x2, beam.y2);
+        ctx.stroke();
+
+        beam.alpha -= 0.08;
+    }
+    activeLaserBeams = activeLaserBeams.filter(b => b.alpha > 0);
+}
+
+/* --------------------------------
+   SHIELD SYSTEM — Pulsing Reflective Ring
+-----------------------------------*/
+function drawShield() {
+    if (shieldLevel === 0) return;
+
+    shieldPulseTime += 0.05;
+    const pulse = Math.sin(shieldPulseTime) * 6;
+    const r = shieldRadius + pulse;
+
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, r, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255,0,255,0.8)";
+    ctx.lineWidth = 3 + Math.sin(shieldPulseTime) * 1.5;
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = "#ff00ff";
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+}
+
+function updateShieldCollision(e) {
+    if (shieldLevel === 0) return;
+
+    const dx = e.x - player.x;
+    const dy = e.y - player.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist < shieldRadius + e.size) {
+        const nx = dx / dist;
+        const ny = dy / dist;
+
+        e.vx += nx * shieldBounce;
+        e.vy += ny * shieldBounce;
+
+        e.life -= shieldDamage;
+
+        for (let i = 0; i < 6; i++)
+            particles.push(new Particle(e.x, e.y, "#ff00ff"));
+    }
+}
+
+/* --------------------------------
+   MAGNET SYSTEM — Soft Orbit Attraction
+-----------------------------------*/
+function applyMagnetUpgrade() {
+    magnetLevel++;
+    magnetStrength += 0.02;
+}
+
+/* --------------------------------
+   DASH SYSTEM — Warp Blink + Neon Streak
+-----------------------------------*/
+function tryDash() {
+    if (isPaused) return;
+    if (!dashReady) return;
+
+    dashReady = false;
+    dashVulnerable = false;
+    dashCooldownProgress = 0;
+
+    dashTrail.push({ x: player.x, y: player.y, alpha: 1 });
+
+    playerBlink();
+
+    if (mouse.x != null) {
+        player.angle = Math.atan2(mouse.y - center.y, mouse.x - center.x);
+    }
+
+    for (let i = 0; i < 15; i++)
+        particles.push(new Particle(player.x, player.y, "#ff00ff"));
+
+    setTimeout(() => dashVulnerable = true, dashInvulTime);
+    setTimeout(() => dashReady = true, dashCooldown);
+}
+
+// Warp Blink fade animation
+function playerBlink() {
+    player.blink = 1;
+
+    setTimeout(() => player.blink = 0, 100);
+    setTimeout(() => player.blink = 2, 150);
+    setTimeout(() => player.blink = 0, 250);
+}
+
+// Dash particle streak
+function drawDashTrail() {
+    dashTrail.forEach(t => {
+        ctx.strokeStyle = `rgba(255,0,255,${t.alpha})`;
+        ctx.lineWidth = 8;
+
+        ctx.beginPath();
+        ctx.moveTo(player.x, player.y);
+        ctx.lineTo(t.x, t.y);
+        ctx.stroke();
+
+        t.alpha -= 0.06;
+    });
+
+    dashTrail = dashTrail.filter(t => t.alpha > 0);
+}
+
+// Input handling (Shift or right-click)
+window.addEventListener("keydown", e => {
+    if (e.key === "Shift") tryDash();
+});
+canvas.addEventListener("contextmenu", e => {
+    e.preventDefault();
+    tryDash();
+});
+
+/* --------------------------------
+   DASH COOLDOWN UI WHEEL
+-----------------------------------*/
+function drawCooldownWheel() {
+    const node = document.querySelector("#upDash");
+    const canv = node.querySelector("canvas");
+    const ctx2 = canv.getContext("2d");
+
+    ctx2.clearRect(0, 0, 60, 60);
+
+    drawDashIcon(ctx2);
+
+    if (dashReady) return;
+
+    const pct = dashCooldownProgress;
+    ctx2.strokeStyle = "rgba(255,0,255,0.7)";
+    ctx2.lineWidth = 6;
+
+    ctx2.beginPath();
+    ctx2.arc(30, 30, 24, -Math.PI / 2, -Math.PI / 2 + pct * 2 * Math.PI);
+    ctx2.stroke();
+}
+
+// Dash icon
+function drawDashIcon(ctx) {
+    ctx.strokeStyle = "#ff00ff";
+    ctx.lineWidth = 4;
+
+    ctx.beginPath();
+    ctx.moveTo(20, 20);
+    ctx.lineTo(40, 30);
+    ctx.lineTo(20, 40);
+    ctx.stroke();
+}
+/* ================================
+   SEGMENT 5 — UPGRADE MENU LOGIC
+   (Node clicks, progress bars, soft pause,
+    glass menu open/close, line animations)
+   Source: turn26search1
+=================================== */
+
+/* --------------------------------
+   UPGRADE DEFINITIONS
+-----------------------------------*/
+const upgrades = [
+    { name: "Orbit",  cost: 5,  level: 0, max: 5 },
+    { name: "Radius", cost: 10, level: 0, max: 5 },
+    { name: "Speed",  cost: 15, level: 0, max: 5 },
+
+    { name: "Laser",  cost: 25, level: 0, max: 5 },
+    { name: "Shield", cost: 25, level: 0, max: 5 },
+    { name: "Magnet", cost: 25, level: 0, max: 5 },
+    { name: "Dash",   cost: 25, level: 0, max: 5 }
+];
+
+/* --------------------------------
+   GLASS MENU OPEN / CLOSE
+-----------------------------------*/
+const glass = document.getElementById("upgradeGlass");
+const orb   = document.getElementById("upgradeOrb");
+const closeGlass = document.getElementById("closeGlass");
+
+function openUpgradeMenu() {
+    isPaused = true;
+    glass.style.display = "flex";
+    requestAnimationFrame(() => {
+        glass.classList.add("open");
+    });
+}
+
+function closeUpgradeMenu() {
+    isPaused = false;
+    glass.classList.remove("open");
+    setTimeout(() => {
+        glass.style.display = "none";
+    }, 300);
+}
+
+// Open via orb
+orb.onclick = () => openUpgradeMenu();
+
+// Close via X
+closeGlass.onclick = () => closeUpgradeMenu();
+
+/* --------------------------------
+   HOVER-LINKED CABLE LINES
+-----------------------------------*/
+let hoveredNode = null;
+
+document.querySelectorAll(".upgradeNode").forEach(node => {
+    node.addEventListener("mouseenter", () => hoveredNode = node.id);
+    node.addEventListener("mouseleave", () => hoveredNode = null);
+});
+
+function drawConnectionLines() {
+    const lineCanvas = document.getElementById("lineCanvas");
+    const lctx = lineCanvas.getContext("2d");
+
+    lctx.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
+
+    const nodes = {
+        upOrbit, upRadius, upSpeed,
+        upLaser, upShield, upMagnet, upDash
+    };
+
+    function centerOf(node) {
+        const r1 = node.getBoundingClientRect();
+        const r2 = lineCanvas.getBoundingClientRect();
+        return {
+            x: r1.left + r1.width/2 - r2.left,
+            y: r1.top  + r1.height/2 - r2.top
+        };
+    }
+
+    const pairs = [
+        [upOrbit,  upLaser],
+        [upRadius, upShield],
+        [upSpeed,  upMagnet],
+        [upLaser,  upShield],
+        [upShield, upDash],
+        [upDash,   upMagnet]
+    ];
+
+    pairs.forEach(([A, B]) => {
+        const a = centerOf(A);
+        const b = centerOf(B);
+
+        const glow =
+            (hoveredNode === A.id || hoveredNode === B.id)
+                ? "#ff00ff"
+                : "#553355";
+
+        lctx.strokeStyle = glow;
+        lctx.lineWidth = 4;
+
+        lctx.beginPath();
+        lctx.moveTo(a.x, a.y);
+        lctx.lineTo(b.x, b.y);
+        lctx.stroke();
+    });
+}
+
+/* --------------------------------
+   UPGRADE APPLICATION LOGIC
+-----------------------------------*/
+function applyUpgrade(name) {
+    const u = upgrades.find(x => x.name === name);
+    if (!u) return;
+
+    if (points >= u.cost && u.level < u.max) {
+        points = 0;
+        infoDiv.textContent = "Points: 0";
+        u.level++;
+
+        if (name === "Orbit")
+            orbitBalls.push(new OrbitBall(Math.random() * Math.PI * 2));
+
+        if (name === "Radius")
+            player.orbitRadius += 25;
+
+        if (name === "Speed")
+            orbitBalls.forEach(o => (o.angularSpeed += 0.015));
+
+        if (name === "Laser") {
+            laserFireDelay = Math.max(300, laserFireDelay - 150);
+            laserDamage += 1;
+        }
+
+        if (name === "Shield") {
+            shieldLevel++;
+            shieldRadius += 12;
+            shieldBounce += 1.5;
+            shieldDamage += 1;
+        }
+
+        if (name === "Magnet") {
+            magnetLevel++;
+            magnetStrength += 0.02;
+        }
+
+        if (name === "Dash") {
+            dashLevel++;
+            dashCooldown = Math.max(800, dashCooldown - 300);
+            dashInvulTime += 80;
+        }
+
+        updateBars();
+    }
+}
+
+/* --------------------------------
+   PROGRESS BAR UPDATER
+-----------------------------------*/
+function updateBars() {
+    document.querySelectorAll(".upgradeNode").forEach(node => {
+        const name = node.querySelector(".uName").textContent;
+        const u = upgrades.find(x => x.name === name);
+        if (!u) return;
+
+        node.querySelector(".progressBar div").style.width =
+            (u.level / u.max) * 100 + "%";
+    });
+}
+
+/* --------------------------------
+   NODE CLICK HANDLERS
+-----------------------------------*/
+upOrbit.onclick  = () => applyUpgrade("Orbit");
+upRadius.onclick = () => applyUpgrade("Radius");
+upSpeed.onclick  = () => applyUpgrade("Speed");
+
+upLaser.onclick  = () => applyUpgrade("Laser");
+upShield.onclick = () => applyUpgrade("Shield");
+upMagnet.onclick = () => applyUpgrade("Magnet");
+upDash.onclick   = () => applyUpgrade("Dash");
+
+/* --------------------------------
+   DASH COOLDOWN PROGRESS
+-----------------------------------*/
+function updateDashCooldown(delta) {
+    if (!dashReady) {
+        dashCooldownProgress += delta / dashCooldown;
+        if (dashCooldownProgress > 1) dashCooldownProgress = 1;
+    }
+}
+/* ================================
+   SEGMENT 6 — GAME LOOP + STARTUP
+   Source: turn26search1
+=================================== */
+
+/* --------------------------------
+   COLLISION CHECKING
+-----------------------------------*/
+function checkCollisions() {
+    for (let e of enemies) {
+
+        // Orbit balls + player hit enemy
+        for (let b of [player, ...orbitBalls]) {
+            const dx = e.x - b.x;
+            const dy = e.y - b.y;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist < e.size + b.size) {
+                shakeTime = 5;
+                e.life--;
+                points++;
+                infoDiv.textContent = "Points: " + points;
+
+                for (let i = 0; i < 10; i++)
+                    particles.push(new Particle(e.x, e.y, e.color));
+            }
+        }
+
+        // Enemy hits center (player death)
+        if (Math.hypot(e.x - center.x, e.y - center.y) < 20) {
+            // Dash invulnerability
+            if (!dashVulnerable) continue;
+
+            gameOver = true;
+            isPaused = true;
+
+            // Violent orb pulse → then open menu
+            const orb = document.getElementById("upgradeOrb");
+            orb.style.animation = "orbDeathPulse 0.3s infinite alternate";
+
+            setTimeout(() => {
+                orb.style.animation = "";
+                openUpgradeMenu();
+            }, 1200);
+        }
+    }
+}
+
+/* --------------------------------
+   ANIMATION LOOP
+-----------------------------------*/
+function animate(now = 0) {
+    ctx.save();
+
+    const delta = lastFrameTime ? now - lastFrameTime : 16;
+    lastFrameTime = now;
+
+    // Draw cable lines even during pause
+    drawConnectionLines();
+    drawCooldownWheel();
+
+    if (isPaused) {
+        ctx.restore();
+        requestAnimationFrame(animate);
+        return;
+    }
+
+    // Clear + soft blur trail
+    screenShake();
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw center core
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, 20, 0, Math.PI * 2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+
+    // Player + orbits
+    player.update(mouse.x, mouse.y);
+    player.draw();
+
+    orbitBalls.forEach((o, i) => {
+        o.update(player.angle, i, orbitBalls.length);
+        o.draw();
+    });
+
+    // Enemies + shield collision
+    enemies.forEach(e => {
+        e.update();
+        updateShieldCollision(e);
+        e.draw();
+    });
+
+    particles.forEach(p => { p.update(); p.draw(); });
+    particles = particles.filter(p => p.life > 0);
+
+    checkCollisions();
+    enemies = enemies.filter(e => e.life > 0);
+
+    // Ability visuals
+    updateLaserSystem(delta);
+    drawLaserBeams();
+    drawShield();
+    drawDashTrail();
+    updateDashCooldown(delta);
+
+    ctx.restore();
+
+    if (!gameOver)
+        requestAnimationFrame(animate);
+}
+
+/* --------------------------------
+   INITIAL SETUP
+-----------------------------------*/
+let player = new PlayerBall();
+orbitBalls = [new OrbitBall(0)];
+
+function startGame() {
+    spawnCount = 0;
+    points = 0;
+    gameOver = false;
+
+    enemies = [];
+    particles = [];
+
+    player = new PlayerBall();
+    orbitBalls = [new OrbitBall(0)];
+
+    infoDiv.textContent = "Points: 0";
+
+    startEnemySpawn();
+    animate();
+
+    // Game begins with menu OPEN (your request)
+    openUpgradeMenu();
+}
+
+/* --------------------------------
+   START EVERYTHING
+-----------------------------------*/
+startGame();
 </script>
-</body>
-</html>
