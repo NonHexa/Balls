@@ -3,10 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Orbit Defense</title>
-
-<!-- =============================
-     GLOBAL STYLES
-============================= -->
 <style>
     body {
         margin: 0;
@@ -29,10 +25,6 @@
         z-index: 5;
     }
 
-    /* =============================
-       FLOATING ORB BUTTON
-    ============================== */
-
     #upgradeOrb {
         position: fixed;
         bottom: 40px;
@@ -53,11 +45,6 @@
         box-shadow: 0 0 35px #ff00ff, 0 0 100px #aa00aa;
     }
 
-
-    /* =============================
-       GLASS OVERLAY
-    ============================== */
-
     #upgradeGlass {
         position: fixed;
         inset: 0;
@@ -77,11 +64,6 @@
         opacity: 1;
         transform: scale(1);
     }
-
-
-    /* =============================
-       UPGRADE STAR LAYOUT
-    ============================== */
 
     #upgradeStarContainer {
         position: relative;
@@ -135,12 +117,6 @@
         transition: width 0.2s ease;
     }
 
-
-    /* =============================
-       NODE POSITIONS
-       (Diamond Outer + Ring Inner)
-    ============================== */
-
     #upOrbit  { top: 20px; left: 50%; transform: translateX(-50%); }
     #upRadius { top: 50%; left: 20px;  transform: translateY(-50%); }
     #upSpeed  { top: 50%; right: 20px; transform: translateY(-50%); }
@@ -150,22 +126,12 @@
     #upMagnet { top: 290px; right: 130px; }
     #upDash   { top: 410px; left: 50%; transform: translateX(-50%); }
 
-
-    /* =============================
-       LINE CANVAS (BACKGROUND)
-    ============================== */
-
     #lineCanvas {
         position: absolute;
         top: 0;
         left: 0;
         z-index: 1;
     }
-
-
-    /* =============================
-       CLOSE BUTTON
-    ============================== */
 
     #closeGlass {
         position: absolute;
@@ -182,20 +148,10 @@
         transform: scale(1.2);
     }
 
-
-    /* =============================
-       DASH COOLDOWN WHEEL
-    ============================== */
-
     .iconCanvas {
         margin-top: 4px;
         z-index: 3;
     }
-
-
-    /* =============================
-       ORB DEATH PULSE
-    ============================== */
 
     @keyframes orbDeathPulse {
         0%   { transform: scale(1);   box-shadow: 0 0 60px #ff00ff; }
@@ -272,14 +228,6 @@
     </div>
 </div>
 <script>
-/* ================================
-   SEGMENT 3 — CORE GAME ENGINE JS
-   (All logic rebuilt cleanly)
-=================================== */
-
-/* --------------------------------
-   CANVAS + GLOBAL STATE
------------------------------------*/
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -294,9 +242,13 @@ window.addEventListener("resize", () => {
     center = { x: canvas.width / 2, y: canvas.height / 2 };
 });
 
-/* --------------------------------
-   GAME STATE
------------------------------------*/
+//Gyro Listener :)
+window.addEventListener("deviceorientation", (event) => {
+    if (!gyroEnabled) return;
+    gyro.x = event.gamma;
+    gyro.y = event.beta;
+});
+
 let points = 0;
 let gameOver = false;
 let isPaused = false;
@@ -305,17 +257,12 @@ let particles = [];
 let enemies = [];
 let orbitBalls = [];
 let spawnCount = 0;
+let targetAngle = 0;
 
 let lastFrameTime = 0;
 
-/* --------------------------------
-   POINTS UI
------------------------------------*/
 const infoDiv = document.getElementById("info");
 
-/* --------------------------------
-   HELPER: SCREEN SHAKE
------------------------------------*/
 let shakeTime = 0;
 function screenShake() {
     if (shakeTime > 0) {
@@ -326,9 +273,6 @@ function screenShake() {
     }
 }
 
-/* --------------------------------
-   PARTICLE OBJECT
------------------------------------*/
 class Particle {
     constructor(x, y, color) {
         this.x = x; this.y = y;
@@ -348,9 +292,6 @@ class Particle {
     }
 }
 
-/* --------------------------------
-   PLAYER ORBIT BALL (main)
------------------------------------*/
 class PlayerBall {
     constructor() {
         this.orbitRadius = 150;
@@ -359,9 +300,17 @@ class PlayerBall {
         this.blink = 0; // For dash warp blink
     }
     update(mx, my) {
-        if (mx !== null) {
+        if (gyroEnabled) {
+            const gx = gyro.x / 45;
+            const gy = gyro.y / 45;
+            targetAngle = Math.atan2(gy, gx);
+
+            this.angle += (targetAngle - this.angle) * 0.15;
+}
+        else if (mx !== null) {
+            // fallback to mouse (desktop)
             this.angle = Math.atan2(my - center.y, mx - center.x);
-        }
+}
         this.x = center.x + Math.cos(this.angle) * this.orbitRadius;
         this.y = center.y + Math.sin(this.angle) * this.orbitRadius;
     }
@@ -380,9 +329,6 @@ class PlayerBall {
     }
 }
 
-/* --------------------------------
-   SECONDARY ORBIT BALLS
------------------------------------*/
 class OrbitBall {
     constructor(angle) {
         this.angle = angle;
@@ -429,18 +375,12 @@ class OrbitBall {
     }
 }
 
-/* --------------------------------
-   ENEMY TYPES
------------------------------------*/
 const enemyTypes = {
     fast:   { color: "#ff0000",  size: 8,  gravity: 0.30, life: 1, speedMultiplier: 2.0 },
     medium: { color: "#ff8800",  size: 14, gravity: 0.20, life: 2, speedMultiplier: 1.2 },
     slow:   { color: "#8800ff",  size: 20, gravity: 0.15, life: 3, speedMultiplier: 0.8 }
 };
 
-/* --------------------------------
-   STANDARD ENEMY CLASS
------------------------------------*/
 class Enemy {
     constructor(forceType = null) {
         spawnCount++;
@@ -490,9 +430,6 @@ class Enemy {
     }
 }
 
-/* --------------------------------
-   BOSS ENEMY CLASS
------------------------------------*/
 class BossEnemy {
     constructor() {
         this.size = 40;
@@ -535,9 +472,6 @@ class BossEnemy {
     }
 }
 
-/* --------------------------------
-   ENEMY SPAWNER
------------------------------------*/
 let enemyInterval = null;
 
 function startEnemySpawn() {
@@ -579,24 +513,18 @@ function startEnemySpawn() {
     }, 300);
 }
 
-/* --------------------------------
-   MOUSE TRACKING
------------------------------------*/
 let mouse = { x: null, y: null };
 canvas.addEventListener("mousemove", e => {
     mouse.x = e.clientX;
     mouse.y = e.clientY;
 });
-/* ================================
-   SEGMENT 4 — ABILITIES SYSTEM
-   Laser • Shield • Magnet • Dash
-   (All upgrades integrated cleanly)
-   Source: turn26search1
-=================================== */
+let gyro = {
+    x: 0, // left/right tilt
+    y: 0  // forward/back tilt
+};
 
-/* --------------------------------
-   GLOBAL UPGRADE STATE
------------------------------------*/
+let gyroEnabled = false;
+
 let laserCooldown = 0;
 let laserFireDelay = 1600;   // ms base
 let laserDamage = 1;
@@ -619,10 +547,7 @@ let dashVulnerable = true;
 let dashCooldownProgress = 0;
 let dashTrail = [];
 
-/* --------------------------------
-   LASER SYSTEM
-   Auto‑aim thin magenta sniper beam
------------------------------------*/
+
 let activeLaserBeams = [];
 
 function updateLaserSystem(deltaTime) {
@@ -676,9 +601,7 @@ function drawLaserBeams() {
     activeLaserBeams = activeLaserBeams.filter(b => b.alpha > 0);
 }
 
-/* --------------------------------
-   SHIELD SYSTEM — Pulsing Reflective Ring
------------------------------------*/
+
 function drawShield() {
     if (shieldLevel === 0) return;
 
@@ -717,17 +640,13 @@ function updateShieldCollision(e) {
     }
 }
 
-/* --------------------------------
-   MAGNET SYSTEM — Soft Orbit Attraction
------------------------------------*/
+
 function applyMagnetUpgrade() {
     magnetLevel++;
     magnetStrength += 0.02;
 }
 
-/* --------------------------------
-   DASH SYSTEM — Warp Blink + Neon Streak
------------------------------------*/
+
 function tryDash() {
     if (isPaused) return;
     if (!dashReady) return;
@@ -777,7 +696,7 @@ function drawDashTrail() {
     dashTrail = dashTrail.filter(t => t.alpha > 0);
 }
 
-// Input handling (Shift or right-click)
+
 window.addEventListener("keydown", e => {
     if (e.key === "Shift") tryDash();
 });
@@ -786,9 +705,7 @@ canvas.addEventListener("contextmenu", e => {
     tryDash();
 });
 
-/* --------------------------------
-   DASH COOLDOWN UI WHEEL
------------------------------------*/
+
 function drawCooldownWheel() {
     const node = document.querySelector("#upDash");
     const canv = node.querySelector("canvas");
@@ -820,16 +737,7 @@ function drawDashIcon(ctx) {
     ctx.lineTo(20, 40);
     ctx.stroke();
 }
-/* ================================
-   SEGMENT 5 — UPGRADE MENU LOGIC
-   (Node clicks, progress bars, soft pause,
-    glass menu open/close, line animations)
-   Source: turn26search1
-=================================== */
 
-/* --------------------------------
-   UPGRADE DEFINITIONS
------------------------------------*/
 const upgrades = [
     { name: "Orbit",  cost: 5,  level: 0, max: 5 },
     { name: "Radius", cost: 10, level: 0, max: 5 },
@@ -841,9 +749,6 @@ const upgrades = [
     { name: "Dash",   cost: 25, level: 0, max: 5 }
 ];
 
-/* --------------------------------
-   GLASS MENU OPEN / CLOSE
------------------------------------*/
 const glass = document.getElementById("upgradeGlass");
 const orb   = document.getElementById("upgradeOrb");
 const closeGlass = document.getElementById("closeGlass");
@@ -870,15 +775,30 @@ orb.onclick = () => openUpgradeMenu();
 // Close via X
 closeGlass.onclick = () => closeUpgradeMenu();
 
-/* --------------------------------
-   HOVER-LINKED CABLE LINES
------------------------------------*/
 let hoveredNode = null;
 
 document.querySelectorAll(".upgradeNode").forEach(node => {
     node.addEventListener("mouseenter", () => hoveredNode = node.id);
     node.addEventListener("mouseleave", () => hoveredNode = null);
 });
+
+function enableGyro() {
+    if (typeof DeviceOrientationEvent !== "undefined" &&
+        typeof DeviceOrientationEvent.requestPermission === "function") {
+        
+        DeviceOrientationEvent.requestPermission()
+            .then(permissionState => {
+                if (permissionState === "granted") {
+                    gyroEnabled = true;
+                }
+            })
+            .catch(console.error);
+
+    } else {
+        // Android / others
+        gyroEnabled = true;
+    }
+}
 
 function drawConnectionLines() {
     const lineCanvas = document.getElementById("lineCanvas");
@@ -928,9 +848,6 @@ function drawConnectionLines() {
     });
 }
 
-/* --------------------------------
-   UPGRADE APPLICATION LOGIC
------------------------------------*/
 function applyUpgrade(name) {
     const u = upgrades.find(x => x.name === name);
     if (!u) return;
@@ -976,9 +893,6 @@ function applyUpgrade(name) {
     }
 }
 
-/* --------------------------------
-   PROGRESS BAR UPDATER
------------------------------------*/
 function updateBars() {
     document.querySelectorAll(".upgradeNode").forEach(node => {
         const name = node.querySelector(".uName").textContent;
@@ -990,9 +904,6 @@ function updateBars() {
     });
 }
 
-/* --------------------------------
-   NODE CLICK HANDLERS
------------------------------------*/
 upOrbit.onclick  = () => applyUpgrade("Orbit");
 upRadius.onclick = () => applyUpgrade("Radius");
 upSpeed.onclick  = () => applyUpgrade("Speed");
@@ -1002,23 +913,13 @@ upShield.onclick = () => applyUpgrade("Shield");
 upMagnet.onclick = () => applyUpgrade("Magnet");
 upDash.onclick   = () => applyUpgrade("Dash");
 
-/* --------------------------------
-   DASH COOLDOWN PROGRESS
------------------------------------*/
 function updateDashCooldown(delta) {
     if (!dashReady) {
         dashCooldownProgress += delta / dashCooldown;
         if (dashCooldownProgress > 1) dashCooldownProgress = 1;
     }
 }
-/* ================================
-   SEGMENT 6 — GAME LOOP + STARTUP
-   Source: turn26search1
-=================================== */
 
-/* --------------------------------
-   COLLISION CHECKING
------------------------------------*/
 function checkCollisions() {
     for (let e of enemies) {
 
@@ -1059,9 +960,6 @@ function checkCollisions() {
     }
 }
 
-/* --------------------------------
-   ANIMATION LOOP
------------------------------------*/
 function animate(now = 0) {
     ctx.save();
 
@@ -1124,9 +1022,6 @@ function animate(now = 0) {
         requestAnimationFrame(animate);
 }
 
-/* --------------------------------
-   INITIAL SETUP
------------------------------------*/
 let player = new PlayerBall();
 orbitBalls = [new OrbitBall(0)];
 
@@ -1142,7 +1037,7 @@ function startGame() {
     orbitBalls = [new OrbitBall(0)];
 
     infoDiv.textContent = "Points: 0";
-
+    window.addEventListener("click", enableGyro, { once: true });
     startEnemySpawn();
     animate();
 
@@ -1150,8 +1045,5 @@ function startGame() {
     openUpgradeMenu();
 }
 
-/* --------------------------------
-   START EVERYTHING
------------------------------------*/
 startGame();
 </script>
