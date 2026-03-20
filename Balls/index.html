@@ -245,8 +245,14 @@ window.addEventListener("resize", () => {
 //Gyro Listener :)
 window.addEventListener("deviceorientation", (event) => {
     if (!gyroEnabled) return;
-    gyro.x = event.gamma;
-    gyro.y = event.beta;
+
+    gyro.x = event.gamma || 0;
+    gyro.y = event.beta || 0;
+
+    // Detect if gyro is actually being used
+    if (Math.abs(gyro.x) > 2 || Math.abs(gyro.y) > 2) {
+        gyroActive = true;
+    }
 });
 
 let points = 0;
@@ -258,6 +264,10 @@ let enemies = [];
 let orbitBalls = [];
 let spawnCount = 0;
 let targetAngle = 0;
+let gyroSensitivity = 0.4; 
+let gyroRamp = 0;           
+let difficultyRamp = 0; 
+let gyroActive = false;
 
 let lastFrameTime = 0;
 
@@ -300,16 +310,24 @@ class PlayerBall {
         this.blink = 0; // For dash warp blink
     }
     update(mx, my) {
-        if (gyroEnabled) {
-            const gx = gyro.x / 45;
-            const gy = gyro.y / 45;
-            targetAngle = Math.atan2(gy, gx);
+        if (gyroEnabled && gyroActive) {
 
-            this.angle += (targetAngle - this.angle) * 0.15;
+    // Slowly ramp control up over time
+    gyroRamp += 0.02;
+    if (gyroRamp > 1) gyroRamp = 1;
+
+    // Scale input
+    const gx = (gyro.x / 45) * gyroSensitivity * gyroRamp;
+    const gy = (gyro.y / 45) * gyroSensitivity * gyroRamp;
+
+    const targetAngle = Math.atan2(gy, gx);
+
+    // Smooth turning (this is key for "slowness feel")
+    this.angle += (targetAngle - this.angle) * 0.08;
 }
-        else if (mx !== null) {
-            // fallback to mouse (desktop)
-            this.angle = Math.atan2(my - center.y, mx - center.x);
+    else if (mx !== null) {
+        // fallback to mouse (desktop)
+        this.angle = Math.atan2(my - center.y, mx - center.x);
 }
         this.x = center.x + Math.cos(this.angle) * this.orbitRadius;
         this.y = center.y + Math.sin(this.angle) * this.orbitRadius;
@@ -415,8 +433,11 @@ class Enemy {
         const dy = center.y - this.y;
         const dist = Math.hypot(dx, dy);
 
-        this.vx += dx / dist * this.gravity * this.speedMultiplier;
-        this.vy += dy / dist * this.gravity * this.speedMultiplier;
+        const speedScale = 0.3 + (difficultyRamp * 0.7);
+        // starts at 30% speed → ramps to 100%
+
+        this.vx += dx / dist * this.gravity * this.speedMultiplier * speedScale;
+        this.vy += dy / dist * this.gravity * this.speedMultiplier * speedScale;
 
         this.x += this.vx;
         this.y += this.vy;
@@ -477,40 +498,48 @@ let enemyInterval = null;
 function startEnemySpawn() {
     clearInterval(enemyInterval);
 
-    enemyInterval = setInterval(() => {
+    function spawnLoop() {
 
-        if (gameOver || isPaused) return;
-        if (enemies.length >= 100) return;
+        if (!gameOver && !isPaused && enemies.length < 100) {
 
-        // Boss every 25 spawns
-        if (spawnCount > 0 && spawnCount % 25 === 0) {
-            enemies.push(new BossEnemy());
-            return;
-        }
+            // Boss logic
+            if (spawnCount > 0 && spawnCount % 25 === 0) {
+                enemies.push(new BossEnemy());
+            } else {
 
-        // Fast enemy warning
-        if (spawnCount > 15 && Math.random() < 0.2) {
-            const edge = Math.random();
+                // Fast enemy warning
+                if (spawnCount > 15 && Math.random() < 0.2) {
 
-            for (let i = 0; i < 50; i++) {
-                let x, y;
-                if (edge < 0.25)   { x = 0;            y = Math.random() * canvas.height; }
-                else if (edge<.5)  { x = canvas.width; y = Math.random() * canvas.height; }
-                else if (edge<.75) { x = Math.random() * canvas.width; y = 0; }
-                else               { x = Math.random() * canvas.width; y = canvas.height; }
+                    const edge = Math.random();
 
-                particles.push(new Particle(x, y, "#ff2222"));
+                    for (let i = 0; i < 50; i++) {
+                        let x, y;
+                        if (edge < 0.25)   { x = 0; y = Math.random() * canvas.height; }
+                        else if (edge<.5)  { x = canvas.width; y = Math.random() * canvas.height; }
+                        else if (edge<.75) { x = Math.random() * canvas.width; y = 0; }
+                        else               { x = Math.random() * canvas.width; y = canvas.height; }
+
+                        particles.push(new Particle(x, y, "#ff2222"));
+                    }
+
+                    setTimeout(() => {
+                        enemies.push(new Enemy(enemyTypes.fast));
+                    }, 500);
+
+                } else {
+                    enemies.push(new Enemy());
+                }
             }
-
-            setTimeout(() => {
-                enemies.push(new Enemy(enemyTypes.fast));
-            }, 500);
-        }
-        else {
-            enemies.push(new Enemy());
         }
 
-    }, 300);
+        // ⬇️ Dynamic spawn delay
+        const delay = 800 - (difficultyRamp * 500);
+        // starts at 800ms → goes to 300ms
+
+        enemyInterval = setTimeout(spawnLoop, delay);
+    }
+
+    spawnLoop();
 }
 
 let mouse = { x: null, y: null };
@@ -546,6 +575,8 @@ let dashVulnerable = true;
 
 let dashCooldownProgress = 0;
 let dashTrail = [];
+let savedPoints = 0;
+let restartAfterMenu = false;
 
 
 let activeLaserBeams = [];
@@ -762,13 +793,42 @@ function openUpgradeMenu() {
 }
 
 function closeUpgradeMenu() {
-    isPaused = false;
+
     glass.classList.remove("open");
+
     setTimeout(() => {
         glass.style.display = "none";
+
+        // If we died → restart game
+        if (restartAfterMenu) {
+
+            restartAfterMenu = false;
+
+            // Restart game WITHOUT resetting points
+            gameOver = false;
+            isPaused = false;
+
+            enemies = [];
+            particles = [];
+
+            player = new PlayerBall();
+            orbitBalls = [new OrbitBall(0)];
+
+            spawnCount = 0;
+
+            // Restore saved points
+            points = Math.floor(savedPoints * 0.7) + 5;
+            infoDiv.textContent = "Points: " + points;
+
+            startEnemySpawn();
+            animate();
+        } else {
+            // CASE 2: First start (just unpause)
+            isPaused = false;
+        }
+
     }, 300);
 }
-
 // Open via orb
 orb.onclick = () => openUpgradeMenu();
 
@@ -947,6 +1007,8 @@ function checkCollisions() {
 
             gameOver = true;
             isPaused = true;
+            savedPoints = points;
+            restartAfterMenu = true;
 
             // Violent orb pulse → then open menu
             const orb = document.getElementById("upgradeOrb");
@@ -969,6 +1031,8 @@ function animate(now = 0) {
     // Draw cable lines even during pause
     drawConnectionLines();
     drawCooldownWheel();
+    difficultyRamp += 0.002; // speed of ramp (tweak this)
+    if (difficultyRamp > 1) difficultyRamp = 1;
 
     if (isPaused) {
         ctx.restore();
