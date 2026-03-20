@@ -146,7 +146,7 @@ canvas {
     <!-- Friction & Vibrate -->
     <div class="gui-row">
         <label>Friction: <span id="frictionValue">0.995</span></label>
-        <input type="range" id="frictionSlider" min="0.95" max="1.1" step="0.005" value="0.995">
+        <input type="range" id="frictionSlider" min="0.95" max="1.05" step="0.0001" value="0.995">
         <label><input type="checkbox" id="vibrateToggle" checked> Vibrate on collision</label>
     </div>
 
@@ -179,7 +179,7 @@ canvas {
     </div>
 
     <!-- Spawn Button -->
-    <button onclick="spawnBalls(1)">Spawn Balls</button>
+    <button onclick="spawnBalls(10)">Spawn Balls</button>
 
 </div>
 
@@ -234,7 +234,7 @@ resize();
 window.addEventListener("resize",resize);
 
 let friction = 0.995;
-const wallBounce = 0.9;
+const wallBounce = 1;
 
 let gravityEnabled = false;
 
@@ -596,7 +596,7 @@ update(){
     this.walls();
 
     if(colorMode === "hueCycle"){
-        this.hue += 1;
+        this.hue += 0.1;
         if(this.hue >= 360) this.hue -= 360;
     }
 
@@ -844,8 +844,8 @@ draggedBall=null;
 function applyOrbit() {
     if (!draggedBall || !orbitEnabled) return;
 
-    const BASE_MIN_SPEED = 0.02;  // minimum base angular speed
-    const BASE_MAX_SPEED = 0.06;  // maximum base angular speed
+    const BASE_MIN_SPEED = 0.002;  // minimum base angular speed
+    const BASE_MAX_SPEED = 0.02;  // maximum base angular speed
 
     for (let b of balls) {
         if (b === draggedBall) continue;
