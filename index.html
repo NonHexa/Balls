@@ -80,7 +80,14 @@ canvas {
     right: 10px;
     max-width: 260px;
     cursor: move;
-    display: block; /* default desktop GUI visible */
+    display: none; /* default desktop GUI visible */
+}
+.gui {
+    display: none;
+}
+
+.gui.open {
+    display: block;
 }
 
 @media (max-width: 600px) {
@@ -191,30 +198,6 @@ canvas {
 const settingsToggleBtn = document.getElementById("settingsToggle");
 const guiBox = document.querySelector(".gui");
 
-settingsToggleBtn.addEventListener("click", () => {
-    guiBox.style.display = guiBox.style.display === "block" ? "none" : "block";
-});
-
-// Make desktop GUI draggable
-let isDraggingGUI = false;
-let offsetX = 0, offsetY = 0;
-
-guiBox.addEventListener("mousedown", e => {
-    if (!e.target.closest('input') && !e.target.closest('button') && !e.target.closest('select')) {
-        isDraggingGUI = true;
-        offsetX = e.clientX - guiBox.offsetLeft;
-        offsetY = e.clientY - guiBox.offsetTop;
-    }
-});
-
-window.addEventListener("mousemove", e => {
-    if (!isDraggingGUI) return;
-    guiBox.style.left = (e.clientX - offsetX) + "px";
-    guiBox.style.top = (e.clientY - offsetY) + "px";
-});
-
-window.addEventListener("mouseup", () => { isDraggingGUI = false; });
-
 // Is just a whole bunch of constants as um need them :)
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -224,6 +207,43 @@ const gravityHint = document.getElementById("gravityHint");
 
 const settingsToggle = document.getElementById("settingsToggle");
 const gui = document.querySelector(".gui");
+
+const CELL_SIZE = 80;
+let grid = new Map();
+let BALL_ID = 0;
+
+settingsToggleBtn.addEventListener("click", () => {
+    gui.classList.toggle("open");
+});
+
+let isDraggingGUI = false;
+let guiOffsetX = 0;
+let guiOffsetY = 0;
+
+gui.addEventListener("mousedown", (e) => {
+
+    // Disable dragging on touch devices
+    if ("ontouchstart" in window) return;
+
+    // Prevent dragging when interacting with controls
+    if (e.target.closest("input, button, select")) return;
+
+    isDraggingGUI = true;
+    guiOffsetX = e.clientX - gui.offsetLeft;
+    guiOffsetY = e.clientY - gui.offsetTop;
+});
+
+window.addEventListener("mousemove", (e) => {
+    if (!isDraggingGUI) return;
+
+    gui.style.left = (e.clientX - guiOffsetX) + "px";
+    gui.style.top = (e.clientY - guiOffsetY) + "px";
+    gui.style.right = "auto"; // prevents snapping back
+});
+
+window.addEventListener("mouseup", () => {
+    isDraggingGUI = false;
+});
 
 function resize(){
 canvas.width = window.innerWidth;
@@ -271,37 +291,8 @@ collisionSound.volume = 0;
 let colorMode = "random";
 let fixedColor = "#ff0000";
 
-// Make it so the Setting window is moveable :)
-let guiOffsetX = 0;
-let guiOffsetY = 0;
-
-gui.addEventListener("mousedown", (e) => {
-
-    if("ontouchstart" in window) return;
-
-    if(e.target.tagName === "INPUT" || e.target.tagName === "BUTTON" || e.target.tagName === "SELECT"){
-        return;
-    }
-
-    isDraggingGUI = true;
-    guiOffsetX = e.clientX - gui.offsetLeft;
-    guiOffsetY = e.clientY - gui.offsetTop;
-});
-// window events just for gui stuff dont worry
-window.addEventListener("mousemove", (e) => {
-    if(!isDraggingGUI) return;
-
-    gui.style.left = (e.clientX - guiOffsetX) + "px";
-    gui.style.top = (e.clientY - guiOffsetY) + "px";
-    gui.style.right = "auto"; // important so it doesn't snap back
-});
-
-window.addEventListener("mouseup", () => {
-    isDraggingGUI = false;
-});
-
 window.addEventListener("click", (e) => {
-    if(!gui.contains(e.target) && e.target !== settingsToggle){
+    if (!gui.contains(e.target) && !settingsToggleBtn.contains(e.target)) {
         gui.classList.remove("open");
     }
 });
@@ -318,10 +309,6 @@ if(orbitToggle){
 
 let lastMotionAt = 0;
 const MOTION_TIMEOUT_MS = 500; // if no motion data received recently, fall back to downward gravity
-
-settingsToggle.onclick = () => {
-    gui.classList.toggle("open");
-};
 
 function setGravityHint(text){
     if(gravityHint){
@@ -353,6 +340,41 @@ function handleMotion(event){
     gravityY = (ay / 9.8) * gravityStrength;
 
     lastMotionAt = performance.now();
+}
+
+function getCellKey(x, y) {
+    const cx = Math.floor(x / CELL_SIZE);
+    const cy = Math.floor(y / CELL_SIZE);
+    return `${cx},${cy}`;
+}
+
+function buildGrid() {
+    grid.clear();
+
+    for (let b of balls) {
+        const key = getCellKey(b.x, b.y);
+
+        if (!grid.has(key)) {
+            grid.set(key, []);
+        }
+
+        grid.get(key).push(b);
+    }
+}
+
+function getNearbyCells(x, y) {
+    const cx = Math.floor(x / CELL_SIZE);
+    const cy = Math.floor(y / CELL_SIZE);
+
+    const neighbors = [];
+
+    for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+            neighbors.push(`${cx + dx},${cy + dy}`);
+        }
+    }
+
+    return neighbors;
 }
 
 function handleOrientation(event){
@@ -499,6 +521,7 @@ class Ball{
 
 constructor(x,y,r){
 
+this.id = BALL_ID++;
 this.x=x;
 this.y=y;
 this.radius=r;
@@ -633,83 +656,76 @@ function spawnBalls(n){
 // Ensure spawnBalls is callable from inline event handlers
 window.spawnBalls = spawnBalls;
 
-function resolveCollisions(){
+function resolveCollisions() {
 
-for(let i=0;i<balls.length;i++){
+    buildGrid();
 
-for(let j=i+1;j<balls.length;j++){
+    for (let b1 of balls) {
 
-const b1=balls[i];
-const b2=balls[j];
+        const nearbyKeys = getNearbyCells(b1.x, b1.y);
 
-let dx=b2.x-b1.x;
-let dy=b2.y-b1.y;
+        for (let key of nearbyKeys) {
 
-let dist=Math.hypot(dx,dy);
-const minDist=b1.radius+b2.radius;
+            const cell = grid.get(key);
+            if (!cell) continue;
 
-if(dist===0){
-dx=0.01;
-dy=0;
-dist=0.01;
-}
+            for (let b2 of cell) {
 
-if(dist<minDist){
+                // ✅ skip self AND duplicates
+                if (b1 === b2 || b1.id >= b2.id) continue;
 
-    if(collisionSound){
-    collisionSound.currentTime = 0;
-    collisionSound.play();
-}
+                let dx = b2.x - b1.x;
+                let dy = b2.y - b1.y;
 
-const nx=dx/dist;
-const ny=dy/dist;
+                let distSq = dx*dx + dy*dy;
+                const minDist = b1.radius + b2.radius;
 
-const overlap=minDist-dist;
+                // ✅ cheap early exit (no sqrt yet)
+                if (distSq >= minDist * minDist) continue;
 
-const m1=b1.mass;
-const m2=b2.mass;
-const total=m1+m2;
+                let dist = Math.sqrt(distSq);
 
-b1.x-=nx*(overlap*(m2/total));
-b1.y-=ny*(overlap*(m2/total));
+                if (dist === 0) {
+                    dx = 0.01;
+                    dy = 0;
+                    dist = 0.01;
+                }
 
-b2.x+=nx*(overlap*(m1/total));
-b2.y+=ny*(overlap*(m1/total));
+                const nx = dx / dist;
+                const ny = dy / dist;
 
-const rvx=b2.vx-b1.vx;
-const rvy=b2.vy-b1.vy;
+                const overlap = minDist - dist;
 
-const velAlongNormal=rvx*nx+rvy*ny;
+                const m1 = b1.mass;
+                const m2 = b2.mass;
+                const total = m1 + m2;
 
-if(velAlongNormal>0) continue;
+                // Separate
+                b1.x -= nx * (overlap * (m2 / total));
+                b1.y -= ny * (overlap * (m2 / total));
 
-const restitution=1;
+                b2.x += nx * (overlap * (m1 / total));
+                b2.y += ny * (overlap * (m1 / total));
 
-const impulse=-(1+restitution)*velAlongNormal/(1/m1+1/m2);
+                const rvx = b2.vx - b1.vx;
+                const rvy = b2.vy - b1.vy;
 
-// Temporarily change color for collision flash
-b1.hue = Math.random() * 360;
-b2.hue = Math.random() * 360;
+                const velAlongNormal = rvx * nx + rvy * ny;
+                if (velAlongNormal > 0) continue;
 
-const ix=impulse*nx;
-const iy=impulse*ny;
+                const impulse = -(1 + 1) * velAlongNormal / (1/m1 + 1/m2);
 
-if(vibrateEnabled && navigator.vibrate){
-    navigator.vibrate(5); // 5ms vibration
-}
+                const ix = impulse * nx;
+                const iy = impulse * ny;
 
-b1.vx-=ix/m1;
-b1.vy-=iy/m1;
+                b1.vx -= ix / m1;
+                b1.vy -= iy / m1;
 
-b2.vx+=ix/m2;
-b2.vy+=iy/m2;
-
-}
-
-}
-
-}
-
+                b2.vx += ix / m2;
+                b2.vy += iy / m2;
+            }
+        }
+    }
 }
 
 let draggedBall=null;
@@ -871,7 +887,7 @@ function applyOrbit() {
         const currentSpeed = Math.hypot(b.vx, b.vy) / b.orbitData.radius;
         const effectiveSpeed = Math.max(b.orbitData.speed, currentSpeed);
 
-        b.orbitData.angle += effectiveSpeed;
+        b.orbitData.angle += b.orbitData.speed;
 
         // Calculate new position along orbit
         const angle = b.orbitData.angle;
