@@ -49,6 +49,20 @@ let player = {
     vy: 0,
     radius: 10
 };
+let goal = {
+    x: 0,
+    y: 0,
+    r: 15
+};
+const cols = 15;
+const rows = 20;
+const cellSize = 40;
+
+let maze = [];
+let walls = [];
+
+const offsetX = (canvas.width - cols * cellSize) / 2;
+const offsetY = (canvas.height - rows * cellSize) / 2;
 
 document.getElementById("backBtn").onclick = () => {
     window.location.href = "index.html";
@@ -75,54 +89,149 @@ window.addEventListener("deviceorientation", (e) => {
     gyro.y = e.beta || 0;  // forward/back
 });
 
-let walls = [
-    { x: 200, y: 0, w: 20, h: 300 },
-    { x: 400, y: 200, w: 20, h: 300 },
-    { x: 100, y: 400, w: 300, h: 20 }
-];
+function createGrid() {
+    maze = [];
 
-let goal = { x: 600, y: 400, r: 15 };
+    for (let y = 0; y < rows; y++) {
+        let row = [];
+        for (let x = 0; x < cols; x++) {
+            row.push({
+                x,
+                y,
+                visited: false,
+                walls: { top: true, right: true, bottom: true, left: true }
+            });
+        }
+        maze.push(row);
+    }
+}
+
+function generateMaze(x = 0, y = 0) {
+    let current = maze[y][x];
+    current.visited = true;
+
+    const directions = shuffle([
+        [0, -1, "top", "bottom"],
+        [1, 0, "right", "left"],
+        [0, 1, "bottom", "top"],
+        [-1, 0, "left", "right"]
+    ]);
+
+    for (let [dx, dy, wall, opposite] of directions) {
+        let nx = x + dx;
+        let ny = y + dy;
+
+        if (nx >= 0 && ny >= 0 && nx < cols && ny < rows) {
+            let next = maze[ny][nx];
+
+            if (!next.visited) {
+                current.walls[wall] = false;
+                next.walls[opposite] = false;
+
+                generateMaze(nx, ny);
+            }
+        }
+    }
+}
+
+function shuffle(arr) {
+    return arr.sort(() => Math.random() - 0.5);
+}
+
+function buildWalls() {
+    walls = [];
+
+    maze.forEach(row => {
+        row.forEach(cell => {
+            const x = cell.x * cellSize + offsetX;
+            const y = cell.y * cellSize + offsetY;
+
+            if (cell.walls.top)
+                walls.push({ x, y, w: cellSize, h: 4 });
+
+            if (cell.walls.left)
+                walls.push({ x, y, w: 4, h: cellSize });
+
+            if (cell.walls.right)
+                walls.push({ x: x + cellSize, y, w: 4, h: cellSize });
+
+            if (cell.walls.bottom)
+                walls.push({ x, y: y + cellSize, w: cellSize, h: 4 });
+        });
+    });
+}
+
+createGrid();
+generateMaze();
+buildWalls();
+
+player.x = 20;
+player.y = 20;
+
+goal.x = (cols - 1) * cellSize + 20;
+goal.y = (rows - 1) * cellSize + 20;
+
 
 function update() {
+// Apply tilt force
+const force = 0.2;
 
-    // Apply tilt force
-    const force = 0.2;
+player.vx += (gyro.x / 45) * force;
+player.vy += (gyro.y / 45) * force;
 
-    player.vx += (gyro.x / 45) * force;
-    player.vy += (gyro.y / 45) * force;
+// Friction (important)
+player.vx *= 0.95;
+player.vy *= 0.95;
+// Move X
+player.x += player.vx;
 
-    // Friction
-    player.vx *= 0.95;
-    player.vy *= 0.95;
+walls.forEach(w => {
+    if (
+        player.x + player.radius > w.x &&
+        player.x - player.radius < w.x + w.w &&
+        player.y + player.radius > w.y &&
+        player.y - player.radius < w.y + w.h
+    ) {
+        // Bounce X only
+        if (player.vx > 0) player.x = w.x - player.radius;
+        if (player.vx < 0) player.x = w.x + w.w + player.radius;
 
-    player.x += player.vx;
-    player.y += player.vy;
-
-    // Wall collisions
-    walls.forEach(w => {
-        if (
-            player.x + player.radius > w.x &&
-            player.x - player.radius < w.x + w.w &&
-            player.y + player.radius > w.y &&
-            player.y - player.radius < w.y + w.h
-        ) {
-            // Simple bounce back
-            player.vx *= -0.5;
-            player.vy *= -0.5;
-        }
-    });
-
-    // Goal check
-    const dx = player.x - goal.x;
-    const dy = player.y - goal.y;
-
-    if (Math.hypot(dx, dy) < player.radius + goal.r) {
-        alert("You win!");
-        player.x = 100;
-        player.y = 100;
-        player.vx = 0;
-        player.vy = 0;
+        player.vx *= -0.5; // 50% bounce
     }
+});
+
+// Move Y
+player.y += player.vy;
+
+walls.forEach(w => {
+    if (
+        player.x + player.radius > w.x &&
+        player.x - player.radius < w.x + w.w &&
+        player.y + player.radius > w.y &&
+        player.y - player.radius < w.y + w.h
+    ) {
+        // Bounce Y only
+        if (player.vy > 0) player.y = w.y - player.radius;
+        if (player.vy < 0) player.y = w.y + w.h + player.radius;
+
+        player.vy *= -0.5; // 50% bounce
+    }
+});
+const dx = player.x - goal.x;
+const dy = player.y - goal.y;
+
+if (Math.hypot(dx, dy) < player.radius + goal.r) {
+    alert("You win!");
+
+    createGrid();
+    generateMaze();
+    buildWalls();
+
+    player.x = 20;
+    player.y = 20;
+    player.vx = 0;
+    player.vy = 0;
+}
 }
 
 function draw() {
