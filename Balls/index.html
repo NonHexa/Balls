@@ -117,7 +117,7 @@
         transition: width 0.2s ease;
     }
 
-    #upOrbit  { top: 20px; left: 50%; transform: translateX(-50%); }
+    #upOrbit  { top: 20px; right: 85px; transform: translateX(-50%); }
     #upRadius { top: 50%; left: 20px;  transform: translateY(-50%); }
     #upSpeed  { top: 50%; right: 20px; transform: translateY(-50%); }
 
@@ -125,6 +125,7 @@
     #upShield { top: 290px; left: 130px; }
     #upMagnet { top: 290px; right: 130px; }
     #upDash   { top: 410px; left: 50%; transform: translateX(-50%); }
+    #upDual   { top: 20px; right: 245px; transform: translateX(-50%); }
 
     #lineCanvas {
         position: absolute;
@@ -218,6 +219,11 @@
             <div class="uName">Dash</div>
             <div class="progressBar"><div></div></div>
         </div>
+        <div class="upgradeNode inner" id="upDual">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Dual</div>
+            <div class="progressBar"><div></div></div>
+        </div>
 
         <!-- Connecting Lines Canvas -->
         <canvas id="lineCanvas" width="620" height="620"></canvas>
@@ -241,6 +247,8 @@ window.addEventListener("resize", () => {
     canvas.height = innerHeight;
     center = { x: canvas.width / 2, y: canvas.height / 2 };
 });
+
+upDual.onclick = () => applyUpgrade("Dual");
 
 //Gyro Listener :)
 window.addEventListener("deviceorientation", (event) => {
@@ -268,6 +276,7 @@ let gyroSensitivity = 0.4;
 let gyroRamp = 0;           
 let difficultyRamp = 0; 
 let gyroActive = false;
+let player2 = null;
 
 let lastFrameTime = 0;
 
@@ -357,7 +366,8 @@ class OrbitBall {
 
     update(centerAngle, i, total) {
         // Base orbit
-        const baseTarget = centerAngle + i * (Math.PI * 2 / total);
+        const spreadOffset = player2 ? Math.PI / total : 0;
+        const baseTarget = centerAngle + spreadOffset + i * (Math.PI * 2 / total);
         this.angle += (baseTarget - this.angle) * 0.1 + this.angularSpeed;
 
         // Subtle wobble
@@ -416,6 +426,11 @@ class Enemy {
         }
 
         Object.assign(this, JSON.parse(JSON.stringify(t)));
+        // Increase health at low difficulty
+        const healthScale = 1.8 - (difficultyRamp * 0.8);
+        // starts ~1.8x HP → goes to normal (1x)
+
+        this.life = Math.ceil(this.life * healthScale);
 
         // Spawn at edge
         const e = Math.random();
@@ -500,7 +515,9 @@ function startEnemySpawn() {
 
     function spawnLoop() {
 
-        if (!gameOver && !isPaused && enemies.length < 100) {
+        const maxEnemies = 10 + Math.floor(difficultyRamp * 90);
+
+        if (!gameOver && !isPaused && enemies.length < maxEnemies){
 
             // Boss logic
             if (spawnCount > 0 && spawnCount % 25 === 0) {
@@ -533,7 +550,7 @@ function startEnemySpawn() {
         }
 
         // ⬇️ Dynamic spawn delay
-        const delay = 800 - (difficultyRamp * 500);
+        const delay = 1200 - (difficultyRamp * 900);
         // starts at 800ms → goes to 300ms
 
         enemyInterval = setTimeout(spawnLoop, delay);
@@ -777,7 +794,8 @@ const upgrades = [
     { name: "Laser",  cost: 25, level: 0, max: 5 },
     { name: "Shield", cost: 25, level: 0, max: 5 },
     { name: "Magnet", cost: 25, level: 0, max: 5 },
-    { name: "Dash",   cost: 25, level: 0, max: 5 }
+    { name: "Dash",   cost: 25, level: 0, max: 5 },
+    { name: "Dual", cost: 40, level: 0, max: 1 }
 ];
 
 const glass = document.getElementById("upgradeGlass");
@@ -881,12 +899,14 @@ function drawConnectionLines() {
     }
 
     const pairs = [
+        [upDual,   upOrbit],
         [upOrbit,  upLaser],
         [upRadius, upShield],
         [upSpeed,  upMagnet],
         [upLaser,  upShield],
         [upShield, upDash],
-        [upDash,   upMagnet]
+        [upDash,   upMagnet],
+        [upLaser,  upDual]
     ];
 
     pairs.forEach(([A, B]) => {
@@ -937,6 +957,11 @@ function applyUpgrade(name) {
             shieldBounce += 1.5;
             shieldDamage += 1;
         }
+        if (name === "Dual") {
+            if (!player2) {
+                player2 = new PlayerBall();
+    }
+}
 
         if (name === "Magnet") {
             magnetLevel++;
@@ -984,7 +1009,10 @@ function checkCollisions() {
     for (let e of enemies) {
 
         // Orbit balls + player hit enemy
-        for (let b of [player, ...orbitBalls]) {
+        let allBalls = [player, ...orbitBalls];
+        if (player2) allBalls.push(player2);
+
+        for (let b of allBalls) {
             const dx = e.x - b.x;
             const dy = e.y - b.y;
             const dist = Math.hypot(dx, dy);
@@ -1059,6 +1087,16 @@ function animate(now = 0) {
         o.update(player.angle, i, orbitBalls.length);
         o.draw();
     });
+
+    if (player2) {
+    // Opposite side of orbit
+    player2.angle = player.angle + Math.PI;
+
+    player2.x = center.x + Math.cos(player2.angle) * player2.orbitRadius;
+    player2.y = center.y + Math.sin(player2.angle) * player2.orbitRadius;
+
+    player2.draw();
+}
 
     // Enemies + shield collision
     enemies.forEach(e => {
