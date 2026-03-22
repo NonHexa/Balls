@@ -416,9 +416,9 @@ class OrbitBall {
 }
 
 const enemyTypes = {
-    fast:   { color: "#ff0000",  size: 8,  gravity: 0.30, life: 1, speedMultiplier: 2.0 },
-    medium: { color: "#ff8800",  size: 14, gravity: 0.20, life: 2, speedMultiplier: 1.2 },
-    slow:   { color: "#8800ff",  size: 20, gravity: 0.15, life: 3, speedMultiplier: 0.8 }
+    fast:   { color: "#ff0000",  size: 8,  gravity: 0.20, life: 1, speedMultiplier: 1.8 },
+    medium: { color: "#ff8800",  size: 14, gravity: 0.10, life: 2, speedMultiplier: 0.8 },
+    slow:   { color: "#8800ff",  size: 20, gravity: 0.05, life: 3, speedMultiplier: 0.4 }
 };
 
 class Enemy {
@@ -439,8 +439,8 @@ class Enemy {
 
         Object.assign(this, JSON.parse(JSON.stringify(t)));
         // Increase health at low difficulty
-        const healthScale = 1.8 - (difficultyRamp * 0.8);
-        // starts 1.8x HP goes to normal (1x)
+        const healthScale = 2.4 - (difficultyRamp * 0.8);
+        // starts 1.8x HP goes to normal
 
         this.life = Math.ceil(this.life * healthScale);
 
@@ -460,7 +460,7 @@ class Enemy {
         const dy = center.y - this.y;
         const dist = Math.hypot(dx, dy);
 
-        const speedScale = 0.3 + (difficultyRamp * 0.7);
+        const speedScale = 0.1 + (difficultyRamp * 0.4);
         // starts at 30% speed ramps to 100%
 
         this.vx += dx / dist * this.gravity * this.speedMultiplier * speedScale;
@@ -1066,7 +1066,7 @@ function animate(now = 0) {
     // Lines between upgrades
     drawConnectionLines();
     drawCooldownWheel();
-    difficultyRamp += 0.002; // difficulty change because why not
+    difficultyRamp += 0.0001; // difficulty change because why not
     if (difficultyRamp > 1) difficultyRamp = 1;
 
     if (isPaused) {
