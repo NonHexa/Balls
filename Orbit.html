@@ -416,9 +416,9 @@ class OrbitBall {
 }
 
 const enemyTypes = {
-    fast:   { color: "#ff0000",  size: 8,  gravity: 0.20, life: 1, speedMultiplier: 1.8 },
-    medium: { color: "#ff8800",  size: 14, gravity: 0.10, life: 2, speedMultiplier: 0.8 },
-    slow:   { color: "#8800ff",  size: 20, gravity: 0.05, life: 3, speedMultiplier: 0.4 }
+    fast:   { color: "#ff0000",  size: 8,  gravity: 0.20, life: 2, speedMultiplier: 1.8 },
+    medium: { color: "#ff8800",  size: 14, gravity: 0.10, life: 4, speedMultiplier: 0.8 },
+    slow:   { color: "#8800ff",  size: 20, gravity: 0.05, life: 6, speedMultiplier: 0.4 }
 };
 
 class Enemy {
@@ -583,7 +583,7 @@ let gyro = {
 let gyroEnabled = false;
 
 let laserCooldown = 0;
-let laserFireDelay = 1600;   // laser delay
+let laserFireDelay = 16;   // laser delay
 let laserDamage = 1;
 
 let shieldLevel = 0;
@@ -1015,7 +1015,6 @@ function updateDashCooldown(delta) {
 
 function checkCollisions() {
     for (let e of enemies) {
-
         let allBalls = [player, ...orbitBalls];
         if (player2) allBalls.push(player2);
 
@@ -1026,6 +1025,11 @@ function checkCollisions() {
 
             if (dist < e.size + b.size) {
                 shakeTime = 5;
+                const nx = dx / dist;
+                const ny = dy / dist;
+
+                e.vx += nx * 5;
+                e.vy += ny * 5;
                 e.life--;
                 points++;
                 infoDiv.textContent = "Points: " + points;
@@ -1034,7 +1038,31 @@ function checkCollisions() {
                     particles.push(new Particle(e.x, e.y, e.color));
             }
         }
+    for (let i = 0; i < enemies.length; i++) {
+    for (let j = i + 1; j < enemies.length; j++) {
 
+        let a = enemies[i];
+        let b = enemies[j];
+
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < a.size + b.size) {
+                    // Explosion particles
+            for (let k = 0; k < 20; k++) {
+                particles.push(new Particle(a.x, a.y, "#ff4444"));
+            }
+
+            // Remove both enemies
+            enemies.splice(j, 1);
+            enemies.splice(i, 1);
+
+            i--; // adjust index after removal
+            break;
+        }
+    }
+}
         // Enemy hits center You die haha
         if (Math.hypot(e.x - center.x, e.y - center.y) < 20) {
             // Dash hasnt really been worked out so I will have it as this :)
