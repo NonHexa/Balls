@@ -174,23 +174,21 @@
 </head>
 <body>
 
-<!-- Points HUD -->
+
 <div class="info" id="info">Points: 0</div>
 <div>
     <button id="backBtn">← Menu</button>
 </div>
-<!-- Main Game Canvas -->
+
 <canvas id="gameCanvas"></canvas>
 
-<!-- Floating Neon Upgrade Orb -->
 <div id="upgradeOrb"></div>
 
-<!-- Full Glassmorphism Upgrade Menu -->
 <div id="upgradeGlass">
     
     <div id="upgradeStarContainer">
 
-        <!-- Outer Diamond Nodes -->
+
         <div class="upgradeNode" id="upOrbit">
             <canvas class="iconCanvas" width="60" height="60"></canvas>
             <div class="uName">Orbit</div>
@@ -208,7 +206,7 @@
             <div class="progressBar"><div></div></div>
         </div>
 
-        <!-- Inner Ring Nodes -->
+
         <div class="upgradeNode inner" id="upLaser">
             <canvas class="iconCanvas" width="60" height="60"></canvas>
             <div class="uName">Laser</div>
@@ -238,10 +236,9 @@
             <div class="progressBar"><div></div></div>
         </div>
 
-        <!-- Connecting Lines Canvas -->
         <canvas id="lineCanvas" width="620" height="620"></canvas>
 
-        <!-- Close Glass Menu Button -->
+
         <div id="closeGlass">×</div>
 
     </div>
@@ -270,7 +267,7 @@ window.addEventListener("deviceorientation", (event) => {
     gyro.x = event.gamma || 0;
     gyro.y = event.beta || 0;
 
-    // Detect if gyro is actually being used
+
     if (Math.abs(gyro.x) > 2 || Math.abs(gyro.y) > 2) {
         gyroActive = true;
     }
@@ -333,26 +330,24 @@ class PlayerBall {
         this.orbitRadius = 150;
         this.angle = 0;
         this.size = 16;
-        this.blink = 0; // For dash warp blink
+        this.blink = 0;
     }
     update(mx, my) {
         if (gyroEnabled && gyroActive) {
 
-    // Slowly ramp control up over time
     gyroRamp += 0.02;
     if (gyroRamp > 1) gyroRamp = 1;
 
-    // Scale input
     const gx = (gyro.x / 45) * gyroSensitivity * gyroRamp;
     const gy = (gyro.y / 45) * gyroSensitivity * gyroRamp;
 
     const targetAngle = Math.atan2(gy, gx);
 
-    // Smooth turning (this is key for "slowness feel")
+   
     this.angle += (targetAngle - this.angle) * 0.08;
 }
     else if (mx !== null) {
-        // fallback to mouse (desktop)
+       
         this.angle = Math.atan2(my - center.y, mx - center.x);
 }
         this.x = center.x + Math.cos(this.angle) * this.orbitRadius;
@@ -445,7 +440,7 @@ class Enemy {
         Object.assign(this, JSON.parse(JSON.stringify(t)));
         // Increase health at low difficulty
         const healthScale = 1.8 - (difficultyRamp * 0.8);
-        // starts ~1.8x HP → goes to normal (1x)
+        // starts 1.8x HP goes to normal (1x)
 
         this.life = Math.ceil(this.life * healthScale);
 
@@ -466,7 +461,7 @@ class Enemy {
         const dist = Math.hypot(dx, dy);
 
         const speedScale = 0.3 + (difficultyRamp * 0.7);
-        // starts at 30% speed → ramps to 100%
+        // starts at 30% speed ramps to 100%
 
         this.vx += dx / dist * this.gravity * this.speedMultiplier * speedScale;
         this.vy += dy / dist * this.gravity * this.speedMultiplier * speedScale;
@@ -541,7 +536,6 @@ function startEnemySpawn() {
                 enemies.push(new BossEnemy());
             } else {
 
-                // Fast enemy warning
                 if (spawnCount > 15 && Math.random() < 0.2) {
 
                     const edge = Math.random();
@@ -566,9 +560,9 @@ function startEnemySpawn() {
             }
         }
 
-        // ⬇️ Dynamic spawn delay
+        
         const delay = 1200 - (difficultyRamp * 900);
-        // starts at 800ms → goes to 300ms
+        // starts at 800ms goes to 300ms
 
         enemyInterval = setTimeout(spawnLoop, delay);
     }
@@ -582,14 +576,14 @@ canvas.addEventListener("mousemove", e => {
     mouse.y = e.clientY;
 });
 let gyro = {
-    x: 0, // left/right tilt
-    y: 0  // forward/back tilt
+    x: 0, 
+    y: 0  
 };
 
 let gyroEnabled = false;
 
 let laserCooldown = 0;
-let laserFireDelay = 1600;   // ms base
+let laserFireDelay = 1600;   // laser delay
 let laserDamage = 1;
 
 let shieldLevel = 0;
@@ -735,7 +729,7 @@ function tryDash() {
     setTimeout(() => dashReady = true, dashCooldown);
 }
 
-// Warp Blink fade animation
+// The warping animation :)
 function playerBlink() {
     player.blink = 1;
 
@@ -744,7 +738,7 @@ function playerBlink() {
     setTimeout(() => player.blink = 0, 250);
 }
 
-// Dash particle streak
+// Warping Partiles when it is moving :]
 function drawDashTrail() {
     dashTrail.forEach(t => {
         ctx.strokeStyle = `rgba(255,0,255,${t.alpha})`;
@@ -791,7 +785,7 @@ function drawCooldownWheel() {
     ctx2.stroke();
 }
 
-// Dash icon
+// Ions 
 function drawDashIcon(ctx) {
     ctx.strokeStyle = "#ff00ff";
     ctx.lineWidth = 4;
@@ -802,7 +796,7 @@ function drawDashIcon(ctx) {
     ctx.lineTo(20, 40);
     ctx.stroke();
 }
-
+// The upgradesss Ik very cool it is just the dictary for them
 const upgrades = [
     { name: "Orbit",  cost: 5,  level: 0, max: 5 },
     { name: "Radius", cost: 10, level: 0, max: 5 },
@@ -834,12 +828,11 @@ function closeUpgradeMenu() {
     setTimeout(() => {
         glass.style.display = "none";
 
-        // If we died → restart game
+        // retarding game apon death
         if (restartAfterMenu) {
 
             restartAfterMenu = false;
 
-            // Restart game WITHOUT resetting points
             gameOver = false;
             isPaused = false;
 
@@ -851,23 +844,22 @@ function closeUpgradeMenu() {
 
             spawnCount = 0;
 
-            // Restore saved points
+            // For if points are kept or not
             points = Math.floor(savedPoints * 0.7) + 5;
             infoDiv.textContent = "Points: " + points;
 
             startEnemySpawn();
             animate();
         } else {
-            // CASE 2: First start (just unpause)
             isPaused = false;
         }
 
     }, 300);
 }
-// Open via orb
+
 orb.onclick = () => openUpgradeMenu();
 
-// Close via X
+
 closeGlass.onclick = () => closeUpgradeMenu();
 
 let hoveredNode = null;
@@ -890,7 +882,6 @@ function enableGyro() {
             .catch(console.error);
 
     } else {
-        // Android / others
         gyroEnabled = true;
     }
 }
@@ -1025,7 +1016,6 @@ function updateDashCooldown(delta) {
 function checkCollisions() {
     for (let e of enemies) {
 
-        // Orbit balls + player hit enemy
         let allBalls = [player, ...orbitBalls];
         if (player2) allBalls.push(player2);
 
@@ -1045,9 +1035,9 @@ function checkCollisions() {
             }
         }
 
-        // Enemy hits center (player death)
+        // Enemy hits center You die haha
         if (Math.hypot(e.x - center.x, e.y - center.y) < 20) {
-            // Dash invulnerability
+            // Dash hasnt really been worked out so I will have it as this :)
             if (!dashVulnerable) continue;
 
             gameOver = true;
@@ -1055,7 +1045,7 @@ function checkCollisions() {
             savedPoints = points;
             restartAfterMenu = true;
 
-            // Violent orb pulse → then open menu
+            // Orb pulses and then goes weeeeee
             const orb = document.getElementById("upgradeOrb");
             orb.style.animation = "orbDeathPulse 0.3s infinite alternate";
 
@@ -1073,10 +1063,10 @@ function animate(now = 0) {
     const delta = lastFrameTime ? now - lastFrameTime : 16;
     lastFrameTime = now;
 
-    // Draw cable lines even during pause
+    // Lines between upgrades
     drawConnectionLines();
     drawCooldownWheel();
-    difficultyRamp += 0.002; // speed of ramp (tweak this)
+    difficultyRamp += 0.002; // difficulty change because why not
     if (difficultyRamp > 1) difficultyRamp = 1;
 
     if (isPaused) {
@@ -1085,18 +1075,18 @@ function animate(now = 0) {
         return;
     }
 
-    // Clear + soft blur trail
+    // trails
     screenShake();
     ctx.fillStyle = "rgba(0,0,0,0.2)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw center core
+    // Baase or main ball core
     ctx.beginPath();
     ctx.arc(center.x, center.y, 20, 0, Math.PI * 2);
     ctx.fillStyle = "#fff";
     ctx.fill();
 
-    // Player + orbits
+    // Player movment and orbits
     player.update(mouse.x, mouse.y);
     player.draw();
 
@@ -1106,7 +1096,7 @@ function animate(now = 0) {
     });
 
     if (player2) {
-    // Opposite side of orbit
+    // Opposite side of orbit cause you know can have 2
     player2.angle = player.angle + Math.PI;
 
     player2.x = center.x + Math.cos(player2.angle) * player2.orbitRadius;
@@ -1115,7 +1105,7 @@ function animate(now = 0) {
     player2.draw();
 }
 
-    // Enemies + shield collision
+    // collisons
     enemies.forEach(e => {
         e.update();
         updateShieldCollision(e);
@@ -1128,7 +1118,7 @@ function animate(now = 0) {
     checkCollisions();
     enemies = enemies.filter(e => e.life > 0);
 
-    // Ability visuals
+    // visuals
     updateLaserSystem(delta);
     drawLaserBeams();
     drawShield();
@@ -1160,7 +1150,6 @@ function startGame() {
     startEnemySpawn();
     animate();
 
-    // Game begins with menu OPEN (your request)
     openUpgradeMenu();
 }
 
