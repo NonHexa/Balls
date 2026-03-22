@@ -416,8 +416,8 @@ class OrbitBall {
 }
 
 const enemyTypes = {
-    fast:   { color: "#ff0000",  size: 8,  gravity: 0.20, life: 2, speedMultiplier: 1.8 },
-    medium: { color: "#ff8800",  size: 14, gravity: 0.10, life: 4, speedMultiplier: 0.8 },
+    fast:   { color: "#ff0000",  size: 8,  gravity: 0.20, life: 1, speedMultiplier: 1.8 },
+    medium: { color: "#ff8800",  size: 14, gravity: 0.10, life: 2, speedMultiplier: 0.8 },
     slow:   { color: "#8800ff",  size: 20, gravity: 0.05, life: 6, speedMultiplier: 0.4 }
 };
 
@@ -1028,8 +1028,8 @@ function checkCollisions() {
                 const nx = dx / dist;
                 const ny = dy / dist;
 
-                e.vx += nx * 5;
-                e.vy += ny * 5;
+                e.vx += nx * 3;
+                e.vy += ny * 3;
                 e.life--;
                 points++;
                 infoDiv.textContent = "Points: " + points;
