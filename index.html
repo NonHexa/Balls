@@ -13,7 +13,6 @@ body {
     overflow: hidden;
 }
 
-/* Title */
 h1 {
     text-align: center;
     margin-top: 40px;
@@ -22,7 +21,6 @@ h1 {
     color: #ff00ff;
 }
 
-/* Grid layout */
 .menu {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -30,7 +28,6 @@ h1 {
     padding: 60px;
 }
 
-/* Game card */
 .card {
     position: relative;
     height: 180px;
@@ -43,7 +40,6 @@ h1 {
     transition: 0.3s ease;
 }
 
-/* Glow effect */
 .card::before {
     content: "";
     position: absolute;
@@ -57,13 +53,11 @@ h1 {
     opacity: 1;
 }
 
-/* Hover animation */
 .card:hover {
     transform: scale(1.08);
     box-shadow: 0 0 40px #ff00ff88;
 }
 
-/* Title inside card */
 .card h2 {
     position: absolute;
     bottom: 20px;
@@ -71,7 +65,6 @@ h1 {
     margin: 0;
 }
 
-/* Optional thumbnail */
 .card img {
     position: absolute;
     inset: 0;
@@ -90,13 +83,10 @@ h1 {
 <div class="menu">
 
     <div class="card" onclick="goToGame('Orbit.html')">
-        <!-- Optional image -->
-        <!-- <img src="orbit.png"> -->
         <h2>Orbit Shitty Game</h2>
     </div>
 
     <div class="card" onclick="goToGame('Balls.html')">
-        <!-- <img src="other.png"> -->
         <h2>BallsBallsBalls</h2>
     </div>
     <div class="card" onclick="goToGame('Maze.html')">

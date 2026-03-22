@@ -71,7 +71,6 @@ document.getElementById("backBtn").onclick = () => {
 let gyro = { x: 0, y: 0 };
 let gyroEnabled = false;
 
-// Enable gyro on tap (important for iPhone)
 window.addEventListener("click", () => {
     if (typeof DeviceOrientationEvent.requestPermission === "function") {
         DeviceOrientationEvent.requestPermission().then(p => {
@@ -173,16 +172,13 @@ goal.y = (rows - 1) * cellSize + 20;
 
 
 function update() {
-// Apply tilt force
 const force = 0.2;
 
 player.vx += (gyro.x / 45) * force;
 player.vy += (gyro.y / 45) * force;
 
-// Friction (important)
 player.vx *= 0.95;
 player.vy *= 0.95;
-// Move X
 player.x += player.vx;
 
 walls.forEach(w => {
@@ -192,7 +188,6 @@ walls.forEach(w => {
         player.y + player.radius > w.y &&
         player.y - player.radius < w.y + w.h
     ) {
-        // Bounce X only
         if (player.vx > 0) player.x = w.x - player.radius;
         if (player.vx < 0) player.x = w.x + w.w + player.radius;
 
@@ -200,7 +195,6 @@ walls.forEach(w => {
     }
 });
 
-// Move Y
 player.y += player.vy;
 
 walls.forEach(w => {
@@ -210,7 +204,6 @@ walls.forEach(w => {
         player.y + player.radius > w.y &&
         player.y - player.radius < w.y + w.h
     ) {
-        // Bounce Y only
         if (player.vy > 0) player.y = w.y - player.radius;
         if (player.vy < 0) player.y = w.y + w.h + player.radius;
 
@@ -239,19 +232,16 @@ function draw() {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Walls
     ctx.fillStyle = "#ff00ff";
     walls.forEach(w => {
         ctx.fillRect(w.x, w.y, w.w, w.h);
     });
 
-    // Goal
     ctx.beginPath();
     ctx.arc(goal.x, goal.y, goal.r, 0, Math.PI * 2);
     ctx.fillStyle = "#00ffcc";
     ctx.fill();
-
-    // Player
+    
     ctx.beginPath();
     ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
     ctx.fillStyle = "#fff";

@@ -80,7 +80,7 @@ canvas {
     right: 10px;
     max-width: 260px;
     cursor: move;
-    display: none; /* default desktop GUI visible */
+    display: none; 
 }
 .gui {
     display: none;
@@ -106,12 +106,12 @@ font-size: 16px;
 
 @media (max-width: 600px) {
 
-    /* Hide desktop GUI */
+
     .gui.desktop {
         display: none;
     }
 
-    /* Mobile GUI styling */
+
     .gui.mobile {
         position: fixed;
         bottom: 10px;
@@ -124,7 +124,7 @@ font-size: 16px;
         display: block;
     }
 
-    /* Bigger settings button for mobile */
+
     #settingsToggle {
         bottom: 80px;
         top: auto;
@@ -144,14 +144,13 @@ font-size: 16px;
     Drag balls • Double click/tap to spawn
 </div>
 
-<!-- Settings Toggle Button -->
+
 <button id="settingsToggle">⚙ Settings</button>
 <button id="backBtn">← Menu</button>
 
-<!-- GUI Container -->
+
 <div class="gui desktop mobile">
 
-    <!-- Gravity & Orbit -->
     <div class="gui-row">
         <label><input type="checkbox" id="gravityToggle"> Gravity</label>
         <div id="gravityHint" class="hint">Tap Gravity to enable motion on mobile</div>
@@ -159,34 +158,29 @@ font-size: 16px;
         <label><input type="checkbox" id="orbitToggle" checked> Orbit</label>
     </div>
 
-    <!-- Gravity Strength -->
     <div class="gui-row">
         <label>Gravity strength: <span id="gravityStrengthValue">0.2</span></label>
         <input type="range" id="gravityStrengthSlider" min="0" max="1" step="0.01" value="0.2">
     </div>
 
-    <!-- Friction & Vibrate -->
     <div class="gui-row">
         <label>Friction: <span id="frictionValue">0.995</span></label>
         <input type="range" id="frictionSlider" min="0.95" max="1.05" step="0.0001" value="0.995">
         <label><input type="checkbox" id="vibrateToggle" checked> Vibrate on collision</label>
     </div>
 
-    <!-- Trail -->
     <div class="gui-row">
         <label><input type="checkbox" id="trailToggle" checked> Trail</label>
         <label>Trail opacity: <span id="trailAlphaValue">0.15</span></label>
         <input type="range" id="trailAlphaSlider" min="0" max="1" step="0.01" value="0.15">
     </div>
 
-    <!-- Glow -->
     <div class="gui-row">
         <label><input type="checkbox" id="glowToggle" checked> Glow</label>
         <label>Glow strength: <span id="glowValue">20</span></label>
         <input type="range" id="glowSlider" min="0" max="60" step="1" value="20">
     </div>
 
-    <!-- Color -->
     <div class="gui-row">
         <label>Color mode:</label>
         <select id="colorMode">
@@ -200,7 +194,6 @@ font-size: 16px;
         <label>Fixed color: <input type="color" id="fixedColor" value="#ff0000"></label>
     </div>
 
-    <!-- Spawn Button -->
     <button onclick="spawnBalls(10)">Spawn Balls</button>
 
 </div>
@@ -209,11 +202,9 @@ font-size: 16px;
 
 <script>
 
-// Toggle GUI visibility
 const settingsToggleBtn = document.getElementById("settingsToggle");
 const guiBox = document.querySelector(".gui");
 
-// Is just a whole bunch of constants as um need them :)
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -302,7 +293,7 @@ if(vibrateToggle){
     };
 }
 
-// Sound for collisions
+// Sound for collisions hehe is funny set sound to 0 so um it doesnt make a sound
 const collisionSound = new Audio("BallSounds.mp3")
 collisionSound.volume = 0;
 
@@ -435,7 +426,6 @@ async function requestMotionPermission(){
             console.log(e);
         }
     } else {
-        // Android / most mobile browsers: no permission required
         addMotionListener();
         setGravityHint("Gravity enabled. Tilt your device.");
     }
@@ -455,7 +445,6 @@ function addMotionListener(){
     motionListenerAdded = true;
 }
 
-// If the browser supports DeviceMotion but doesn't require permission, listen early.
 if(supportsDeviceMotion && !requiresPermission){
     addMotionListener();
 }
@@ -690,7 +679,6 @@ function resolveCollisions() {
 
             for (let b2 of cell) {
 
-                // ✅ skip self AND duplicates
                 if (b1 === b2 || b1.id >= b2.id) continue;
 
                 let dx = b2.x - b1.x;
@@ -699,7 +687,6 @@ function resolveCollisions() {
                 let distSq = dx*dx + dy*dy;
                 const minDist = b1.radius + b2.radius;
 
-                // ✅ cheap early exit (no sqrt yet)
                 if (distSq >= minDist * minDist) continue;
 
                 let dist = Math.sqrt(distSq);
