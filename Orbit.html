@@ -693,6 +693,7 @@ function updateShieldCollision(e) {
         e.vy += ny * shieldBounce;
 
         e.life -= shieldDamage;
+        points++;
 
         for (let i = 0; i < 6; i++)
             particles.push(new Particle(e.x, e.y, "#ff00ff"));
