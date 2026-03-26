@@ -264,7 +264,7 @@ resize();
 window.addEventListener("resize",resize);
 
 let friction = 0.995;
-const wallBounce = 1;
+const wallBounce = 0.99999;
 
 let gravityEnabled = false;
 
@@ -295,7 +295,7 @@ if(vibrateToggle){
 
 // Sound for collisions hehe is funny set sound to 0 so um it doesnt make a sound
 const collisionSound = new Audio("BallSounds.mp3")
-collisionSound.volume = 0;
+collisionSound.volume = 1;
 
 
 let colorMode = "random";
