@@ -16,86 +16,165 @@
         display: block;
     }
 
+    #gameCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 0;
+    }
+
     .info {
         position: fixed;
+        top: 14px;
+        left: 14px;
+        z-index: 100;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.45);
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 20px;
+        line-height: 1.3;
+        pointer-events: none;
+        text-shadow: 0 0 6px #000;
+    }
+
+    #backBtn {
+        position: fixed;
         top: 10px;
-        left: 10px;
-        color: white;
+        right: 10px;
+        z-index: 101;
+        padding: 8px 14px;
+        border-radius: 6px;
+        border: 1px solid #555;
+        background: rgba(30, 30, 30, 0.85);
+        color: #ccc;
+        cursor: pointer;
         font-size: 16px;
-        z-index: 5;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    #backBtn:hover {
+        background: rgba(60, 60, 60, 0.95);
+        color: #fff;
+        border-color: #888;
     }
 
     #upgradeOrb {
         position: fixed;
-        bottom: 40px;
-        right: 40px;
-        width: 80px;
-        height: 80px;
+        right: 28px;
+        bottom: 28px;
+        width: 78px;
+        height: 78px;
         border-radius: 50%;
-        background: radial-gradient(circle at 30% 30%,
-                   #ff55ff 0%, #660066 70%, #220022 100%);
-        box-shadow: 0 0 25px #ff00ff, 0 0 60px #aa00aa;
+        background: radial-gradient(circle at 35% 30%, #ff8aff 0%, #ff00ff 48%, #4a0048 100%);
+        box-shadow: 0 0 42px #ff00ffaa;
+        z-index: 102;
         cursor: pointer;
-        transition: 0.25s ease;
-        z-index: 20;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        animation: orbPulse 2s ease-in-out infinite;
     }
 
     #upgradeOrb:hover {
-        transform: scale(1.15);
-        box-shadow: 0 0 35px #ff00ff, 0 0 100px #aa00aa;
+        transform: scale(1.12);
+        box-shadow: 0 0 70px #ff00ff;
+        animation: none;
+    }
+
+    @keyframes orbPulse {
+        0%, 100% { box-shadow: 0 0 32px #ff00ffaa; }
+        50%      { box-shadow: 0 0 52px #ff00ffdd; }
     }
 
     #upgradeGlass {
         position: fixed;
         inset: 0;
-        background: rgba(8,8,16,0.45);
-        backdrop-filter: blur(14px);
         display: none;
-        justify-content: center;
         align-items: center;
-        z-index: 30;
-
+        justify-content: center;
+        z-index: 200;
+        background: rgba(10, 0, 16, 0.78);
         opacity: 0;
-        transform: scale(0.90);
-        transition: opacity .35s ease, transform .35s ease;
+        transition: opacity 0.3s ease;
     }
 
     #upgradeGlass.open {
         opacity: 1;
-        transform: scale(1);
+    }
+
+    #treeViewport {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        border: none;
+        background: transparent;
+        overflow: hidden;
+        cursor: grab;
+    }
+
+    #treeContent {
+        position: absolute;
+        inset: 0;
+        transform: translate(0px, 0px) scale(1);
+        transform-origin: 0 0;
+        pointer-events: auto;
     }
 
     #upgradeStarContainer {
         position: relative;
-        width: 620px;
-        height: 620px;
+        width: 900px;
+        height: 760px;
+        margin: 0 auto;
+    }
+
+    #lineCanvas {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
     }
 
     .upgradeNode {
         position: absolute;
-        width: 140px;
-        height: 180px;
-        padding-top: 10px;
-        border-radius: 22px;
-
-        background: rgba(255,255,255,0.12);
-        backdrop-filter: blur(14px);
-        border: 2px solid rgba(255,0,255,0.45);
-        box-shadow: 0 0 22px #ff00ff55;
-
+        z-index: 10;
+        width: 118px;
+        padding: 10px 8px 12px;
+        border-radius: 12px;
         text-align: center;
-        transition: 0.25s ease;
+        background: rgba(30, 5, 40, 0.65);
+        border: 1px solid rgba(255, 0, 255, 0.3);
+        backdrop-filter: blur(4px);
+        pointer-events: auto;
         cursor: pointer;
-        z-index: 2;
+        transform: var(--base-transform, none);
+        transition: transform 0.2s, box-shadow 0.2s, filter 0.2s, border-color 0.2s, background 0.2s;
     }
 
     .upgradeNode:hover {
-        transform: scale(1.08);
+        transform: var(--base-transform, none) scale(1.1);
         box-shadow: 0 0 30px #ff00ff88;
+        border-color: rgba(255, 0, 255, 0.7);
+        background: rgba(60, 10, 80, 0.75);
+    }
+
+    .upgradeNode:active {
+        transform: var(--base-transform, none) scale(0.97);
+    }
+
+    .upgradeNode.unlocked {
+        animation: unlockPop 0.4s ease;
+    }
+
+    .iconCanvas {
+        display: block;
+        margin: 0 auto;
     }
 
     .uName {
-        color: white;
+        color: #fff;
         font-size: 18px;
         margin-top: 8px;
         letter-spacing: 1px;
@@ -105,69 +184,155 @@
         width: 80%;
         height: 8px;
         margin: 12px auto;
-        background: rgba(255,255,255,0.25);
+        background: rgba(255, 255, 255, 0.25);
         border-radius: 4px;
+        overflow: hidden;
     }
 
     .progressBar div {
         height: 100%;
         width: 0%;
-        background: #ff00ff;
+        background: linear-gradient(90deg, #ff00ff, #cc44ff);
         border-radius: 4px;
-        transition: width 0.2s ease;
+        transition: width 0.3s ease;
+        box-shadow: 0 0 6px #ff00ff88;
     }
 
-    #upOrbit  { top: 20px; right: 85px; transform: translateX(-50%); }
-    #upRadius { top: 50%; left: 20px;  transform: translateY(-50%); }
-    #upSpeed  { top: 50%; right: 20px; transform: translateY(-50%); }
+    .uCost {
+        color: #ff88ff;
+        font-size: 11px;
+        margin-top: 2px;
+        opacity: 0.8;
+    }
 
-    #upLaser  { top: 170px; left: 50%; transform: translateX(-50%); }
-    #upShield { top: 290px; left: 130px; }
-    #upMagnet { top: 290px; right: 130px; }
-    #upDash   { top: 410px; left: 50%; transform: translateX(-50%); }
-    #upDual   { top: 20px; right: 245px; transform: translateX(-50%); }
+    .uReq {
+        color: #aa66aa;
+        font-size: 10px;
+        margin-top: 1px;
+        opacity: 0.6;
+    }
 
-    #lineCanvas {
-        position: absolute;
-        top: 0;
+    .hpBar {
+        position: fixed;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        display: flex;
+        gap: 6px;
+        pointer-events: none;
+    }
+
+    .hpHeart {
+        font-size: 24px;
+        filter: drop-shadow(0 0 4px #ff0044);
+        transition: opacity 0.3s;
+    }
+
+    .hpHeart.empty {
+        opacity: 0.2;
+        filter: grayscale(1);
+    }
+
+    .waveBar {
+        position: fixed;
+        bottom: 0;
         left: 0;
-        z-index: 1;
+        width: 100%;
+        height: 4px;
+        z-index: 99;
+        background: rgba(255,255,255,0.1);
+        pointer-events: none;
     }
-    #backBtn {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 100;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: none;
-    background: #222;
-    color: white;
-    cursor: pointer;
-    font-size: 16px;
+
+    .waveBar div {
+        height: 100%;
+        background: linear-gradient(90deg, #ff00ff, #ff8800);
+        transition: width 0.3s;
+        box-shadow: 0 0 8px #ff00ff;
     }
+
+    .damageOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 98;
+        pointer-events: none;
+        background: radial-gradient(ellipse at center, transparent 50%, rgba(255,0,0,0.4) 100%);
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+
     #closeGlass {
-        position: absolute;
-        top: -80px;
-        right: -80px;
-        font-size: 80px;
+        position: fixed;
+        top: 16px;
+        right: 20px;
+        z-index: 250;
         color: #ff00ff;
+        font-size: 42px;
+        line-height: 1;
         cursor: pointer;
-        transition: .25s ease;
-        z-index: 3;
+        user-select: none;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(40, 0, 50, 0.6);
+        border: 1px solid rgba(255, 0, 255, 0.4);
+        transition: transform 0.2s ease, background 0.2s, box-shadow 0.2s;
     }
 
     #closeGlass:hover {
-        transform: scale(1.2);
+        transform: scale(1.15);
+        background: rgba(80, 0, 100, 0.8);
+        box-shadow: 0 0 20px #ff00ff66;
     }
 
-    .iconCanvas {
-        margin-top: 4px;
-        z-index: 3;
+    #upOrbit   { top: 10px;  left: 50%;  --base-transform: translateX(-50%); }
+    #upRadius  { top: 155px; left: 17%;  --base-transform: translateX(-50%); }
+    #upLaser   { top: 155px; left: 50%;  --base-transform: translateX(-50%); }
+    #upSpeed   { top: 155px; left: 83%;  --base-transform: translateX(-50%); }
+    #upShield  { top: 300px; left: 12%;  --base-transform: translateX(-50%); }
+    #upDual    { top: 300px; left: 37%;  --base-transform: translateX(-50%); }
+    #upPierce  { top: 300px; left: 63%;  --base-transform: translateX(-50%); }
+    #upMagnet  { top: 300px; left: 88%;  --base-transform: translateX(-50%); }
+    #upCryo    { top: 445px; left: 12%;  --base-transform: translateX(-50%); }
+    #upDash    { top: 445px; left: 37%;  --base-transform: translateX(-50%); }
+    #upMulti   { top: 445px; left: 63%;  --base-transform: translateX(-50%); }
+    #upGravity { top: 445px; left: 88%;  --base-transform: translateX(-50%); }
+    #upNova    { top: 590px; left: 33%;  --base-transform: translateX(-50%); }
+    #upRegen   { top: 590px; left: 67%;  --base-transform: translateX(-50%); }
+
+    @media (max-width: 800px) {
+        .info {
+            font-size: 18px;
+        }
+
+        .upgradeNode {
+            width: 98px;
+            padding: 6px;
+        }
+
+        .uName {
+            font-size: 14px;
+        }
+
+        #closeGlass {
+            top: 8px;
+            right: 10px;
+            font-size: 44px;
+        }
+    }
+
+    @keyframes unlockPop {
+        0%   { transform: var(--base-transform, none) scale(0.5); filter: brightness(2); }
+        60%  { transform: var(--base-transform, none) scale(1.2); }
+        100% { transform: var(--base-transform, none) scale(1); }
     }
 
     @keyframes orbDeathPulse {
-        0%   { transform: scale(1);   box-shadow: 0 0 60px #ff00ff; }
+        0%   { transform: scale(1); box-shadow: 0 0 60px #ff00ff; }
         100% { transform: scale(1.4); box-shadow: 0 0 140px #ff00ff; }
     }
 </style>
@@ -176,6 +341,9 @@
 
 
 <div class="info" id="info">Points: 0</div>
+<div class="hpBar" id="hpBar"></div>
+<div class="waveBar" id="waveBar"><div id="waveProgress"></div></div>
+<div class="damageOverlay" id="damageOverlay"></div>
 <div>
     <button id="backBtn">← Menu</button>
 </div>
@@ -185,7 +353,8 @@
 <div id="upgradeOrb"></div>
 
 <div id="upgradeGlass">
-    
+<div id="treeViewport">
+    <div id="treeContent">
     <div id="upgradeStarContainer">
 
 
@@ -236,12 +405,44 @@
             <div class="progressBar"><div></div></div>
         </div>
 
-        <canvas id="lineCanvas" width="620" height="620"></canvas>
+        <div class="upgradeNode inner" id="upPierce">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Pierce</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upCryo">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Cryo</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upGravity">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Gravity</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upMulti">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Multi</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upNova">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Nova</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upRegen">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Regen</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+
+        <canvas id="lineCanvas" width="900" height="760"></canvas>
 
 
-        <div id="closeGlass">×</div>
-
+        </div>
+        </div>
     </div>
+    <div id="closeGlass">×</div>
 </div>
 <script>
 const canvas = document.getElementById("gameCanvas");
@@ -291,17 +492,107 @@ let player2 = null;
 let wave = 1;
 let inBossFight = false;
 let enemiesKilledThisWave = 0;
-let enemiesToNextBoss = 25;
+let enemiesToNextBoss = 30;
 
 let bossLevel = 0;
 
+let playerHP = 3;
+let maxHP = 3;
+let damageFlash = 0;
+
+let pierceLevel = 0;
+let cryoLevel = 0;
+let cryoRadius = 0;
+let cryoSlow = 1;
+let gravityLevel = 0;
+let multiLevel = 0;
+let novaLevel = 0;
+let novaCooldown = 0;
+let novaMaxCooldown = 8000;
+let novaRadius = 150;
+let novaDamage = 2;
+let novaFlash = 0;
+let regenLevel = 0;
+let regenTimer = 0;
+let regenInterval = 15000;
+
 let lastFrameTime = 0;
+
+let offsetX = 0;
+let offsetY = 0;
+let isDraggingTree = false;
+let lastX = 0;
+let lastY = 0;
+let scale = 1;
+let dragMoved = false;
+
+
+const viewport = document.getElementById("treeViewport");
+const content = document.getElementById("treeContent");
+
 
 const infoDiv = document.getElementById("info");
 
 document.getElementById("backBtn").onclick = () => {
     window.location.href = "index.html";
 };
+
+viewport.addEventListener("mousedown", (e) => {
+    if (e.target.closest(".upgradeNode")) return;
+
+    isDraggingTree = true;
+    dragMoved = false;
+
+    lastX = e.clientX;
+    lastY = e.clientY;
+});
+
+window.addEventListener("mousemove", (e) => {
+    if (!isDraggingTree) return;
+
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+        dragMoved = true;
+    }
+
+    offsetX += dx;
+    offsetY += dy;
+
+    lastX = e.clientX;
+    lastY = e.clientY;
+
+    updateTreeTransform();
+});
+
+window.addEventListener("mouseup", () => {
+    isDraggingTree = false;
+});
+
+function updateTreeTransform() {
+    content.style.transform =
+        `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+
+    drawConnectionLines(); // keep lines aligned
+}
+
+viewport.addEventListener("wheel", (e) => {
+    e.preventDefault();
+
+    const zoomSpeed = 0.1;
+    scale += e.deltaY < 0 ? zoomSpeed : -zoomSpeed;
+
+    scale = Math.max(0.5, Math.min(2, scale));
+
+    updateTreeTransform();
+});
+
+const upgradeNodes = [...document.querySelectorAll(".upgradeNode")];
+upgradeNodes.forEach(n => {
+    const name = n.querySelector(".uName").textContent.trim();
+    n.dataset.name = name;
+});
 
 let shakeTime = 0;
 function screenShake() {
@@ -423,33 +714,64 @@ class OrbitBall {
 }
 
 const enemyTypes = {
-    fast:   { color: "#ff0000",  size: 8,  gravity: 0.20, life: 1, speedMultiplier: 1.8 },
-    medium: { color: "#ff8800",  size: 14, gravity: 0.10, life: 2, speedMultiplier: 0.8 },
-    slow:   { color: "#8800ff",  size: 20, gravity: 0.05, life: 6, speedMultiplier: 0.4 }
+    fast:     { color: "#ff0000", size: 8,  gravity: 0.20, life: 1, speedMultiplier: 1.8, pts: 1 },
+    medium:   { color: "#ff8800", size: 14, gravity: 0.10, life: 2, speedMultiplier: 0.8, pts: 1 },
+    slow:     { color: "#8800ff", size: 20, gravity: 0.05, life: 6, speedMultiplier: 0.4, pts: 2 },
+    zigzag:   { color: "#00ff88", size: 10, gravity: 0.12, life: 2, speedMultiplier: 1.2, pts: 2, zigzags: true },
+    shielded: { color: "#ffff00", size: 16, gravity: 0.08, life: 3, speedMultiplier: 0.6, pts: 3, hasShield: true },
+    splitter: { color: "#ff4488", size: 18, gravity: 0.07, life: 2, speedMultiplier: 0.7, pts: 2, splits: true },
+    ghost:    { color: "#8888ff", size: 12, gravity: 0.10, life: 1, speedMultiplier: 1.0, pts: 3, phases: true }
 };
 
 class Enemy {
     constructor(forceType = null) {
         spawnCount++;
 
-        // Choose type
+        // Choose type based on wave
         let t;
         if (forceType) t = forceType;
         else if (spawnCount < 5) t = enemyTypes.medium;
         else if (spawnCount < 15) t = Math.random() < 0.7 ? enemyTypes.medium : enemyTypes.slow;
         else {
-            const r = Math.random();
-            if (r < 0.5)      t = enemyTypes.medium;
-            else if (r < 0.8) t = enemyTypes.slow;
-            else              t = enemyTypes.fast;
+            // Build pool based on wave
+            let pool = [
+                { type: enemyTypes.medium, w: 35 },
+                { type: enemyTypes.slow,   w: 20 },
+                { type: enemyTypes.fast,   w: 15 }
+            ];
+            if (wave >= 3) pool.push({ type: enemyTypes.zigzag,   w: 12 });
+            if (wave >= 4) pool.push({ type: enemyTypes.shielded, w: 8 });
+            if (wave >= 5) pool.push({ type: enemyTypes.splitter, w: 8 });
+            if (wave >= 6) pool.push({ type: enemyTypes.ghost,    w: 7 });
+
+            const totalW = pool.reduce((s, p) => s + p.w, 0);
+            let r = Math.random() * totalW;
+            t = pool[pool.length - 1].type;
+            for (const p of pool) {
+                r -= p.w;
+                if (r <= 0) { t = p.type; break; }
+            }
         }
 
         Object.assign(this, JSON.parse(JSON.stringify(t)));
-        // Increase health at low difficulty
-        const healthScale = 2.4 - (difficultyRamp * 0.8);
-        // starts 1.8x HP goes to normal
 
+        // Scale health with difficulty
+        const healthScale = 2.0 - (difficultyRamp * 0.6);
         this.life = Math.ceil(this.life * healthScale);
+
+        // Wave scaling: enemies get tougher
+        if (wave > 5) {
+            this.life += Math.floor((wave - 5) * 0.3);
+            this.speedMultiplier *= 1 + (wave - 5) * 0.02;
+        }
+
+        // Type-specific init
+        if (this.zigzags) this.zigTimer = Math.random() * Math.PI * 2;
+        if (this.phases) {
+            this.phaseTimer = Math.random() * Math.PI * 2;
+            this.visible = true;
+        }
+        if (this.hasShield) this.shielded = true;
 
         // Spawn at edge
         const e = Math.random();
@@ -462,26 +784,74 @@ class Enemy {
         this.vy = 0;
     }
 
+    takeDamage(dmg) {
+        if (this.phases && !this.visible) return false;
+        if (this.shielded) {
+            this.shielded = false;
+            this.color = this.color === "#ffff00" ? "#cc8800" : this.color;
+            for (let i = 0; i < 8; i++)
+                particles.push(new Particle(this.x, this.y, "#ffff00"));
+            return false;
+        }
+        this.life -= dmg;
+        return true;
+    }
+
     update() {
         const dx = center.x - this.x;
         const dy = center.y - this.y;
         const dist = Math.hypot(dx, dy);
 
-        const speedScale = 0.1 + (difficultyRamp * 0.4);
-        // starts at 30% speed ramps to 100%
+        const speedScale = 0.15 + (difficultyRamp * 0.35);
 
         this.vx += dx / dist * this.gravity * this.speedMultiplier * speedScale;
         this.vy += dy / dist * this.gravity * this.speedMultiplier * speedScale;
+
+        // Zigzag oscillation
+        if (this.zigzags) {
+            this.zigTimer += 0.08;
+            const perpX = -dy / dist;
+            const perpY = dx / dist;
+            this.vx += perpX * Math.sin(this.zigTimer) * 0.8;
+            this.vy += perpY * Math.sin(this.zigTimer) * 0.8;
+        }
+
+        // Ghost phasing
+        if (this.phases) {
+            this.phaseTimer += 0.025;
+            this.visible = Math.sin(this.phaseTimer) > -0.3;
+        }
+
+        // Cryo slowdown
+        if (cryoLevel > 0) {
+            const cd = Math.hypot(this.x - center.x, this.y - center.y);
+            if (cd < cryoRadius) {
+                this.vx *= cryoSlow;
+                this.vy *= cryoSlow;
+            }
+        }
 
         this.x += this.vx;
         this.y += this.vy;
     }
 
     draw() {
+        ctx.save();
+        if (this.phases && !this.visible) ctx.globalAlpha = 0.15;
+
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
         ctx.fill();
+
+        if (this.shielded) {
+            ctx.strokeStyle = "rgba(255,255,0,0.5)";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size + 5, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        ctx.restore();
     }
 }
 
@@ -533,8 +903,6 @@ let enemyInterval = null;
 
 function rebuildFromUpgrades() {
     orbitBalls = [];
-
-    // Reset base player
     player = new PlayerBall();
 
     const orbitLevel  = upgrades.find(u => u.name === "Orbit").level;
@@ -542,24 +910,17 @@ function rebuildFromUpgrades() {
     const speedLevel  = upgrades.find(u => u.name === "Speed").level;
     const dualLevel   = upgrades.find(u => u.name === "Dual").level;
 
-    // Rebuild orbit balls
     for (let i = 0; i < 1 + orbitLevel; i++) {
         const o = new OrbitBall(Math.random() * Math.PI * 2);
         o.angularSpeed += speedLevel * 0.015;
         orbitBalls.push(o);
     }
 
-    // Apply radius upgrades
     player.orbitRadius = 150 + radiusLevel * 25;
 
-    // Recreate dual player
-    if (dualLevel > 0) {
-        player2 = new PlayerBall();
-    } else {
-        player2 = null;
-    }
+    if (dualLevel > 0) player2 = new PlayerBall();
+    else player2 = null;
 
-    // Reapply other systems
     const laserLevel = upgrades.find(u => u.name === "Laser").level;
     laserDamage = 1 + laserLevel;
     laserFireDelay = 16;
@@ -578,6 +939,33 @@ function rebuildFromUpgrades() {
     dashLevel = dashUp;
     dashCooldown = Math.max(800, 2500 - dashUp * 300);
     dashInvulTime = 300 + dashUp * 80;
+
+    // New upgrades
+    const pUp = upgrades.find(u => u.name === "Pierce").level;
+    pierceLevel = pUp;
+
+    const cUp = upgrades.find(u => u.name === "Cryo").level;
+    cryoLevel = cUp;
+    cryoRadius = cUp > 0 ? 120 + cUp * 60 : 0;
+    cryoSlow = cUp > 0 ? 0.97 - cUp * 0.02 : 1;
+
+    const gUp = upgrades.find(u => u.name === "Gravity").level;
+    gravityLevel = gUp;
+
+    const mUp = upgrades.find(u => u.name === "Multi").level;
+    multiLevel = mUp;
+
+    const nUp = upgrades.find(u => u.name === "Nova").level;
+    novaLevel = nUp;
+    novaMaxCooldown = nUp > 0 ? Math.max(3000, 8000 - nUp * 1500) : 8000;
+    novaRadius = 150 + nUp * 40;
+    novaDamage = 2 + nUp;
+    novaCooldown = 0;
+
+    const rUp = upgrades.find(u => u.name === "Regen").level;
+    regenLevel = rUp;
+    regenInterval = rUp > 0 ? Math.max(6000, 15000 - rUp * 3000) : 15000;
+    regenTimer = 0;
 }
 
 function startEnemySpawn() {
@@ -585,12 +973,12 @@ function startEnemySpawn() {
 
     function spawnLoop() {
 
-        const maxEnemies = 8 + wave * 4;
+        const maxEnemies = 6 + wave * 3;
 
         if (!gameOver && !isPaused && enemies.length < maxEnemies){
 
-            // Boss logic
-            if (spawnCount > 15 && Math.random() < 0.2) {
+            // Fast enemy warning burst
+            if (spawnCount > 15 && Math.random() < 0.15) {
 
                 const edge = Math.random();
 
@@ -615,8 +1003,7 @@ function startEnemySpawn() {
         }
 
         
-        const delay = Math.max(250, 1200 - wave * 80);
-        // starts at 800ms goes to 300ms
+        const delay = Math.max(300, 1500 - wave * 70);
 
         enemyInterval = setTimeout(spawnLoop, delay);
     }
@@ -674,20 +1061,65 @@ function updateLaserSystem(deltaTime) {
     const delay = 400 - lvl * 60;
     const dmg   = laserDamage + lvl * 1;
 
-    let nearest = null;
-    let nd = Infinity;
-    for (let e of enemies) {
-        const d = Math.hypot(e.x - player.x, e.y - player.y);
-        if (d < nd) { nd = d; nearest = e; }
-    }
-    if (!nearest) return;
+    // Multi: fire at multiple targets
+    const targetCount = 1 + multiLevel;
+    let targeted = new Set();
 
-    fireLaserAt(nearest, dmg);
-    laserCooldown = delay;
+    for (let t = 0; t < targetCount; t++) {
+        let nearest = null;
+        let nd = Infinity;
+        for (let e of enemies) {
+            if (targeted.has(e)) continue;
+            if (e.phases && !e.visible) continue;
+            const d = Math.hypot(e.x - player.x, e.y - player.y);
+            if (d < nd) { nd = d; nearest = e; }
+        }
+        if (!nearest) break;
+        targeted.add(nearest);
+
+        // Fire with pierce chain
+        fireLaserChain(nearest, dmg);
+    }
+
+    if (targeted.size > 0) laserCooldown = delay;
+}
+
+function fireLaserChain(startEnemy, dmg) {
+    let targets = [startEnemy];
+    let hit = new Set([startEnemy]);
+
+    for (let i = 0; i < pierceLevel; i++) {
+        let last = targets[targets.length - 1];
+        let nearest = null;
+        let nd = Infinity;
+        for (let e of enemies) {
+            if (hit.has(e)) continue;
+            if (e.phases && !e.visible) continue;
+            const d = Math.hypot(e.x - last.x, e.y - last.y);
+            if (d < nd && d < 200) { nd = d; nearest = e; }
+        }
+        if (!nearest) break;
+        targets.push(nearest);
+        hit.add(nearest);
+    }
+
+    for (let enemy of targets) {
+        fireLaserAt(enemy, dmg);
+    }
+
+    // Draw chain lines between pierce targets
+    for (let i = 1; i < targets.length; i++) {
+        activeLaserBeams.push({
+            x1: targets[i-1].x, y1: targets[i-1].y,
+            x2: targets[i].x, y2: targets[i].y,
+            alpha: 0.7
+        });
+    }
 }
 
 function fireLaserAt(enemy, dmg) {
-    enemy.life -= dmg;
+    if (enemy.takeDamage) enemy.takeDamage(dmg);
+    else enemy.life -= dmg;
 
     activeLaserBeams.push({
         x1: player.x, y1: player.y,
@@ -732,6 +1164,93 @@ function drawShield() {
     ctx.shadowBlur = 0;
 }
 
+function drawCryoField() {
+    if (cryoLevel === 0) return;
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, cryoRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(0,180,255,0.25)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = "rgba(0,180,255,0.04)";
+    ctx.fill();
+}
+
+function applyGravityWell() {
+    if (gravityLevel === 0) return;
+    const pull = 0.002 * gravityLevel;
+    for (let i = 0; i < enemies.length; i++) {
+        for (let j = i + 1; j < enemies.length; j++) {
+            const a = enemies[i], b = enemies[j];
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 250 && dist > 1) {
+                const fx = dx / dist * pull;
+                const fy = dy / dist * pull;
+                a.vx += fx; a.vy += fy;
+                b.vx -= fx; b.vy -= fy;
+            }
+        }
+    }
+}
+
+function updateNova(delta) {
+    if (novaLevel === 0) return;
+    novaCooldown -= delta;
+    if (novaCooldown > 0) return;
+    novaCooldown = novaMaxCooldown;
+    for (let e of enemies) {
+        const d = Math.hypot(e.x - center.x, e.y - center.y);
+        if (d < novaRadius) {
+            e.life -= novaDamage;
+            for (let i = 0; i < 5; i++)
+                particles.push(new Particle(e.x, e.y, "#ff8800"));
+        }
+    }
+    novaFlash = 1;
+    shakeTime = 8;
+    for (let i = 0; i < 30; i++)
+        particles.push(new Particle(center.x, center.y, "#ffaa00"));
+}
+
+function drawNovaFlash() {
+    if (novaFlash <= 0) return;
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, novaRadius * (1 - novaFlash * 0.3), 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255,150,0,${novaFlash})`;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    novaFlash -= 0.025;
+}
+
+function updateRegen(delta) {
+    if (regenLevel === 0) return;
+    if (playerHP >= maxHP) return;
+    regenTimer -= delta;
+    if (regenTimer > 0) return;
+    playerHP++;
+    regenTimer = regenInterval;
+    updateHPDisplay();
+    for (let i = 0; i < 12; i++)
+        particles.push(new Particle(center.x, center.y, "#00ff88"));
+}
+
+function updateHPDisplay() {
+    const bar = document.getElementById("hpBar");
+    bar.innerHTML = "";
+    for (let i = 0; i < maxHP; i++) {
+        const h = document.createElement("span");
+        h.className = "hpHeart" + (i >= playerHP ? " empty" : "");
+        h.textContent = "\u2764";
+        bar.appendChild(h);
+    }
+}
+
+function updateWaveProgress() {
+    const pct = Math.min(100, (enemiesKilledThisWave / enemiesToNextBoss) * 100);
+    document.getElementById("waveProgress").style.width = pct + "%";
+}
+
 function updateShieldCollision(e) {
     if (shieldLevel === 0) return;
 
@@ -746,7 +1265,8 @@ function updateShieldCollision(e) {
         e.vx += nx * shieldBounce;
         e.vy += ny * shieldBounce;
 
-        e.life -= shieldDamage;
+        if (e.takeDamage) e.takeDamage(shieldDamage);
+        else e.life -= shieldDamage;
         points++;
 
         for (let i = 0; i < 6; i++)
@@ -851,20 +1371,15 @@ function checkWaveProgression() {
 function startBossFight() {
     inBossFight = true;
     bossLevel++;
-
-    // clear normal enemies for focus
     enemies = [];
 
-    // spawn boss based on level
-    if (bossLevel === 1) {
-        enemies.push(new BossEnemy()); // splitting boss
-    }
-    else if (bossLevel === 2) {
-        enemies.push(new FastBoss());
-    }
-    else {
-        enemies.push(new TankBoss());
-    }
+    // Cycle through 5 boss types
+    const bossType = ((bossLevel - 1) % 5) + 1;
+    if (bossType === 1) enemies.push(new BossEnemy());
+    else if (bossType === 2) enemies.push(new FastBoss());
+    else if (bossType === 3) enemies.push(new TankBoss());
+    else if (bossType === 4) enemies.push(new OrbiterBoss());
+    else enemies.push(new PulseBoss());
 }
 
 class FastBoss extends BossEnemy {
@@ -891,24 +1406,126 @@ class TankBoss extends BossEnemy {
     constructor() {
         super();
         this.size = 60;
-        this.life = 10;
+        this.life = 10 + bossLevel * 3;
         this.color = "#8800ff";
+    }
+}
+
+class OrbiterBoss extends BossEnemy {
+    constructor() {
+        super(canvas.width / 2 + 200, canvas.height / 2);
+        this.size = 35;
+        this.life = 12 + bossLevel * 2;
+        this.color = "#00ffaa";
+        this.isBoss = true;
+        this.orbitAngle = 0;
+        this.orbitSpeed = 0.015;
+        this.orbitDist = 250;
+        this.spawnTimer = 0;
+        this.maxGeneration = 0;
+    }
+    update() {
+        this.orbitAngle += this.orbitSpeed;
+        this.x = center.x + Math.cos(this.orbitAngle) * this.orbitDist;
+        this.y = center.y + Math.sin(this.orbitAngle) * this.orbitDist;
+        this.vx = 0; this.vy = 0;
+        this.spawnTimer++;
+        if (this.spawnTimer > 180) {
+            this.spawnTimer = 0;
+            enemies.push(new Enemy(enemyTypes.fast));
+        }
+        if (this.life < 6) this.orbitSpeed = 0.025;
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = this.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // Draw orbit path
+        ctx.strokeStyle = "rgba(0,255,170,0.15)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, this.orbitDist, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+}
+
+class PulseBoss extends BossEnemy {
+    constructor() {
+        super();
+        this.size = 50;
+        this.life = 18 + bossLevel * 3;
+        this.color = "#ff8800";
+        this.isBoss = true;
+        this.pulseTimer = 0;
+        this.pulseFlash = 0;
+        this.maxGeneration = 0;
+    }
+    update() {
+        const dx = center.x - this.x;
+        const dy = center.y - this.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 200) {
+            this.vx += dx / dist * 0.04;
+            this.vy += dy / dist * 0.04;
+        } else {
+            this.vx *= 0.95;
+            this.vy *= 0.95;
+        }
+        this.x += this.vx;
+        this.y += this.vy;
+        this.pulseTimer++;
+        if (this.pulseTimer > 300) {
+            this.pulseTimer = 0;
+            this.pulseFlash = 1;
+            // Push all orbit balls outward
+            orbitBalls.forEach(o => {
+                const pdx = o.x - this.x;
+                const pdy = o.y - this.y;
+                const pd = Math.hypot(pdx, pdy) || 1;
+                o.angle += (pdx / pd) * 0.5;
+            });
+            shakeTime = 8;
+            for (let i = 0; i < 20; i++)
+                particles.push(new Particle(this.x, this.y, "#ff8800"));
+        }
+    }
+    draw() {
+        if (this.pulseFlash > 0) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 200 * (1 - this.pulseFlash), 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255,136,0,${this.pulseFlash})`;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            this.pulseFlash -= 0.02;
+        }
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = this.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
     }
 }
 
 function endBossFight() {
     inBossFight = false;
-
     wave++;
     enemiesKilledThisWave = 0;
+    enemiesToNextBoss += 12;
 
-    enemiesToNextBoss += 10;
-
-    difficultyRamp += 0.1;
+    difficultyRamp += 0.08;
     if (difficultyRamp > 1) difficultyRamp = 1;
 
-    // spawn burst for next wave
-    for (let i = 0; i < 5 + wave * 2; i++) {
+    // Bonus points for boss kill
+    points += 5 + bossLevel * 3;
+
+    // Spawn burst for next wave
+    for (let i = 0; i < 3 + wave * 2; i++) {
         enemies.push(new Enemy());
     }
 }
@@ -924,17 +1541,22 @@ function drawDashIcon(ctx) {
     ctx.lineTo(20, 40);
     ctx.stroke();
 }
-// The upgradesss Ik very cool it is just the dictary for them
+// The upgradesss - now with level-based requirements
 const upgrades = [
-    { name: "Orbit",  cost: 5,  level: 0, max: 5 },
-    { name: "Radius", cost: 10, level: 0, max: 5 },
-    { name: "Speed",  cost: 15, level: 0, max: 5 },
-
-    { name: "Laser",  cost: 25, level: 0, max: 5 },
-    { name: "Shield", cost: 25, level: 0, max: 5 },
-    { name: "Magnet", cost: 25, level: 0, max: 5 },
-    { name: "Dash",   cost: 25, level: 0, max: 5 },
-    { name: "Dual", cost: 40, level: 0, max: 1 }
+    { name: "Orbit",   cost: 5,   level: 0, max: 5, requires: [] },
+    { name: "Radius",  cost: 8,   level: 0, max: 5, requires: [{name:"Orbit", level:1}] },
+    { name: "Speed",   cost: 8,   level: 0, max: 5, requires: [{name:"Orbit", level:1}] },
+    { name: "Laser",   cost: 12,  level: 0, max: 5, requires: [{name:"Orbit", level:1}] },
+    { name: "Shield",  cost: 14,  level: 0, max: 5, requires: [{name:"Radius", level:1}] },
+    { name: "Magnet",  cost: 14,  level: 0, max: 5, requires: [{name:"Speed", level:1}] },
+    { name: "Dash",    cost: 18,  level: 0, max: 5, requires: [{name:"Shield", level:1}, {name:"Magnet", level:1}] },
+    { name: "Dual",    cost: 30,  level: 0, max: 1, requires: [{name:"Laser", level:2}] },
+    { name: "Pierce",  cost: 18,  level: 0, max: 3, requires: [{name:"Laser", level:2}] },
+    { name: "Cryo",    cost: 18,  level: 0, max: 3, requires: [{name:"Shield", level:2}] },
+    { name: "Gravity", cost: 22,  level: 0, max: 3, requires: [{name:"Magnet", level:3}] },
+    { name: "Multi",   cost: 35,  level: 0, max: 2, requires: [{name:"Pierce", level:2}, {name:"Dual", level:1}] },
+    { name: "Nova",    cost: 22,  level: 0, max: 3, requires: [{name:"Dash", level:2}] },
+    { name: "Regen",   cost: 28,  level: 0, max: 3, requires: [{name:"Cryo", level:1}, {name:"Nova", level:1}] }
 ];
 
 const glass = document.getElementById("upgradeGlass");
@@ -944,9 +1566,32 @@ const closeGlass = document.getElementById("closeGlass");
 function openUpgradeMenu() {
     isPaused = true;
     glass.style.display = "flex";
+    requestAnimationFrame(drawConnectionLines);
+    updateBars();
     requestAnimationFrame(() => {
         glass.classList.add("open");
     });
+}
+
+function canBuyUpgrade(u) {
+    return u.requires.every(req => {
+        const up = upgrades.find(x => x.name === req.name);
+        return up && up.level >= req.level;
+    });
+}
+
+function getUpgradeCost(u) {
+    return Math.floor(u.cost * (1 + u.level * 0.5));
+}
+
+function spawnUpgradeParticles(x, y) {
+    for (let i = 0; i < 20; i++) {
+        particles.push(new Particle(
+            x,
+            y,
+            "#ff00ff"
+        ));
+    }
 }
 
 function closeUpgradeMenu() {
@@ -974,6 +1619,19 @@ function closeUpgradeMenu() {
             // For if points are kept or not
             points = Math.floor(savedPoints * 0.7) + 5;
             infoDiv.textContent = "Points: " + points;
+
+            // Reset timing and cooldowns so laser/dash work immediately
+            lastFrameTime = 0;
+            laserCooldown = 0;
+            dashReady = true;
+            dashVulnerable = true;
+            dashCooldownProgress = 0;
+            novaCooldown = 0;
+            novaFlash = 0;
+            regenTimer = 0;
+            playerHP = maxHP;
+            updateHPDisplay();
+            enemiesKilledThisWave = 0;
 
             startEnemySpawn();
             animate();
@@ -1017,16 +1675,16 @@ function drawConnectionLines() {
     const lineCanvas = document.getElementById("lineCanvas");
     const lctx = lineCanvas.getContext("2d");
 
-    lctx.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
+    const star = document.getElementById("upgradeStarContainer");
+    lineCanvas.width = Math.max(1, Math.floor(star.clientWidth));
+    lineCanvas.height = Math.max(1, Math.floor(star.clientHeight));
 
-    const nodes = {
-        upOrbit, upRadius, upSpeed,
-        upLaser, upShield, upMagnet, upDash
-    };
+    lctx.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
+    lctx.globalAlpha = 1;
 
     function centerOf(node) {
         const r1 = node.getBoundingClientRect();
-        const r2 = lineCanvas.getBoundingClientRect();
+        const r2 = star.getBoundingClientRect();
         return {
             x: r1.left + r1.width/2 - r2.left,
             y: r1.top  + r1.height/2 - r2.top
@@ -1034,24 +1692,33 @@ function drawConnectionLines() {
     }
 
     const pairs = [
-        [upDual,   upOrbit],
+        [upOrbit,  upRadius],
         [upOrbit,  upLaser],
+        [upOrbit,  upSpeed],
         [upRadius, upShield],
+        [upLaser,  upDual],
+        [upLaser,  upPierce],
         [upSpeed,  upMagnet],
-        [upLaser,  upShield],
+        [upShield, upCryo],
         [upShield, upDash],
-        [upDash,   upMagnet],
-        [upLaser,  upDual]
+        [upMagnet, upDash],
+        [upMagnet, upGravity],
+        [upDual,   upMulti],
+        [upPierce, upMulti],
+        [upDash,   upNova],
+        [upCryo,   upRegen],
+        [upNova,   upRegen]
     ];
 
     pairs.forEach(([A, B]) => {
         const a = centerOf(A);
         const b = centerOf(B);
 
-        const glow =
-            (hoveredNode === A.id || hoveredNode === B.id)
-                ? "#ff00ff"
-                : "#553355";
+        const unlocked =
+            upgrades.find(u => u.name === A.querySelector(".uName").textContent)?.level > 0 &&
+            upgrades.find(u => u.name === B.querySelector(".uName").textContent)?.level > 0;
+
+        const glow = unlocked ? "#ff00ff" : "#553355";
 
         lctx.strokeStyle = glow;
         lctx.lineWidth = 4;
@@ -1066,10 +1733,12 @@ function drawConnectionLines() {
 function applyUpgrade(name) {
     const u = upgrades.find(x => x.name === name);
     if (!u) return;
+    if (!canBuyUpgrade(u)) return;
 
-    if (points >= u.cost && u.level < u.max) {
-        points = 0;
-        infoDiv.textContent = "Points: 0";
+    const cost = getUpgradeCost(u);
+    if (points >= cost && u.level < u.max && canBuyUpgrade(u)) {
+        points -= cost;
+        infoDiv.textContent = `Wave ${wave} | Points: ${points}`;
         u.level++;
 
         if (name === "Orbit")
@@ -1092,11 +1761,10 @@ function applyUpgrade(name) {
             shieldBounce += 1.5;
             shieldDamage += 1;
         }
+
         if (name === "Dual") {
-            if (!player2) {
-                player2 = new PlayerBall();
-    }
-}
+            if (!player2) player2 = new PlayerBall();
+        }
 
         if (name === "Magnet") {
             magnetLevel++;
@@ -1109,6 +1777,45 @@ function applyUpgrade(name) {
             dashInvulTime += 80;
         }
 
+        if (name === "Pierce") {
+            pierceLevel = u.level;
+        }
+
+        if (name === "Cryo") {
+            cryoLevel = u.level;
+            cryoRadius = 120 + u.level * 60;
+            cryoSlow = 0.97 - u.level * 0.02;
+        }
+
+        if (name === "Gravity") {
+            gravityLevel = u.level;
+        }
+
+        if (name === "Multi") {
+            multiLevel = u.level;
+        }
+
+        if (name === "Nova") {
+            novaLevel = u.level;
+            novaMaxCooldown = Math.max(3000, 8000 - u.level * 1500);
+            novaRadius = 150 + u.level * 40;
+            novaDamage = 2 + u.level;
+        }
+
+        if (name === "Regen") {
+            regenLevel = u.level;
+            regenInterval = Math.max(6000, 15000 - u.level * 3000);
+        }
+
+        const node = upgradeNodes.find(n => n.dataset.name === u.name);
+
+        node.classList.add("unlocked");
+        setTimeout(() => node.classList.remove("unlocked"), 400);
+
+        const rect = node.getBoundingClientRect();
+        spawnUpgradeParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+        drawConnectionLines();
         updateBars();
     }
 }
@@ -1118,9 +1825,38 @@ function updateBars() {
         const name = node.querySelector(".uName").textContent;
         const u = upgrades.find(x => x.name === name);
         if (!u) return;
-
+        if (!canBuyUpgrade(u)) {
+            node.style.opacity = 0.3;
+            node.style.filter = "grayscale(1)";
+        } else {
+            node.style.opacity = 1;
+            node.style.filter = "none";
+        }
         node.querySelector(".progressBar div").style.width =
             (u.level / u.max) * 100 + "%";
+
+        // Update cost display
+        let costEl = node.querySelector(".uCost");
+        if (!costEl) {
+            costEl = document.createElement("div");
+            costEl.className = "uCost";
+            node.querySelector(".progressBar").before(costEl);
+        }
+        if (u.level >= u.max) costEl.textContent = "MAX";
+        else costEl.textContent = `Cost: ${getUpgradeCost(u)}`;
+
+        // Show requirement hint
+        let reqEl = node.querySelector(".uReq");
+        if (!reqEl) {
+            reqEl = document.createElement("div");
+            reqEl.className = "uReq";
+            costEl.after(reqEl);
+        }
+        if (!canBuyUpgrade(u) && u.requires.length > 0) {
+            reqEl.textContent = "Needs: " + u.requires.map(r => `${r.name} Lv${r.level}`).join(", ");
+        } else {
+            reqEl.textContent = "";
+        }
     });
 }
 
@@ -1132,6 +1868,12 @@ upLaser.onclick  = () => applyUpgrade("Laser");
 upShield.onclick = () => applyUpgrade("Shield");
 upMagnet.onclick = () => applyUpgrade("Magnet");
 upDash.onclick   = () => applyUpgrade("Dash");
+upPierce.onclick = () => applyUpgrade("Pierce");
+upCryo.onclick   = () => applyUpgrade("Cryo");
+upGravity.onclick = () => applyUpgrade("Gravity");
+upMulti.onclick  = () => applyUpgrade("Multi");
+upNova.onclick   = () => applyUpgrade("Nova");
+upRegen.onclick  = () => applyUpgrade("Regen");
 
 function updateDashCooldown(delta) {
     if (!dashReady) {
@@ -1151,65 +1893,83 @@ function checkCollisions() {
             const dist = Math.hypot(dx, dy);
 
             if (dist < e.size + b.size) {
+                // Ghost immune when phased
+                if (e.phases && !e.visible) continue;
+
                 shakeTime = 5;
                 const nx = dx / dist;
                 const ny = dy / dist;
 
                 e.vx += nx * 3;
                 e.vy += ny * 3;
-                e.life--;
-                points++;
-                infoDiv.textContent = "Points: " + points;
+
+                // Use takeDamage for shielded enemies
+                const hit = e.takeDamage ? e.takeDamage(1) : (e.life--, true);
+                if (hit) {
+                    points += (e.pts || 1);
+                    infoDiv.textContent = `Wave ${wave} | Points: ${points}`;
+                }
 
                 for (let i = 0; i < 10; i++)
                     particles.push(new Particle(e.x, e.y, e.color));
             }
         }
-    for (let i = 0; i < enemies.length; i++) {
-    for (let j = i + 1; j < enemies.length; j++) {
 
-        let a = enemies[i];
-        let b = enemies[j];
-
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
-        const dist = Math.hypot(dx, dy);
-
-        if (dist < a.size + b.size) {
-
-        if (a.isBoss || b.isBoss) continue;
-
-        for (let k = 0; k < 20; k++) {
-            particles.push(new Particle(a.x, a.y, "#ff4444"));
+        // Enemy-enemy collisions
+        for (let i = 0; i < enemies.length; i++) {
+            for (let j = i + 1; j < enemies.length; j++) {
+                let a = enemies[i];
+                let b = enemies[j];
+                const dx = a.x - b.x;
+                const dy = a.y - b.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist < a.size + b.size) {
+                    if (a.isBoss || b.isBoss) continue;
+                    for (let k = 0; k < 20; k++)
+                        particles.push(new Particle(a.x, a.y, "#ff4444"));
+                    enemies.splice(j, 1);
+                    enemies.splice(i, 1);
+                    points++;
+                    enemiesKilledThisWave++;
+                    i--;
+                    break;
+                }
+            }
         }
 
-        enemies.splice(j, 1);
-        enemies.splice(i, 1);
-        points++;
-
-        i--;
-        break;
-        }
-    }
-}
-        // Enemy hits center You die haha
+        // Enemy hits center → lose HP instead of instant death
         if (Math.hypot(e.x - center.x, e.y - center.y) < 20) {
-            // Dash hasnt really been worked out so I will have it as this :)
             if (!dashVulnerable) continue;
 
-            gameOver = true;
-            isPaused = true;
-            savedPoints = points;
-            restartAfterMenu = true;
+            playerHP--;
+            updateHPDisplay();
+            shakeTime = 12;
 
-            // Orb pulses and then goes weeeeee
-            const orb = document.getElementById("upgradeOrb");
-            orb.style.animation = "orbDeathPulse 0.3s infinite alternate";
+            // Red flash
+            const overlay = document.getElementById("damageOverlay");
+            overlay.style.opacity = "1";
+            setTimeout(() => overlay.style.opacity = "0", 200);
 
-            setTimeout(() => {
-                orb.style.animation = "";
-                openUpgradeMenu();
-            }, 1200);
+            // Remove this enemy
+            e.life = 0;
+
+            for (let i = 0; i < 20; i++)
+                particles.push(new Particle(center.x, center.y, "#ff0000"));
+
+            if (playerHP <= 0) {
+                gameOver = true;
+                isPaused = true;
+                savedPoints = points;
+                restartAfterMenu = true;
+
+                const orb = document.getElementById("upgradeOrb");
+                orb.style.animation = "orbDeathPulse 0.3s infinite alternate";
+
+                setTimeout(() => {
+                    orb.style.animation = "";
+                    openUpgradeMenu();
+                }, 1200);
+            }
         }
     }
 }
@@ -1220,10 +1980,8 @@ function animate(now = 0) {
     const delta = lastFrameTime ? now - lastFrameTime : 16;
     lastFrameTime = now;
 
-    // Lines between upgrades
-    drawConnectionLines();
     drawCooldownWheel();
-    difficultyRamp += 0.0001; // difficulty change because why not
+    difficultyRamp += 0.00004;
     if (difficultyRamp > 1) difficultyRamp = 1;
 
     if (isPaused) {
@@ -1232,18 +1990,16 @@ function animate(now = 0) {
         return;
     }
 
-    // trails
     screenShake();
     ctx.fillStyle = "rgba(0,0,0,0.2)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Baase or main ball core
+    // Core
     ctx.beginPath();
     ctx.arc(center.x, center.y, 20, 0, Math.PI * 2);
     ctx.fillStyle = "#fff";
     ctx.fill();
 
-    // Player movment and orbits
     player.update(mouse.x, mouse.y);
     player.draw();
 
@@ -1253,16 +2009,15 @@ function animate(now = 0) {
     });
 
     if (player2) {
-    // Opposite side of orbit cause you know can have 2
-    player2.angle = player.angle + Math.PI;
+        player2.angle = player.angle + Math.PI;
+        player2.x = center.x + Math.cos(player2.angle) * player2.orbitRadius;
+        player2.y = center.y + Math.sin(player2.angle) * player2.orbitRadius;
+        player2.draw();
+    }
 
-    player2.x = center.x + Math.cos(player2.angle) * player2.orbitRadius;
-    player2.y = center.y + Math.sin(player2.angle) * player2.orbitRadius;
+    // New systems
+    applyGravityWell();
 
-    player2.draw();
-}
-
-    // collisons
     enemies.forEach(e => {
         e.update();
         updateShieldCollision(e);
@@ -1276,59 +2031,71 @@ function animate(now = 0) {
     let newEnemies = [];
 
     enemies = enemies.filter(e => {
-
         if (e.life > 0) return true;
 
-        if (e.isBoss && e.generation < e.maxGeneration) {
-
-            const splitCount = 2 + e.generation; // 2 → 3 → 4
-
+        // Boss splitting
+        if (e.isBoss && e.generation !== undefined && e.generation < e.maxGeneration) {
+            const splitCount = 2 + e.generation;
             for (let i = 0; i < splitCount; i++) {
                 const angle = (Math.PI * 2 / splitCount) * i;
-
                 const child = new BossEnemy(
                     e.x + Math.cos(angle) * 10,
                     e.y + Math.sin(angle) * 10,
                     e.size * 0.6,
                     e.generation + 1
                 );
-
                 child.vx = Math.cos(angle) * 3;
                 child.vy = Math.sin(angle) * 3;
-
                 newEnemies.push(child);
             }
-
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 20; i++)
                 particles.push(new Particle(e.x, e.y, "#ff00ff"));
-            }
             enemiesKilledThisWave++;
             return false;
         }
 
-        // normal enemy death
+        // Splitter enemy: spawn 2 small fast enemies
+        if (e.splits) {
+            for (let i = 0; i < 2; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const child = new Enemy(enemyTypes.fast);
+                child.x = e.x + Math.cos(angle) * 10;
+                child.y = e.y + Math.sin(angle) * 10;
+                child.vx = Math.cos(angle) * 2;
+                child.vy = Math.sin(angle) * 2;
+                child.size = 6;
+                child.life = 1;
+                child.splits = false;
+                newEnemies.push(child);
+            }
+            for (let i = 0; i < 10; i++)
+                particles.push(new Particle(e.x, e.y, "#ff4488"));
+        }
+
+        if (!e.isBoss) enemiesKilledThisWave++;
         return false;
     });
 
-    // add new split enemies
     enemies.push(...newEnemies);
+
     let bossAlive = false;
+    enemies.forEach(e => { if (e.isBoss) bossAlive = true; });
+    if (inBossFight && !bossAlive) endBossFight();
 
-    enemies.forEach(e => {
-        if (e.isBoss) bossAlive = true;
-    });
-
-    if (inBossFight && !bossAlive) {
-        endBossFight();
-    }
-
-    // visuals
     updateLaserSystem(delta);
     checkWaveProgression();
+    updateNova(delta);
+    updateRegen(delta);
     drawLaserBeams();
     drawShield();
+    drawCryoField();
+    drawNovaFlash();
     drawDashTrail();
     updateDashCooldown(delta);
+    updateWaveProgress();
+
+    // Update HUD
+    infoDiv.textContent = `Wave ${wave} | Points: ${points}`;
 
     ctx.restore();
 
@@ -1343,6 +2110,7 @@ function startGame() {
     spawnCount = 0;
     points = 0;
     gameOver = false;
+    playerHP = maxHP;
 
     enemies = [];
     particles = [];
@@ -1350,7 +2118,8 @@ function startGame() {
     player = new PlayerBall();
     orbitBalls = [new OrbitBall(0)];
 
-    infoDiv.textContent = "Points: 0";
+    infoDiv.textContent = "Wave 1 | Points: 0";
+    updateHPDisplay();
     window.addEventListener("click", enableGyro, { once: true });
     startEnemySpawn();
     animate();
