@@ -479,16 +479,22 @@ class Enemy {
 }
 
 class BossEnemy {
-    constructor() {
-        this.size = 40;
-        this.life = 20;
+    constructor(x = null, y = null, size = 40, generation = 0) {
+        this.size = size;
+        this.generation = generation; // how many times it has split
+        this.maxGeneration = 2;
+
+        this.life = 1; // dies in one hit → triggers split
         this.color = "#ff00ff";
 
-        this.x = Math.random() * canvas.width;
-        this.y = -50;
+        this.x = x ?? Math.random() * canvas.width;
+        this.y = y ?? -50;
+
         this.vx = 0;
         this.vy = 1;
+
         this.blink = 0;
+        this.isBoss = true; // IMPORTANT FLAG
     }
 
     update() {
@@ -496,31 +502,76 @@ class BossEnemy {
         const dy = center.y - this.y;
         const dist = Math.hypot(dx, dy);
 
-        this.vx += dx / dist * 0.05;
-        this.vy += dy / dist * 0.05;
+        const speed = 0.06 + this.generation * 0.02;
+
+        this.vx += dx / dist * speed;
+        this.vy += dy / dist * speed;
 
         this.x += this.vx;
         this.y += this.vy;
     }
 
     draw() {
-        ctx.save();
-
-        if (this.blink === 1) ctx.globalAlpha = 0.2;
-        else if (this.blink === 2) ctx.globalAlpha = 0.4;
-
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
         ctx.shadowBlur = 20;
         ctx.shadowColor = this.color;
         ctx.fill();
-
-        ctx.restore();
+        ctx.shadowBlur = 0;
     }
 }
 
 let enemyInterval = null;
+
+function rebuildFromUpgrades() {
+    orbitBalls = [];
+
+    // Reset base player
+    player = new PlayerBall();
+
+    const orbitLevel  = upgrades.find(u => u.name === "Orbit").level;
+    const radiusLevel = upgrades.find(u => u.name === "Radius").level;
+    const speedLevel  = upgrades.find(u => u.name === "Speed").level;
+    const dualLevel   = upgrades.find(u => u.name === "Dual").level;
+
+    // Rebuild orbit balls
+    for (let i = 0; i < 1 + orbitLevel; i++) {
+        const o = new OrbitBall(Math.random() * Math.PI * 2);
+        o.angularSpeed += speedLevel * 0.015;
+        orbitBalls.push(o);
+    }
+
+    // Apply radius upgrades
+    player.orbitRadius = 150 + radiusLevel * 25;
+
+    // Recreate dual player
+    if (dualLevel > 0) {
+        player2 = new PlayerBall();
+    } else {
+        player2 = null;
+    }
+
+    // Reapply other systems
+    const laserLevel = upgrades.find(u => u.name === "Laser").level;
+    laserDamage = 1 + laserLevel;
+    laserFireDelay = 16;
+
+    const shieldUp = upgrades.find(u => u.name === "Shield").level;
+    shieldLevel = shieldUp;
+    shieldRadius = 60 + shieldUp * 12;
+    shieldBounce = 4 + shieldUp * 1.5;
+    shieldDamage = shieldUp;
+
+    const magnetUp = upgrades.find(u => u.name === "Magnet").level;
+    magnetLevel = magnetUp;
+    magnetStrength = 0.04 + magnetUp * 0.02;
+
+    const dashUp = upgrades.find(u => u.name === "Dash").level;
+    dashLevel = dashUp;
+    dashCooldown = Math.max(800, 2500 - dashUp * 300);
+    dashInvulTime = 300 + dashUp * 80;
+}
 
 function startEnemySpawn() {
     clearInterval(enemyInterval);
@@ -532,7 +583,7 @@ function startEnemySpawn() {
         if (!gameOver && !isPaused && enemies.length < maxEnemies){
 
             // Boss logic
-            if (spawnCount > 0 && spawnCount % 25 === 0) {
+            if (spawnCount === 25) {
                 enemies.push(new BossEnemy());
             } else {
 
@@ -617,7 +668,7 @@ function updateLaserSystem(deltaTime) {
     laserCooldown -= deltaTime;
     if (laserCooldown > 0) return;
 
-    const delay = Math.max(300, laserFireDelay - lvl * 150);
+    const delay = 400 - lvl * 60;
     const dmg   = laserDamage + lvl * 1;
 
     let nearest = null;
@@ -840,8 +891,7 @@ function closeUpgradeMenu() {
             enemies = [];
             particles = [];
 
-            player = new PlayerBall();
-            orbitBalls = [new OrbitBall(0)];
+            rebuildFromUpgrades();
 
             spawnCount = 0;
 
@@ -1050,18 +1100,19 @@ function checkCollisions() {
         const dist = Math.hypot(dx, dy);
 
         if (dist < a.size + b.size) {
-                    // Explosion particles
-            for (let k = 0; k < 20; k++) {
-                particles.push(new Particle(a.x, a.y, "#ff4444"));
-            }
 
-            // Remove both enemies
-            enemies.splice(j, 1);
-            enemies.splice(i, 1);
-            points++;
+        if (a.isBoss || b.isBoss) continue;
 
-            i--; // adjust index after removal
-            break;
+        for (let k = 0; k < 20; k++) {
+            particles.push(new Particle(a.x, a.y, "#ff4444"));
+        }
+
+        enemies.splice(j, 1);
+        enemies.splice(i, 1);
+        points++;
+
+        i--;
+        break;
         }
     }
 }
@@ -1146,7 +1197,45 @@ function animate(now = 0) {
     particles = particles.filter(p => p.life > 0);
 
     checkCollisions();
-    enemies = enemies.filter(e => e.life > 0);
+    let newEnemies = [];
+
+    enemies = enemies.filter(e => {
+
+        if (e.life > 0) return true;
+
+        if (e.isBoss && e.generation < e.maxGeneration) {
+
+            const splitCount = 2 + e.generation; // 2 → 3 → 4
+
+            for (let i = 0; i < splitCount; i++) {
+                const angle = (Math.PI * 2 / splitCount) * i;
+
+                const child = new BossEnemy(
+                    e.x + Math.cos(angle) * 10,
+                    e.y + Math.sin(angle) * 10,
+                    e.size * 0.6,
+                    e.generation + 1
+                );
+
+                child.vx = Math.cos(angle) * 3;
+                child.vy = Math.sin(angle) * 3;
+
+                newEnemies.push(child);
+            }
+
+            for (let i = 0; i < 20; i++) {
+                particles.push(new Particle(e.x, e.y, "#ff00ff"));
+            }
+
+            return false;
+        }
+
+        // normal enemy death
+        return false;
+    });
+
+    // add new split enemies
+    enemies.push(...newEnemies);
 
     // visuals
     updateLaserSystem(delta);
