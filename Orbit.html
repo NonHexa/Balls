@@ -594,13 +594,14 @@ upgradeNodes.forEach(n => {
     n.dataset.name = name;
 });
 
-let shakeTime = 0;
-function screenShake() {
+let shakeTime = 0; // now in seconds
+function screenShake(dt) {
     if (shakeTime > 0) {
         const dx = (Math.random() - 0.5) * 10;
         const dy = (Math.random() - 0.5) * 10;
         ctx.translate(dx, dy);
-        shakeTime--;
+        shakeTime -= dt / 60;
+        if (shakeTime < 0) shakeTime = 0;
     }
 }
 
@@ -609,13 +610,13 @@ class Particle {
         this.x = x; this.y = y;
         this.vx = (Math.random() - 0.5) * 5;
         this.vy = (Math.random() - 0.5) * 5;
-        this.life = 30;
+        this.life = 0.5; // seconds
         this.color = color;
     }
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.life--;
+    update(dt) {
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.life -= dt / 60;
     }
     draw() {
         ctx.fillStyle = this.color;
@@ -672,18 +673,19 @@ class OrbitBall {
         this.orbitRadius = 60;
         this.size = 14;
         this.angularSpeed = 0.02;
+        this.damage = 1;
     }
 
-    update(centerAngle, i, total) {
+    update(centerAngle, i, total, dt) {
         // Base orbit
         const spreadOffset = player2 ? Math.PI / total : 0;
         const baseTarget = centerAngle + spreadOffset + i * (Math.PI * 2 / total);
-        this.angle += (baseTarget - this.angle) * 0.1 + this.angularSpeed;
+        this.angle += ((baseTarget - this.angle) * 0.1 + this.angularSpeed) * dt;
 
         // Subtle wobble
-        this.angle += Math.sin(Date.now() * 0.002 + i) * 0.01;
+        this.angle += Math.sin(Date.now() * 0.002 + i) * 0.01 * dt;
 
-        // Soft magnet attraction (initialized in Segment 5)
+        // Soft magnet attraction
         if (window.magnetLevel > 0 && enemies.length > 0) {
             let nearest = null;
             let nd = Infinity;
@@ -696,7 +698,7 @@ class OrbitBall {
                 const desired = Math.atan2(nearest.y - this.y, nearest.x - this.x);
                 let diff = desired - this.angle;
                 diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-                this.angle += diff * window.magnetStrength;
+                this.angle += diff * window.magnetStrength * dt;
             }
         }
 
@@ -797,28 +799,28 @@ class Enemy {
         return true;
     }
 
-    update() {
+    update(dt) {
         const dx = center.x - this.x;
         const dy = center.y - this.y;
         const dist = Math.hypot(dx, dy);
 
         const speedScale = 0.15 + (difficultyRamp * 0.35);
 
-        this.vx += dx / dist * this.gravity * this.speedMultiplier * speedScale;
-        this.vy += dy / dist * this.gravity * this.speedMultiplier * speedScale;
+        this.vx += dx / dist * this.gravity * this.speedMultiplier * speedScale * dt;
+        this.vy += dy / dist * this.gravity * this.speedMultiplier * speedScale * dt;
 
         // Zigzag oscillation
         if (this.zigzags) {
-            this.zigTimer += 0.08;
+            this.zigTimer += 0.08 * dt;
             const perpX = -dy / dist;
             const perpY = dx / dist;
-            this.vx += perpX * Math.sin(this.zigTimer) * 0.8;
-            this.vy += perpY * Math.sin(this.zigTimer) * 0.8;
+            this.vx += perpX * Math.sin(this.zigTimer) * 0.8 * dt;
+            this.vy += perpY * Math.sin(this.zigTimer) * 0.8 * dt;
         }
 
         // Ghost phasing
         if (this.phases) {
-            this.phaseTimer += 0.025;
+            this.phaseTimer += 0.025 * dt;
             this.visible = Math.sin(this.phaseTimer) > -0.3;
         }
 
@@ -826,13 +828,14 @@ class Enemy {
         if (cryoLevel > 0) {
             const cd = Math.hypot(this.x - center.x, this.y - center.y);
             if (cd < cryoRadius) {
-                this.vx *= cryoSlow;
-                this.vy *= cryoSlow;
+                const slow = Math.pow(cryoSlow, dt);
+                this.vx *= slow;
+                this.vy *= slow;
             }
         }
 
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
     }
 
     draw() {
@@ -874,18 +877,18 @@ class BossEnemy {
         this.isBoss = true; // IMPORTANT FLAG
     }
 
-    update() {
+    update(dt) {
         const dx = center.x - this.x;
         const dy = center.y - this.y;
         const dist = Math.hypot(dx, dy);
 
         const speed = 0.06 + this.generation * 0.02;
 
-        this.vx += dx / dist * speed;
-        this.vy += dy / dist * speed;
+        this.vx += dx / dist * speed * dt;
+        this.vy += dy / dist * speed * dt;
 
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
     }
 
     draw() {
@@ -913,6 +916,7 @@ function rebuildFromUpgrades() {
     for (let i = 0; i < 1 + orbitLevel; i++) {
         const o = new OrbitBall(Math.random() * Math.PI * 2);
         o.angularSpeed += speedLevel * 0.015;
+        o.damage = 1 + speedLevel;
         orbitBalls.push(o);
     }
 
@@ -923,7 +927,7 @@ function rebuildFromUpgrades() {
 
     const laserLevel = upgrades.find(u => u.name === "Laser").level;
     laserDamage = 1 + laserLevel;
-    laserFireDelay = 16;
+    laserFireDelay = Math.max(200, 500 - laserLevel * 60);
 
     const shieldUp = upgrades.find(u => u.name === "Shield").level;
     shieldLevel = shieldUp;
@@ -1024,7 +1028,7 @@ let gyro = {
 let gyroEnabled = false;
 
 let laserCooldown = 0;
-let laserFireDelay = 16;   // laser delay
+let laserFireDelay = 500;   // ms between laser shots
 let laserDamage = 1;
 
 let shieldLevel = 0;
@@ -1058,8 +1062,8 @@ function updateLaserSystem(deltaTime) {
     laserCooldown -= deltaTime;
     if (laserCooldown > 0) return;
 
-    const delay = 400 - lvl * 60;
-    const dmg   = laserDamage + lvl * 1;
+    const delay = laserFireDelay;
+    const dmg   = laserDamage;
 
     // Multi: fire at multiple targets
     const targetCount = 1 + multiLevel;
@@ -1131,7 +1135,7 @@ function fireLaserAt(enemy, dmg) {
         particles.push(new Particle(enemy.x, enemy.y, "#ff00ff"));
 }
 
-function drawLaserBeams() {
+function drawLaserBeams(dt) {
     for (let beam of activeLaserBeams) {
         ctx.strokeStyle = `rgba(255,0,255,${beam.alpha})`;
         ctx.lineWidth = 3;
@@ -1141,16 +1145,16 @@ function drawLaserBeams() {
         ctx.lineTo(beam.x2, beam.y2);
         ctx.stroke();
 
-        beam.alpha -= 0.08;
+        beam.alpha -= 0.08 * dt;
     }
     activeLaserBeams = activeLaserBeams.filter(b => b.alpha > 0);
 }
 
 
-function drawShield() {
+function drawShield(dt) {
     if (shieldLevel === 0) return;
 
-    shieldPulseTime += 0.05;
+    shieldPulseTime += 0.05 * dt;
     const pulse = Math.sin(shieldPulseTime) * 6;
     const r = shieldRadius + pulse;
 
@@ -1175,9 +1179,9 @@ function drawCryoField() {
     ctx.fill();
 }
 
-function applyGravityWell() {
+function applyGravityWell(dt) {
     if (gravityLevel === 0) return;
-    const pull = 0.002 * gravityLevel;
+    const pull = 0.002 * gravityLevel * dt;
     for (let i = 0; i < enemies.length; i++) {
         for (let j = i + 1; j < enemies.length; j++) {
             const a = enemies[i], b = enemies[j];
@@ -1208,19 +1212,19 @@ function updateNova(delta) {
         }
     }
     novaFlash = 1;
-    shakeTime = 8;
+    shakeTime = 0.15;
     for (let i = 0; i < 30; i++)
         particles.push(new Particle(center.x, center.y, "#ffaa00"));
 }
 
-function drawNovaFlash() {
+function drawNovaFlash(dt) {
     if (novaFlash <= 0) return;
     ctx.beginPath();
     ctx.arc(center.x, center.y, novaRadius * (1 - novaFlash * 0.3), 0, Math.PI * 2);
     ctx.strokeStyle = `rgba(255,150,0,${novaFlash})`;
     ctx.lineWidth = 4;
     ctx.stroke();
-    novaFlash -= 0.025;
+    novaFlash -= 0.025 * dt;
 }
 
 function updateRegen(delta) {
@@ -1314,7 +1318,7 @@ function playerBlink() {
 }
 
 // Warping Partiles when it is moving :]
-function drawDashTrail() {
+function drawDashTrail(dt) {
     dashTrail.forEach(t => {
         ctx.strokeStyle = `rgba(255,0,255,${t.alpha})`;
         ctx.lineWidth = 8;
@@ -1324,7 +1328,7 @@ function drawDashTrail() {
         ctx.lineTo(t.x, t.y);
         ctx.stroke();
 
-        t.alpha -= 0.06;
+        t.alpha -= 0.06 * dt;
     });
 
     dashTrail = dashTrail.filter(t => t.alpha > 0);
@@ -1389,16 +1393,16 @@ class FastBoss extends BossEnemy {
         this.color = "#ff2222";
     }
 
-    update() {
+    update(dt) {
         const dx = center.x - this.x;
         const dy = center.y - this.y;
         const dist = Math.hypot(dx, dy);
 
-        this.vx += dx / dist * 0.15;
-        this.vy += dy / dist * 0.15;
+        this.vx += dx / dist * 0.15 * dt;
+        this.vy += dy / dist * 0.15 * dt;
 
-        this.x += this.vx;
-        this.y += this.vy;
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
     }
 }
 
@@ -1424,12 +1428,12 @@ class OrbiterBoss extends BossEnemy {
         this.spawnTimer = 0;
         this.maxGeneration = 0;
     }
-    update() {
-        this.orbitAngle += this.orbitSpeed;
+    update(dt) {
+        this.orbitAngle += this.orbitSpeed * dt;
         this.x = center.x + Math.cos(this.orbitAngle) * this.orbitDist;
         this.y = center.y + Math.sin(this.orbitAngle) * this.orbitDist;
         this.vx = 0; this.vy = 0;
-        this.spawnTimer++;
+        this.spawnTimer += dt;
         if (this.spawnTimer > 180) {
             this.spawnTimer = 0;
             enemies.push(new Enemy(enemyTypes.fast));
@@ -1464,20 +1468,20 @@ class PulseBoss extends BossEnemy {
         this.pulseFlash = 0;
         this.maxGeneration = 0;
     }
-    update() {
+    update(dt) {
         const dx = center.x - this.x;
         const dy = center.y - this.y;
         const dist = Math.hypot(dx, dy);
         if (dist > 200) {
-            this.vx += dx / dist * 0.04;
-            this.vy += dy / dist * 0.04;
+            this.vx += dx / dist * 0.04 * dt;
+            this.vy += dy / dist * 0.04 * dt;
         } else {
-            this.vx *= 0.95;
-            this.vy *= 0.95;
+            this.vx *= Math.pow(0.95, dt);
+            this.vy *= Math.pow(0.95, dt);
         }
-        this.x += this.vx;
-        this.y += this.vy;
-        this.pulseTimer++;
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.pulseTimer += dt;
         if (this.pulseTimer > 300) {
             this.pulseTimer = 0;
             this.pulseFlash = 1;
@@ -1488,7 +1492,7 @@ class PulseBoss extends BossEnemy {
                 const pd = Math.hypot(pdx, pdy) || 1;
                 o.angle += (pdx / pd) * 0.5;
             });
-            shakeTime = 8;
+            shakeTime = 0.15;
             for (let i = 0; i < 20; i++)
                 particles.push(new Particle(this.x, this.y, "#ff8800"));
         }
@@ -1741,18 +1745,27 @@ function applyUpgrade(name) {
         infoDiv.textContent = `Wave ${wave} | Points: ${points}`;
         u.level++;
 
-        if (name === "Orbit")
-            orbitBalls.push(new OrbitBall(Math.random() * Math.PI * 2));
+        if (name === "Orbit") {
+            const speedLvl = upgrades.find(x => x.name === "Speed").level;
+            const o = new OrbitBall(Math.random() * Math.PI * 2);
+            o.angularSpeed += speedLvl * 0.015;
+            o.damage = 1 + speedLvl;
+            orbitBalls.push(o);
+        }
 
         if (name === "Radius")
             player.orbitRadius += 25;
 
-        if (name === "Speed")
-            orbitBalls.forEach(o => (o.angularSpeed += 0.015));
+        if (name === "Speed") {
+            orbitBalls.forEach(o => {
+                o.angularSpeed += 0.015;
+                o.damage = u.level;
+            });
+        }
 
         if (name === "Laser") {
-            laserFireDelay = Math.max(300, laserFireDelay - 150);
-            laserDamage += 1;
+            laserDamage = 1 + u.level;
+            laserFireDelay = Math.max(200, 500 - u.level * 60);
         }
 
         if (name === "Shield") {
@@ -1896,7 +1909,7 @@ function checkCollisions() {
                 // Ghost immune when phased
                 if (e.phases && !e.visible) continue;
 
-                shakeTime = 5;
+                shakeTime = 0.1;
                 const nx = dx / dist;
                 const ny = dy / dist;
 
@@ -1904,7 +1917,8 @@ function checkCollisions() {
                 e.vy += ny * 3;
 
                 // Use takeDamage for shielded enemies
-                const hit = e.takeDamage ? e.takeDamage(1) : (e.life--, true);
+                const orbDmg = b.damage || 1;
+                const hit = e.takeDamage ? e.takeDamage(orbDmg) : (e.life -= orbDmg, true);
                 if (hit) {
                     points += (e.pts || 1);
                     infoDiv.textContent = `Wave ${wave} | Points: ${points}`;
@@ -1943,7 +1957,7 @@ function checkCollisions() {
 
             playerHP--;
             updateHPDisplay();
-            shakeTime = 12;
+            shakeTime = 0.25;
 
             // Red flash
             const overlay = document.getElementById("damageOverlay");
@@ -1977,11 +1991,13 @@ function checkCollisions() {
 function animate(now = 0) {
     ctx.save();
 
-    const delta = lastFrameTime ? now - lastFrameTime : 16;
+    const delta = lastFrameTime ? now - lastFrameTime : 16.67;
     lastFrameTime = now;
+    // dt = 1.0 at 60fps, scales proportionally
+    const dt = Math.min(delta / 16.67, 3); // cap at 3x to avoid spiral of death
 
     drawCooldownWheel();
-    difficultyRamp += 0.00004;
+    difficultyRamp += 0.00004 * dt;
     if (difficultyRamp > 1) difficultyRamp = 1;
 
     if (isPaused) {
@@ -1990,7 +2006,7 @@ function animate(now = 0) {
         return;
     }
 
-    screenShake();
+    screenShake(dt);
     ctx.fillStyle = "rgba(0,0,0,0.2)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -2004,7 +2020,7 @@ function animate(now = 0) {
     player.draw();
 
     orbitBalls.forEach((o, i) => {
-        o.update(player.angle, i, orbitBalls.length);
+        o.update(player.angle, i, orbitBalls.length, dt);
         o.draw();
     });
 
@@ -2016,15 +2032,15 @@ function animate(now = 0) {
     }
 
     // New systems
-    applyGravityWell();
+    applyGravityWell(dt);
 
     enemies.forEach(e => {
-        e.update();
+        e.update(dt);
         updateShieldCollision(e);
         e.draw();
     });
 
-    particles.forEach(p => { p.update(); p.draw(); });
+    particles.forEach(p => { p.update(dt); p.draw(); });
     particles = particles.filter(p => p.life > 0);
 
     checkCollisions();
@@ -2086,11 +2102,11 @@ function animate(now = 0) {
     checkWaveProgression();
     updateNova(delta);
     updateRegen(delta);
-    drawLaserBeams();
-    drawShield();
+    drawLaserBeams(dt);
+    drawShield(dt);
     drawCryoField();
-    drawNovaFlash();
-    drawDashTrail();
+    drawNovaFlash(dt);
+    drawDashTrail(dt);
     updateDashCooldown(delta);
     updateWaveProgress();
 
