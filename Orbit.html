@@ -288,6 +288,13 @@ let difficultyRamp = 0;
 let gyroActive = false;
 let player2 = null;
 
+let wave = 1;
+let inBossFight = false;
+let enemiesKilledThisWave = 0;
+let enemiesToNextBoss = 25;
+
+let bossLevel = 0;
+
 let lastFrameTime = 0;
 
 const infoDiv = document.getElementById("info");
@@ -578,41 +585,37 @@ function startEnemySpawn() {
 
     function spawnLoop() {
 
-        const maxEnemies = 10 + Math.floor(difficultyRamp * 90);
+        const maxEnemies = 8 + wave * 4;
 
         if (!gameOver && !isPaused && enemies.length < maxEnemies){
 
             // Boss logic
-            if (spawnCount === 25) {
-                enemies.push(new BossEnemy());
-            } else {
+            if (spawnCount > 15 && Math.random() < 0.2) {
 
-                if (spawnCount > 15 && Math.random() < 0.2) {
+                const edge = Math.random();
 
-                    const edge = Math.random();
+                for (let i = 0; i < 50; i++) {
+                    let x, y;
+                    if (edge < 0.25)   { x = 0; y = Math.random() * canvas.height; }
+                    else if (edge<.5)  { x = canvas.width; y = Math.random() * canvas.height; }
+                    else if (edge<.75) { x = Math.random() * canvas.width; y = 0; }
+                    else               { x = Math.random() * canvas.width; y = canvas.height; }
 
-                    for (let i = 0; i < 50; i++) {
-                        let x, y;
-                        if (edge < 0.25)   { x = 0; y = Math.random() * canvas.height; }
-                        else if (edge<.5)  { x = canvas.width; y = Math.random() * canvas.height; }
-                        else if (edge<.75) { x = Math.random() * canvas.width; y = 0; }
-                        else               { x = Math.random() * canvas.width; y = canvas.height; }
-
-                        particles.push(new Particle(x, y, "#ff2222"));
-                    }
-
-                    setTimeout(() => {
-                        enemies.push(new Enemy(enemyTypes.fast));
-                    }, 500);
-
-                } else {
-                    enemies.push(new Enemy());
+                    particles.push(new Particle(x, y, "#ff2222"));
                 }
+
+                setTimeout(() => {
+                    enemies.push(new Enemy(enemyTypes.fast));
+                }, 500);
+
+            } else {
+                enemies.push(new Enemy());
             }
+            
         }
 
         
-        const delay = 1200 - (difficultyRamp * 900);
+        const delay = Math.max(250, 1200 - wave * 80);
         // starts at 800ms goes to 300ms
 
         enemyInterval = setTimeout(spawnLoop, delay);
@@ -835,6 +838,79 @@ function drawCooldownWheel() {
     ctx2.beginPath();
     ctx2.arc(30, 30, 24, -Math.PI / 2, -Math.PI / 2 + pct * 2 * Math.PI);
     ctx2.stroke();
+}
+
+function checkWaveProgression() {
+    if (inBossFight) return;
+
+    if (enemiesKilledThisWave >= enemiesToNextBoss) {
+        startBossFight();
+    }
+}
+
+function startBossFight() {
+    inBossFight = true;
+    bossLevel++;
+
+    // clear normal enemies for focus
+    enemies = [];
+
+    // spawn boss based on level
+    if (bossLevel === 1) {
+        enemies.push(new BossEnemy()); // splitting boss
+    }
+    else if (bossLevel === 2) {
+        enemies.push(new FastBoss());
+    }
+    else {
+        enemies.push(new TankBoss());
+    }
+}
+
+class FastBoss extends BossEnemy {
+    constructor() {
+        super();
+        this.size = 30;
+        this.color = "#ff2222";
+    }
+
+    update() {
+        const dx = center.x - this.x;
+        const dy = center.y - this.y;
+        const dist = Math.hypot(dx, dy);
+
+        this.vx += dx / dist * 0.15;
+        this.vy += dy / dist * 0.15;
+
+        this.x += this.vx;
+        this.y += this.vy;
+    }
+}
+
+class TankBoss extends BossEnemy {
+    constructor() {
+        super();
+        this.size = 60;
+        this.life = 10;
+        this.color = "#8800ff";
+    }
+}
+
+function endBossFight() {
+    inBossFight = false;
+
+    wave++;
+    enemiesKilledThisWave = 0;
+
+    enemiesToNextBoss += 10;
+
+    difficultyRamp += 0.1;
+    if (difficultyRamp > 1) difficultyRamp = 1;
+
+    // spawn burst for next wave
+    for (let i = 0; i < 5 + wave * 2; i++) {
+        enemies.push(new Enemy());
+    }
 }
 
 // Ions 
@@ -1226,7 +1302,7 @@ function animate(now = 0) {
             for (let i = 0; i < 20; i++) {
                 particles.push(new Particle(e.x, e.y, "#ff00ff"));
             }
-
+            enemiesKilledThisWave++;
             return false;
         }
 
@@ -1236,9 +1312,19 @@ function animate(now = 0) {
 
     // add new split enemies
     enemies.push(...newEnemies);
+    let bossAlive = false;
+
+    enemies.forEach(e => {
+        if (e.isBoss) bossAlive = true;
+    });
+
+    if (inBossFight && !bossAlive) {
+        endBossFight();
+    }
 
     // visuals
     updateLaserSystem(delta);
+    checkWaveProgression();
     drawLaserBeams();
     drawShield();
     drawDashTrail();
