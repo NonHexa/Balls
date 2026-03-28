@@ -109,6 +109,160 @@
         animation: none;
     }
 
+    #prestigeOrb {
+        position: fixed;
+        left: 28px;
+        bottom: 90px;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #8af 0%, #0af 48%, #004a6a 100%);
+        box-shadow: 0 0 32px rgba(0,170,255,0.6);
+        z-index: 102;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s;
+        animation: prestigePulse 2.5s ease-in-out infinite;
+        display: none;
+    }
+
+    #prestigeOrb:hover {
+        transform: scale(1.12);
+        box-shadow: 0 0 60px #0af;
+        animation: none;
+    }
+
+    @keyframes prestigePulse {
+        0%, 100% { box-shadow: 0 0 24px rgba(0,170,255,0.5); }
+        50%      { box-shadow: 0 0 44px rgba(0,170,255,0.8); }
+    }
+
+    #prestigeStarCount {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #0af;
+        color: #000;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        font-size: 12px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 8px #0af;
+    }
+
+    #prestigeGlass {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        background: rgba(0, 5, 16, 0.82);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    #prestigeGlass.open {
+        opacity: 1;
+    }
+
+    #prestigeTreeContainer {
+        position: relative;
+        width: 500px;
+        height: 400px;
+        margin: 0 auto;
+    }
+
+    #prestigeLineCanvas {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .prestigeNode {
+        position: absolute;
+        z-index: 10;
+        width: 118px;
+        padding: 10px 8px 12px;
+        border-radius: 12px;
+        text-align: center;
+        background: rgba(0, 20, 40, 0.65);
+        border: 1px solid rgba(0, 170, 255, 0.3);
+        backdrop-filter: blur(4px);
+        pointer-events: auto;
+        cursor: pointer;
+        transform: var(--base-transform, none);
+        transition: transform 0.2s, box-shadow 0.2s, filter 0.2s, border-color 0.2s, background 0.2s;
+    }
+
+    .prestigeNode:hover {
+        transform: var(--base-transform, none) scale(1.1);
+        box-shadow: 0 0 30px rgba(0,170,255,0.5);
+        border-color: rgba(0, 170, 255, 0.7);
+        background: rgba(0, 40, 80, 0.75);
+    }
+
+    .prestigeNode:active {
+        transform: var(--base-transform, none) scale(0.97);
+    }
+
+    .prestigeNode .progressBar div {
+        background: linear-gradient(90deg, #0af, #4df);
+        box-shadow: 0 0 6px rgba(0,170,255,0.5);
+    }
+
+    .prestigeNode .uCost {
+        color: #88ddff;
+    }
+
+    .prestigeNode .uReq {
+        color: #6699bb;
+    }
+
+    #pOrbit   { top: 10px;  left: 50%;  --base-transform: translateX(-50%); }
+    #pSpeed   { top: 175px; left: 25%;  --base-transform: translateX(-50%); }
+    #pRadius  { top: 175px; left: 75%;  --base-transform: translateX(-50%); }
+
+    .prestigeTitle {
+        color: #0af;
+        font-size: 22px;
+        text-align: center;
+        margin-bottom: 10px;
+        letter-spacing: 2px;
+        text-shadow: 0 0 10px #0af;
+    }
+
+    #closePrestige {
+        position: fixed;
+        top: 16px;
+        right: 20px;
+        z-index: 250;
+        color: #0af;
+        font-size: 42px;
+        line-height: 1;
+        cursor: pointer;
+        user-select: none;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(0, 20, 50, 0.6);
+        border: 1px solid rgba(0, 170, 255, 0.4);
+        transition: transform 0.2s ease, background 0.2s, box-shadow 0.2s;
+    }
+
+    #closePrestige:hover {
+        transform: scale(1.15);
+        background: rgba(0, 40, 100, 0.8);
+        box-shadow: 0 0 20px rgba(0,170,255,0.4);
+    }
+
     @keyframes orbPulse {
         0%, 100% { box-shadow: 0 0 32px #ff00ffaa; }
         50%      { box-shadow: 0 0 52px #ff00ffdd; }
@@ -315,20 +469,17 @@
         box-shadow: 0 0 20px #ff00ff66;
     }
 
-    #upOrbit   { top: 10px;  left: 50%;  --base-transform: translateX(-50%); }
-    #upRadius  { top: 155px; left: 17%;  --base-transform: translateX(-50%); }
-    #upLaser   { top: 155px; left: 50%;  --base-transform: translateX(-50%); }
-    #upSpeed   { top: 155px; left: 83%;  --base-transform: translateX(-50%); }
-    #upShield  { top: 300px; left: 12%;  --base-transform: translateX(-50%); }
-    #upDual    { top: 300px; left: 37%;  --base-transform: translateX(-50%); }
-    #upPierce  { top: 300px; left: 63%;  --base-transform: translateX(-50%); }
-    #upMagnet  { top: 300px; left: 88%;  --base-transform: translateX(-50%); }
-    #upCryo    { top: 445px; left: 12%;  --base-transform: translateX(-50%); }
-    #upDash    { top: 445px; left: 37%;  --base-transform: translateX(-50%); }
-    #upMulti   { top: 445px; left: 63%;  --base-transform: translateX(-50%); }
-    #upGravity { top: 445px; left: 88%;  --base-transform: translateX(-50%); }
-    #upNova    { top: 590px; left: 33%;  --base-transform: translateX(-50%); }
-    #upRegen   { top: 590px; left: 67%;  --base-transform: translateX(-50%); }
+    #upCryo    { top: 10px;  left: 50%;  --base-transform: translateX(-50%); }
+    #upLaser   { top: 155px; left: 17%;  --base-transform: translateX(-50%); }
+    #upShield  { top: 155px; left: 50%;  --base-transform: translateX(-50%); }
+    #upMagnet  { top: 155px; left: 83%;  --base-transform: translateX(-50%); }
+    #upPierce  { top: 300px; left: 17%;  --base-transform: translateX(-50%); }
+    #upDash    { top: 300px; left: 50%;  --base-transform: translateX(-50%); }
+    #upDual    { top: 300px; left: 83%;  --base-transform: translateX(-50%); }
+    #upGravity { top: 445px; left: 17%;  --base-transform: translateX(-50%); }
+    #upNova    { top: 445px; left: 50%;  --base-transform: translateX(-50%); }
+    #upMulti   { top: 445px; left: 83%;  --base-transform: translateX(-50%); }
+    #upRegen   { top: 590px; left: 50%;  --base-transform: translateX(-50%); }
 
     @media (max-width: 800px) {
         .info {
@@ -378,49 +529,40 @@
 <canvas id="gameCanvas"></canvas>
 
 <div id="upgradeOrb"></div>
+<div id="prestigeOrb" style="display:none"><span id="prestigeStarCount">0</span></div>
 
 <div id="upgradeGlass">
 <div id="treeViewport">
     <div id="treeContent">
     <div id="upgradeStarContainer">
 
-
-        <div class="upgradeNode" id="upOrbit">
+        <div class="upgradeNode" id="upCryo">
             <canvas class="iconCanvas" width="60" height="60"></canvas>
-            <div class="uName">Orbit</div>
+            <div class="uName">Cryo</div>
             <div class="progressBar"><div></div></div>
         </div>
-        <div class="upgradeNode" id="upRadius">
-            <canvas class="iconCanvas" width="60" height="60"></canvas>
-            <div class="uName">Radius</div>
-            <div class="progressBar"><div></div></div>
-        </div>
-
-        <div class="upgradeNode" id="upSpeed">
-            <canvas class="iconCanvas" width="60" height="60"></canvas>
-            <div class="uName">Speed</div>
-            <div class="progressBar"><div></div></div>
-        </div>
-
 
         <div class="upgradeNode inner" id="upLaser">
             <canvas class="iconCanvas" width="60" height="60"></canvas>
             <div class="uName">Laser</div>
             <div class="progressBar"><div></div></div>
         </div>
-
         <div class="upgradeNode inner" id="upShield">
             <canvas class="iconCanvas" width="60" height="60"></canvas>
             <div class="uName">Shield</div>
             <div class="progressBar"><div></div></div>
         </div>
-
         <div class="upgradeNode inner" id="upMagnet">
             <canvas class="iconCanvas" width="60" height="60"></canvas>
             <div class="uName">Magnet</div>
             <div class="progressBar"><div></div></div>
         </div>
 
+        <div class="upgradeNode inner" id="upPierce">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Pierce</div>
+            <div class="progressBar"><div></div></div>
+        </div>
         <div class="upgradeNode inner" id="upDash">
             <canvas class="iconCanvas" width="60" height="60"></canvas>
             <div class="uName">Dash</div>
@@ -432,24 +574,9 @@
             <div class="progressBar"><div></div></div>
         </div>
 
-        <div class="upgradeNode inner" id="upPierce">
-            <canvas class="iconCanvas" width="60" height="60"></canvas>
-            <div class="uName">Pierce</div>
-            <div class="progressBar"><div></div></div>
-        </div>
-        <div class="upgradeNode inner" id="upCryo">
-            <canvas class="iconCanvas" width="60" height="60"></canvas>
-            <div class="uName">Cryo</div>
-            <div class="progressBar"><div></div></div>
-        </div>
         <div class="upgradeNode inner" id="upGravity">
             <canvas class="iconCanvas" width="60" height="60"></canvas>
             <div class="uName">Gravity</div>
-            <div class="progressBar"><div></div></div>
-        </div>
-        <div class="upgradeNode inner" id="upMulti">
-            <canvas class="iconCanvas" width="60" height="60"></canvas>
-            <div class="uName">Multi</div>
             <div class="progressBar"><div></div></div>
         </div>
         <div class="upgradeNode inner" id="upNova">
@@ -457,6 +584,12 @@
             <div class="uName">Nova</div>
             <div class="progressBar"><div></div></div>
         </div>
+        <div class="upgradeNode inner" id="upMulti">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Multi</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+
         <div class="upgradeNode inner" id="upRegen">
             <canvas class="iconCanvas" width="60" height="60"></canvas>
             <div class="uName">Regen</div>
@@ -465,11 +598,35 @@
 
         <canvas id="lineCanvas" width="900" height="760"></canvas>
 
-
         </div>
         </div>
     </div>
     <div id="closeGlass">×</div>
+</div>
+
+<div id="prestigeGlass">
+    <div style="position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div class="prestigeTitle">★ Orbit Prestige ★</div>
+        <div id="prestigeTreeContainer">
+            <div class="prestigeNode" id="pOrbit">
+                <canvas class="iconCanvas" width="60" height="60"></canvas>
+                <div class="uName">Orbit</div>
+                <div class="progressBar"><div></div></div>
+            </div>
+            <div class="prestigeNode" id="pSpeed">
+                <canvas class="iconCanvas" width="60" height="60"></canvas>
+                <div class="uName">Speed</div>
+                <div class="progressBar"><div></div></div>
+            </div>
+            <div class="prestigeNode" id="pRadius">
+                <canvas class="iconCanvas" width="60" height="60"></canvas>
+                <div class="uName">Radius</div>
+                <div class="progressBar"><div></div></div>
+            </div>
+            <canvas id="prestigeLineCanvas" width="500" height="400"></canvas>
+        </div>
+    </div>
+    <div id="closePrestige">×</div>
 </div>
 <script>
 const canvas = document.getElementById("gameCanvas");
@@ -485,8 +642,6 @@ window.addEventListener("resize", () => {
     canvas.height = innerHeight;
     center = { x: canvas.width / 2, y: canvas.height / 2 };
 });
-
-upDual.onclick = () => applyUpgrade("Dual");
 
 //Gyro Listener :)
 window.addEventListener("deviceorientation", (event) => {
@@ -660,7 +815,7 @@ class PlayerBall {
         this.blink = 0;
     }
     update(mx, my) {
-        if (gyroEnabled && gyroActive) {
+        if (gyroEnabled && gyroActive && !touchActive) {
 
     gyroRamp += 0.02;
     if (gyroRamp > 1) gyroRamp = 1;
@@ -936,9 +1091,9 @@ function rebuildFromUpgrades() {
     orbitBalls = [];
     player = new PlayerBall();
 
-    const orbitLevel  = upgrades.find(u => u.name === "Orbit").level;
-    const radiusLevel = upgrades.find(u => u.name === "Radius").level;
-    const speedLevel  = upgrades.find(u => u.name === "Speed").level;
+    const orbitLevel  = prestigeUpgrades.find(u => u.name === "Orbit").level;
+    const radiusLevel = prestigeUpgrades.find(u => u.name === "Radius").level;
+    const speedLevel  = prestigeUpgrades.find(u => u.name === "Speed").level;
     const dualLevel   = upgrades.find(u => u.name === "Dual").level;
 
     for (let i = 0; i < 1 + orbitLevel; i++) {
@@ -1048,12 +1203,135 @@ canvas.addEventListener("mousemove", e => {
     mouse.x = e.clientX;
     mouse.y = e.clientY;
 });
+
+// Touch controls for mobile — drag finger to aim, two-finger tap to dash
+let touchActive = false;
+canvas.addEventListener("touchstart", e => {
+    e.preventDefault();
+    // Two-finger tap = dash
+    if (e.touches.length >= 2) {
+        tryDash();
+        return;
+    }
+    touchActive = true;
+    const t = e.touches[0];
+    mouse.x = t.clientX;
+    mouse.y = t.clientY;
+}, { passive: false });
+
+canvas.addEventListener("touchmove", e => {
+    e.preventDefault();
+    if (!touchActive) return;
+    const t = e.touches[0];
+    mouse.x = t.clientX;
+    mouse.y = t.clientY;
+}, { passive: false });
+
+canvas.addEventListener("touchend", e => {
+    e.preventDefault();
+    if (e.touches.length === 0) touchActive = false;
+}, { passive: false });
 let gyro = {
     x: 0, 
     y: 0  
 };
 
 let gyroEnabled = false;
+
+// ── Web Audio chord system ──
+let audioCtx = null;
+let masterGain = null;
+let ballOscillators = [];  // { osc, gain } per orbit ball
+let audioStarted = false;
+
+// Chord definitions: sets of frequency ratios from a root
+const chordBank = [
+    { name: "Em",   semitones: [0, 3, 7] },
+    { name: "Am",   semitones: [0, 3, 7] },
+    { name: "Cmaj", semitones: [0, 4, 7] },
+    { name: "Dm",   semitones: [0, 3, 7] },
+    { name: "G",    semitones: [0, 4, 7] },
+    { name: "Fmaj", semitones: [0, 4, 7] },
+    { name: "Bm",   semitones: [0, 3, 7] },
+    { name: "Am7",  semitones: [0, 3, 7, 10] }
+];
+// Root notes in Hz for each chord
+const chordRoots = [164.81, 220.00, 261.63, 293.66, 196.00, 174.61, 246.94, 220.00];
+
+function initAudio() {
+    if (audioStarted) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.3;
+    masterGain.connect(audioCtx.destination);
+    audioStarted = true;
+}
+
+function updateOrbSounds() {
+    if (!audioStarted || !audioCtx) return;
+    if (isPaused || gameOver) {
+        // Silence all
+        ballOscillators.forEach(bo => bo.gain.gain.value = 0);
+        return;
+    }
+
+    const count = orbitBalls.length;
+
+    // Create/remove oscillators to match ball count
+    while (ballOscillators.length < count) {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = 220;
+        g.gain.value = 0;
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start();
+        ballOscillators.push({ osc, gain: g });
+    }
+    while (ballOscillators.length > count) {
+        const bo = ballOscillators.pop();
+        bo.osc.stop();
+        bo.osc.disconnect();
+        bo.gain.disconnect();
+    }
+
+    // Pick chord based on wave
+    const ci = (wave - 1) % chordBank.length;
+    const chord = chordBank[ci];
+    const root = chordRoots[ci];
+
+    orbitBalls.forEach((ball, i) => {
+        const bo = ballOscillators[i];
+        if (!bo) return;
+
+        // Assign note from chord, cycling through semitones
+        const st = chord.semitones[i % chord.semitones.length];
+        // Octave offset based on ball index
+        const octave = Math.floor(i / chord.semitones.length);
+        const freq = root * Math.pow(2, st / 12 + octave);
+
+        // Gently slide to frequency
+        bo.osc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.1);
+
+        // Volume scales with angular speed
+        const vol = Math.min(0.35, 0.08 + ball.angularSpeed * 6);
+        bo.gain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05);
+
+        // Waveform changes with speed
+        if (ball.angularSpeed > 0.06) bo.osc.type = "sawtooth";
+        else if (ball.angularSpeed > 0.04) bo.osc.type = "triangle";
+        else bo.osc.type = "sine";
+    });
+}
+
+// Start audio on first user interaction
+function ensureAudio() {
+    if (!audioStarted) initAudio();
+    else if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+}
+window.addEventListener("click", ensureAudio, { once: false });
+window.addEventListener("touchstart", ensureAudio, { once: false });
 
 let laserCooldown = 0;
 let laserFireDelay = 3000;   // ms between laser shots
@@ -1556,6 +1834,11 @@ function endBossFight() {
     // Bonus points for boss kill
     points += 5 + bossLevel * 3;
 
+    // Award prestige star
+    prestigeStars += 1 + Math.floor(bossLevel / 2);
+    document.getElementById("prestigeStarCount").textContent = prestigeStars;
+    prestigeOrbEl.style.display = "block";
+
     // Spawn burst for next wave
     for (let i = 0; i < 3 + wave * 2; i++) {
         enemies.push(new Enemy());
@@ -1575,25 +1858,32 @@ function drawDashIcon(ctx) {
 }
 // The upgradesss - now with level-based requirements
 const upgrades = [
-    { name: "Orbit",   cost: 5,   level: 0, max: 5, requires: [] },
-    { name: "Radius",  cost: 8,   level: 0, max: 5, requires: [{name:"Orbit", level:1}] },
-    { name: "Speed",   cost: 8,   level: 0, max: 5, requires: [{name:"Orbit", level:1}] },
-    { name: "Laser",   cost: 12,  level: 0, max: 5, requires: [{name:"Orbit", level:1}] },
-    { name: "Shield",  cost: 14,  level: 0, max: 5, requires: [{name:"Radius", level:1}] },
-    { name: "Magnet",  cost: 14,  level: 0, max: 5, requires: [{name:"Speed", level:1}] },
+    { name: "Cryo",    cost: 8,   level: 0, max: 3, requires: [] },
+    { name: "Laser",   cost: 12,  level: 0, max: 5, requires: [{name:"Cryo", level:1}] },
+    { name: "Shield",  cost: 14,  level: 0, max: 5, requires: [{name:"Cryo", level:1}] },
+    { name: "Magnet",  cost: 14,  level: 0, max: 5, requires: [{name:"Cryo", level:1}] },
+    { name: "Pierce",  cost: 18,  level: 0, max: 3, requires: [{name:"Laser", level:2}] },
     { name: "Dash",    cost: 18,  level: 0, max: 5, requires: [{name:"Shield", level:1}, {name:"Magnet", level:1}] },
     { name: "Dual",    cost: 30,  level: 0, max: 1, requires: [{name:"Laser", level:2}] },
-    { name: "Pierce",  cost: 18,  level: 0, max: 3, requires: [{name:"Laser", level:2}] },
-    { name: "Cryo",    cost: 18,  level: 0, max: 3, requires: [{name:"Shield", level:2}] },
     { name: "Gravity", cost: 22,  level: 0, max: 3, requires: [{name:"Magnet", level:3}] },
-    { name: "Multi",   cost: 35,  level: 0, max: 2, requires: [{name:"Pierce", level:2}, {name:"Dual", level:1}] },
     { name: "Nova",    cost: 22,  level: 0, max: 3, requires: [{name:"Dash", level:2}] },
-    { name: "Regen",   cost: 28,  level: 0, max: 3, requires: [{name:"Cryo", level:1}, {name:"Nova", level:1}] }
+    { name: "Multi",   cost: 35,  level: 0, max: 2, requires: [{name:"Pierce", level:2}, {name:"Dual", level:1}] },
+    { name: "Regen",   cost: 28,  level: 0, max: 3, requires: [{name:"Cryo", level:2}, {name:"Nova", level:1}] }
 ];
+
+// Prestige tree — orbit-related upgrades earned with prestige stars from boss kills
+const prestigeUpgrades = [
+    { name: "Orbit",  cost: 1, level: 0, max: 5, requires: [] },
+    { name: "Speed",  cost: 1, level: 0, max: 5, requires: [{name:"Orbit", level:1}] },
+    { name: "Radius", cost: 1, level: 0, max: 5, requires: [{name:"Orbit", level:1}] }
+];
+let prestigeStars = 0;
 
 const glass = document.getElementById("upgradeGlass");
 const orb   = document.getElementById("upgradeOrb");
 const closeGlass = document.getElementById("closeGlass");
+const prestigeGlass = document.getElementById("prestigeGlass");
+const prestigeOrbEl = document.getElementById("prestigeOrb");
 
 function openUpgradeMenu() {
     isPaused = true;
@@ -1605,9 +1895,35 @@ function openUpgradeMenu() {
     });
 }
 
+function openPrestigeMenu() {
+    isPaused = true;
+    prestigeGlass.style.display = "flex";
+    requestAnimationFrame(() => {
+        prestigeGlass.classList.add("open");
+        drawPrestigeConnectionLines();
+    });
+    updatePrestigeBars();
+}
+
+function closePrestigeMenu() {
+    prestigeGlass.classList.remove("open");
+    setTimeout(() => {
+        prestigeGlass.style.display = "none";
+        isPaused = false;
+    }, 300);
+}
+
 function canBuyUpgrade(u) {
+    // Check requires against both upgrade pools
     return u.requires.every(req => {
-        const up = upgrades.find(x => x.name === req.name);
+        const up = upgrades.find(x => x.name === req.name) || prestigeUpgrades.find(x => x.name === req.name);
+        return up && up.level >= req.level;
+    });
+}
+
+function canBuyPrestigeUpgrade(u) {
+    return u.requires.every(req => {
+        const up = prestigeUpgrades.find(x => x.name === req.name);
         return up && up.level >= req.level;
     });
 }
@@ -1673,9 +1989,11 @@ function closeUpgradeMenu() {
             enemiesKilledThisWave = 0;
 
             startEnemySpawn();
+            ensureAudio();
             animate();
         } else {
             isPaused = false;
+            ensureAudio();
         }
 
     }, 300);
@@ -1739,22 +2057,19 @@ function drawConnectionLines() {
     }
 
     const pairs = [
-        [upOrbit,  upRadius],
-        [upOrbit,  upLaser],
-        [upOrbit,  upSpeed],
-        [upRadius, upShield],
-        [upLaser,  upDual],
-        [upLaser,  upPierce],
-        [upSpeed,  upMagnet],
-        [upShield, upCryo],
-        [upShield, upDash],
-        [upMagnet, upDash],
-        [upMagnet, upGravity],
-        [upDual,   upMulti],
-        [upPierce, upMulti],
-        [upDash,   upNova],
-        [upCryo,   upRegen],
-        [upNova,   upRegen]
+        [upCryo,    upLaser],
+        [upCryo,    upShield],
+        [upCryo,    upMagnet],
+        [upLaser,   upPierce],
+        [upLaser,   upDual],
+        [upShield,  upDash],
+        [upMagnet,  upDash],
+        [upMagnet,  upGravity],
+        [upPierce,  upMulti],
+        [upDual,    upMulti],
+        [upDash,    upNova],
+        [upCryo,    upRegen],
+        [upNova,    upRegen]
     ];
 
     pairs.forEach(([A, B]) => {
@@ -1777,6 +2092,116 @@ function drawConnectionLines() {
     });
 }
 
+function drawPrestigeConnectionLines() {
+    const lineCanvas = document.getElementById("prestigeLineCanvas");
+    const lctx = lineCanvas.getContext("2d");
+    const container = document.getElementById("prestigeTreeContainer");
+    lineCanvas.width = Math.max(1, Math.floor(container.clientWidth));
+    lineCanvas.height = Math.max(1, Math.floor(container.clientHeight));
+    lctx.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
+
+    function centerOf(node) {
+        return {
+            x: node.offsetLeft + node.offsetWidth / 2,
+            y: node.offsetTop  + node.offsetHeight / 2
+        };
+    }
+
+    const pairs = [
+        [pOrbit, pSpeed],
+        [pOrbit, pRadius]
+    ];
+
+    pairs.forEach(([A, B]) => {
+        const a = centerOf(A);
+        const b = centerOf(B);
+        const unlocked =
+            prestigeUpgrades.find(u => u.name === A.querySelector(".uName").textContent)?.level > 0 &&
+            prestigeUpgrades.find(u => u.name === B.querySelector(".uName").textContent)?.level > 0;
+        lctx.strokeStyle = unlocked ? "#00ffff" : "#224455";
+        lctx.lineWidth = 4;
+        lctx.beginPath();
+        lctx.moveTo(a.x, a.y);
+        lctx.lineTo(b.x, b.y);
+        lctx.stroke();
+    });
+}
+
+function applyPrestigeUpgrade(name) {
+    const u = prestigeUpgrades.find(x => x.name === name);
+    if (!u) return;
+    if (!canBuyPrestigeUpgrade(u)) return;
+    const cost = u.cost + u.level;
+    if (prestigeStars >= cost && u.level < u.max) {
+        prestigeStars -= cost;
+        document.getElementById("prestigeStarCount").textContent = prestigeStars;
+        u.level++;
+
+        if (name === "Orbit") {
+            const speedLvl = prestigeUpgrades.find(x => x.name === "Speed").level;
+            const o = new OrbitBall(Math.random() * Math.PI * 2);
+            o.angularSpeed += speedLvl * 0.015;
+            o.damage = 1 + speedLvl;
+            orbitBalls.push(o);
+        }
+        if (name === "Radius")
+            player.orbitRadius += 25;
+        if (name === "Speed") {
+            orbitBalls.forEach(o => {
+                o.angularSpeed += 0.015;
+                o.damage = u.level;
+            });
+        }
+
+        const node = document.querySelector(`.prestigeNode[data-name="${name}"]`);
+        if (node) {
+            node.classList.add("unlocked");
+            setTimeout(() => node.classList.remove("unlocked"), 400);
+        }
+
+        drawPrestigeConnectionLines();
+        updatePrestigeBars();
+    }
+}
+
+function updatePrestigeBars() {
+    document.querySelectorAll(".prestigeNode").forEach(node => {
+        const name = node.querySelector(".uName").textContent;
+        const u = prestigeUpgrades.find(x => x.name === name);
+        if (!u) return;
+        if (!canBuyPrestigeUpgrade(u)) {
+            node.style.opacity = 0.3;
+            node.style.filter = "grayscale(1)";
+        } else {
+            node.style.opacity = 1;
+            node.style.filter = "none";
+        }
+        node.querySelector(".progressBar div").style.width =
+            (u.level / u.max) * 100 + "%";
+
+        let costEl = node.querySelector(".uCost");
+        if (!costEl) {
+            costEl = document.createElement("div");
+            costEl.className = "uCost";
+            node.querySelector(".progressBar").before(costEl);
+        }
+        if (u.level >= u.max) costEl.textContent = "MAX";
+        else costEl.textContent = `Cost: ${u.cost + u.level} ★`;
+
+        let reqEl = node.querySelector(".uReq");
+        if (!reqEl) {
+            reqEl = document.createElement("div");
+            reqEl.className = "uReq";
+            costEl.after(reqEl);
+        }
+        if (!canBuyPrestigeUpgrade(u) && u.requires.length > 0) {
+            reqEl.textContent = "Needs: " + u.requires.map(r => `${r.name} Lv${r.level}`).join(", ");
+        } else {
+            reqEl.textContent = "";
+        }
+    });
+}
+
 function applyUpgrade(name) {
     const u = upgrades.find(x => x.name === name);
     if (!u) return;
@@ -1787,24 +2212,6 @@ function applyUpgrade(name) {
         points -= cost;
         infoDiv.textContent = `Wave ${wave} | Points: ${points}`;
         u.level++;
-
-        if (name === "Orbit") {
-            const speedLvl = upgrades.find(x => x.name === "Speed").level;
-            const o = new OrbitBall(Math.random() * Math.PI * 2);
-            o.angularSpeed += speedLvl * 0.015;
-            o.damage = 1 + speedLvl;
-            orbitBalls.push(o);
-        }
-
-        if (name === "Radius")
-            player.orbitRadius += 25;
-
-        if (name === "Speed") {
-            orbitBalls.forEach(o => {
-                o.angularSpeed += 0.015;
-                o.damage = u.level;
-            });
-        }
 
         if (name === "Laser") {
             laserDamage = 1 + u.level;
@@ -1916,20 +2323,31 @@ function updateBars() {
     });
 }
 
-upOrbit.onclick  = () => applyUpgrade("Orbit");
-upRadius.onclick = () => applyUpgrade("Radius");
-upSpeed.onclick  = () => applyUpgrade("Speed");
-
+upCryo.onclick   = () => applyUpgrade("Cryo");
 upLaser.onclick  = () => applyUpgrade("Laser");
 upShield.onclick = () => applyUpgrade("Shield");
 upMagnet.onclick = () => applyUpgrade("Magnet");
 upDash.onclick   = () => applyUpgrade("Dash");
 upPierce.onclick = () => applyUpgrade("Pierce");
-upCryo.onclick   = () => applyUpgrade("Cryo");
 upGravity.onclick = () => applyUpgrade("Gravity");
 upMulti.onclick  = () => applyUpgrade("Multi");
 upNova.onclick   = () => applyUpgrade("Nova");
 upRegen.onclick  = () => applyUpgrade("Regen");
+upDual.onclick   = () => applyUpgrade("Dual");
+
+// Prestige node clicks
+pOrbit.onclick  = () => applyPrestigeUpgrade("Orbit");
+pSpeed.onclick  = () => applyPrestigeUpgrade("Speed");
+pRadius.onclick = () => applyPrestigeUpgrade("Radius");
+
+// Prestige node data-name attributes
+document.querySelectorAll(".prestigeNode").forEach(n => {
+    n.dataset.name = n.querySelector(".uName").textContent.trim();
+});
+
+// Prestige orb opens prestige menu
+prestigeOrbEl.onclick = () => openPrestigeMenu();
+document.getElementById("closePrestige").onclick = () => closePrestigeMenu();
 
 function updateDashCooldown(delta) {
     if (!dashReady) {
@@ -2066,6 +2484,8 @@ function animate(now = 0) {
         o.update(player.angle, i, orbitBalls.length, dt);
         o.draw();
     });
+
+    updateOrbSounds();
 
     if (player2) {
         player2.angle = player.angle + Math.PI;
