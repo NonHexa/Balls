@@ -178,9 +178,12 @@ canvas {
         border-radius: 12px;
     }
 
-    .gui.open + #settingsToggle,
     .gui.open ~ #settingsToggle {
         display: none;
+    }
+
+    .gui.open #guiClose {
+        display: block !important;
     }
 
     .info {
@@ -207,6 +210,8 @@ canvas {
 
 
 <div class="gui desktop mobile">
+
+    <button id="guiClose" style="display:none;float:right;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;padding:4px 8px;margin:-8px -8px 4px 0;width:auto;">✕</button>
 
     <div class="gui-row">
         <label><input type="checkbox" id="gravityToggle"> Gravity</label>
@@ -277,6 +282,10 @@ let BALL_ID = 0;
 
 settingsToggleBtn.addEventListener("click", () => {
     gui.classList.toggle("open");
+});
+
+document.getElementById("guiClose").addEventListener("click", () => {
+    gui.classList.remove("open");
 });
 
 let isDraggingGUI = false;
