@@ -184,6 +184,43 @@ canvas {
     box-shadow: 0 0 20px rgba(255,170,0,0.5);
 }
 
+/* ── Zoom controls ── */
+#zoomControls {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 120;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.zoomBtn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    background: rgba(20,10,30,0.75);
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.zoomBtn:hover {
+    background: rgba(60,30,80,0.85);
+    border-color: rgba(255,0,255,0.5);
+}
+#zoomLevel {
+    color: rgba(255,255,255,0.5);
+    font-size: 11px;
+    text-align: center;
+    pointer-events: none;
+}
+
 /* ── Mobile touch joystick ── */
 #joystickZone {
     display: none;
@@ -297,6 +334,12 @@ canvas {
     <div id="joystickKnob"></div>
 </div>
 
+<div id="zoomControls">
+    <button class="zoomBtn" id="zoomIn">+</button>
+    <div id="zoomLevel">2.5×</div>
+    <button class="zoomBtn" id="zoomOut">−</button>
+</div>
+
 <canvas id="game"></canvas>
 
 <script>
@@ -325,7 +368,9 @@ const presets = {
 let cols, rows;
 const cellSize = 40;
 const wallThick = 4;
-const camZoom = 2.5; // how zoomed in the camera is
+let camZoom = 2.5;
+const minZoom = 0.4;
+const maxZoom = 5;
 
 let maze = [];
 let walls = [];
@@ -523,8 +568,8 @@ function update() {
 
     // Gyro
     if (gyroEnabled) {
-        player.vx += (gyro.x / 45) * force;
-        player.vy += (gyro.y / 45) * force;
+        player.vx += (gyro.x / 45) * force * 2;
+        player.vy += (gyro.y / 45) * force * 2;
     }
 
     // Touch joystick
@@ -690,6 +735,46 @@ function draw() {
 
     ctx.restore();
 }
+
+// ── Zoom controls ──
+const zoomLevelEl = document.getElementById('zoomLevel');
+function setZoom(z) {
+    camZoom = Math.max(minZoom, Math.min(maxZoom, z));
+    zoomLevelEl.textContent = camZoom.toFixed(1) + '×';
+}
+document.getElementById('zoomIn').addEventListener('click', () => setZoom(camZoom + 0.3));
+document.getElementById('zoomOut').addEventListener('click', () => setZoom(camZoom - 0.3));
+
+canvas.addEventListener('wheel', e => {
+    if (!running) return;
+    e.preventDefault();
+    setZoom(camZoom + (e.deltaY < 0 ? 0.2 : -0.2));
+}, { passive: false });
+
+// Pinch-to-zoom
+let pinchDist = 0;
+canvas.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        pinchDist = Math.hypot(dx, dy);
+    }
+}, { passive: true });
+canvas.addEventListener('touchmove', e => {
+    if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const newDist = Math.hypot(dx, dy);
+        if (pinchDist > 0) {
+            const scale = newDist / pinchDist;
+            setZoom(camZoom * scale);
+        }
+        pinchDist = newDist;
+    }
+}, { passive: true });
+canvas.addEventListener('touchend', e => {
+    if (e.touches.length < 2) pinchDist = 0;
+}, { passive: true });
 
 // ── Touch joystick ──
 const joystickZone = document.getElementById('joystickZone');
