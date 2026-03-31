@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Maze Suckers</title>
 
 <style>
@@ -182,6 +183,75 @@ canvas {
     transform: scale(1.08);
     box-shadow: 0 0 20px rgba(255,170,0,0.5);
 }
+
+/* ── Mobile touch joystick ── */
+#joystickZone {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 140px;
+    height: 140px;
+    z-index: 120;
+    touch-action: none;
+}
+#joystickBase {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.15);
+}
+#joystickKnob {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    border: 2px solid rgba(255,255,255,0.4);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+@media (max-width: 800px) {
+    #joystickZone {
+        display: block;
+    }
+    #backBtn {
+        padding: 10px 16px;
+        font-size: 15px;
+    }
+    #diffMenu h1 {
+        font-size: 26px;
+        margin-bottom: 14px;
+    }
+    .diffBtn {
+        width: 260px;
+        padding: 16px 0;
+        font-size: 18px;
+    }
+    .diffDesc {
+        font-size: 12px;
+    }
+    #customRow input {
+        width: 54px;
+        padding: 10px;
+        font-size: 16px;
+    }
+    #customGo {
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+    #winOverlay h2 {
+        font-size: 36px;
+    }
+    #winOverlay button {
+        padding: 14px 32px;
+        font-size: 18px;
+    }
+}
 </style>
 </head>
 
@@ -214,13 +284,19 @@ canvas {
 </div>
 
 <div id="winOverlay">
-    <h2>You made it!</h2>
+    <h2>Dont worry knew you could do it :)</h2>
     <button onclick="showDiffMenu()">Play Again</button>
 </div>
 
 <div>
     <button id="backBtn">← Menu</button>
 </div>
+
+<div id="joystickZone">
+    <div id="joystickBase"></div>
+    <div id="joystickKnob"></div>
+</div>
+
 <canvas id="game"></canvas>
 
 <script>
@@ -451,6 +527,12 @@ function update() {
         player.vy += (gyro.y / 45) * force;
     }
 
+    // Touch joystick
+    if (joystick.active) {
+        player.vx += joystick.dx * force;
+        player.vy += joystick.dy * force;
+    }
+
     // Friction
     player.vx *= 0.92;
     player.vy *= 0.92;
@@ -607,6 +689,48 @@ function draw() {
     ctx.restore();
 
     ctx.restore();
+}
+
+// ── Touch joystick ──
+const joystickZone = document.getElementById('joystickZone');
+const joystickKnob = document.getElementById('joystickKnob');
+let joystick = { active: false, dx: 0, dy: 0 };
+
+joystickZone.addEventListener('touchstart', e => {
+    e.preventDefault();
+    joystick.active = true;
+    handleJoystickMove(e);
+}, { passive: false });
+
+joystickZone.addEventListener('touchmove', e => {
+    e.preventDefault();
+    handleJoystickMove(e);
+}, { passive: false });
+
+joystickZone.addEventListener('touchend', e => {
+    e.preventDefault();
+    joystick.active = false;
+    joystick.dx = 0;
+    joystick.dy = 0;
+    joystickKnob.style.transform = 'translate(-50%, -50%)';
+}, { passive: false });
+
+function handleJoystickMove(e) {
+    const rect = joystickZone.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const t = e.touches[0];
+    let dx = t.clientX - cx;
+    let dy = t.clientY - cy;
+    const maxR = rect.width / 2 - 25;
+    const dist = Math.hypot(dx, dy);
+    if (dist > maxR) {
+        dx = (dx / dist) * maxR;
+        dy = (dy / dist) * maxR;
+    }
+    joystick.dx = dx / maxR;
+    joystick.dy = dy / maxR;
+    joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
 }
 
 // ── Loop ──

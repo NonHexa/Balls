@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Game Hub Mhm :]</title>
 
 <style>
@@ -10,7 +11,9 @@ body {
     background: radial-gradient(circle at center, #0a0a12, #000);
     font-family: sans-serif;
     color: white;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 h1 {
@@ -38,6 +41,7 @@ h1 {
     cursor: pointer;
     overflow: hidden;
     transition: 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .card::before {
@@ -63,6 +67,7 @@ h1 {
     bottom: 20px;
     left: 20px;
     margin: 0;
+    font-size: 22px;
 }
 
 .card img {
@@ -76,15 +81,34 @@ h1 {
 .card:active {
     transform: scale(0.95);
 }
-body {
-    margin: 0;
-    background: radial-gradient(circle at center, #0a0a12, #000);
-    animation: pulseBg 6s infinite alternate;
-}
 
 @keyframes pulseBg {
     0% { background: radial-gradient(circle at center, #0a0a12, #000); }
     100% { background: radial-gradient(circle at center, #111133, #000); }
+}
+body {
+    animation: pulseBg 6s infinite alternate;
+}
+
+@media (max-width: 600px) {
+    h1 {
+        font-size: 30px;
+        margin-top: 24px;
+    }
+    .menu {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 20px;
+    }
+    .card {
+        height: 120px;
+        border-radius: 16px;
+    }
+    .card h2 {
+        font-size: 18px;
+        bottom: 14px;
+        left: 16px;
+    }
 }
 </style>
 </head>

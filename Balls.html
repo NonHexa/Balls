@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Bouncy Balls Hehe</title>
 
 <style>
@@ -9,6 +10,7 @@ body {
     margin: 0;
     overflow: hidden;
     background: black;
+    touch-action: none;
 }
 
 canvas {
@@ -22,6 +24,8 @@ canvas {
     color: white;
     font-family: sans-serif;
     opacity: 0.8;
+    font-size: 14px;
+    pointer-events: none;
 }
 
 
@@ -30,21 +34,21 @@ canvas {
     top: 60px;
     right: 10px;
     z-index: 101;
-    padding: 8px 12px;
-    border-radius: 6px;
+    padding: 10px 14px;
+    border-radius: 8px;
     border: none;
-    background: #222;
+    background: rgba(34,34,34,0.9);
     color: white;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 
 .gui {
     box-sizing: border-box;
     background: rgba(0,0,0,0.95);
-    padding: 12px;
-    border-radius: 12px;
+    padding: 16px;
+    border-radius: 14px;
     color: white;
     font-family: sans-serif;
     display: none;
@@ -55,16 +59,57 @@ canvas {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    margin-top: 8px;
+    margin-top: 10px;
 }
 
 .gui-row label {
-    margin-top: 4px;
+    margin-top: 6px;
+    font-size: 15px;
+    padding: 4px 0;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gui-row label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
 }
 
 .gui input[type="range"] {
     width: 100%;
     margin-top: 6px;
+    height: 28px;
+}
+
+.gui select {
+    font-size: 15px;
+    padding: 8px;
+    border-radius: 8px;
+    background: #222;
+    color: white;
+    border: 1px solid #555;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.gui button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 10px;
+    border: 2px solid rgba(255,255,255,0.2);
+    background: rgba(40,20,60,0.85);
+    color: #ff88ff;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+}
+.gui button:hover {
+    transform: scale(1.04);
+    box-shadow: 0 0 16px rgba(255,0,255,0.3);
 }
 
 .hint {
@@ -78,7 +123,7 @@ canvas {
     position: fixed;
     top: 80px;
     right: 10px;
-    max-width: 260px;
+    max-width: 280px;
     cursor: move;
     display: none; 
 }
@@ -91,48 +136,60 @@ canvas {
 }
 
 #backBtn {
-position: fixed;
-top: 10px;
-right: 15px;
-z-index: 100;
-padding: 8px 12px;
-border-radius: 6px;
-border: none;
-background: #222;
-color: white;
-cursor: pointer;
-font-size: 16px;
+    position: fixed;
+    top: 10px;
+    right: 15px;
+    z-index: 100;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(34,34,34,0.9);
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
 }
 
 @media (max-width: 600px) {
-
-
     .gui.desktop {
         display: none;
     }
 
-
     .gui.mobile {
         position: fixed;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        max-width: 400px;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-height: 55vh;
+        overflow-y: auto;
         font-size: 16px;
-        border-radius: 16px;
+        border-radius: 16px 16px 0 0;
+        padding: 18px 16px;
         display: block;
     }
 
-
     #settingsToggle {
-        bottom: 80px;
+        bottom: 14px;
         top: auto;
         left: 50%;
         transform: translateX(-50%);
         font-size: 18px;
-        padding: 12px 18px;
-        border-radius: 10px;
+        padding: 14px 22px;
+        border-radius: 12px;
+    }
+
+    .gui.open + #settingsToggle,
+    .gui.open ~ #settingsToggle {
+        display: none;
+    }
+
+    .info {
+        font-size: 12px;
+    }
+
+    #backBtn {
+        padding: 10px 14px;
+        font-size: 14px;
     }
 }
 </style>
