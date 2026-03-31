@@ -9,70 +9,225 @@ body {
     margin: 0;
     overflow: hidden;
     background: black;
+    font-family: sans-serif;
+    user-select: none;
 }
 
 canvas {
     display: block;
 }
+
 #backBtn {
-position: fixed;
-top: 10px;
-right: 15px;
-z-index: 100;
-padding: 8px 12px;
-border-radius: 6px;
-border: none;
-background: #222;
-color: white;
-cursor: pointer;
-font-size: 16px;
+    position: fixed;
+    top: 10px;
+    right: 15px;
+    z-index: 100;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: rgba(30,30,30,0.85);
+    color: #ccc;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.15s, color 0.15s;
+}
+#backBtn:hover {
+    background: rgba(60,60,60,0.95);
+    color: #fff;
+}
+
+#diffMenu {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.92);
+    gap: 16px;
+}
+
+#diffMenu h1 {
+    color: #fff;
+    font-size: 34px;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 16px #ff00ff;
+}
+
+.diffBtn {
+    width: 240px;
+    padding: 14px 0;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(20,10,30,0.85);
+    color: #fff;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s, border-color 0.2s;
+}
+.diffBtn:hover { transform: scale(1.08); }
+
+.diffBtn.easy {
+    color: #88ffaa;
+    border-color: rgba(136,255,170,0.4);
+}
+.diffBtn.easy:hover {
+    box-shadow: 0 0 30px rgba(136,255,170,0.5);
+}
+
+.diffBtn.medium {
+    color: #ff00ff;
+    border-color: rgba(255,0,255,0.4);
+}
+.diffBtn.medium:hover {
+    box-shadow: 0 0 30px rgba(255,0,255,0.5);
+}
+
+.diffBtn.hard {
+    color: #ff2222;
+    border-color: rgba(255,34,34,0.4);
+}
+.diffBtn.hard:hover {
+    box-shadow: 0 0 30px rgba(255,34,34,0.5);
+}
+
+.diffDesc {
+    font-size: 11px;
+    opacity: 0.6;
+    font-weight: normal;
+    margin-top: 4px;
+    letter-spacing: 0;
+}
+
+#winOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.8);
+}
+
+#winOverlay h2 {
+    color: #00ffcc;
+    font-size: 48px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px #00ffcc;
+}
+
+#winOverlay button {
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: 2px solid #00ffcc;
+    background: rgba(0,40,40,0.8);
+    color: #00ffcc;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+}
+#winOverlay button:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 20px rgba(0,255,204,0.5);
 }
 </style>
 </head>
 
 <body>
+
+<div id="diffMenu">
+    <h1>Choose Maze Size</h1>
+    <button class="diffBtn easy" onclick="startMaze('easy')">
+        Easy
+        <div class="diffDesc">8 × 6 — nice and chill</div>
+    </button>
+    <button class="diffBtn medium" onclick="startMaze('medium')">
+        Medium
+        <div class="diffDesc">15 × 12 — a proper maze</div>
+    </button>
+    <button class="diffBtn hard" onclick="startMaze('hard')">
+        Hard
+        <div class="diffDesc">25 × 20 — good luck</div>
+    </button>
+</div>
+
+<div id="winOverlay">
+    <h2>You made it!</h2>
+    <button onclick="showDiffMenu()">Play Again</button>
+</div>
+
 <div>
     <button id="backBtn">← Menu</button>
 </div>
 <canvas id="game"></canvas>
 
 <script>
-    const canvas = document.getElementById("game");
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 canvas.width = innerWidth;
 canvas.height = innerHeight;
-let player = {
-    x: 100,
-    y: 100,
-    vx: 0,
-    vy: 0,
-    radius: 10
-};
-let goal = {
-    x: 0,
-    y: 0,
-    r: 15
-};
-const cols = 15;
-const rows = 20;
-const cellSize = 40;
 
-let maze = [];
-let walls = [];
-
-const offsetX = (canvas.width - cols * cellSize) / 2;
-const offsetY = (canvas.height - rows * cellSize) / 2;
+window.addEventListener("resize", () => {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+});
 
 document.getElementById("backBtn").onclick = () => {
     window.location.href = "index.html";
 };
 
+// ── Difficulty presets ──
+const presets = {
+    easy:   { cols: 8,  rows: 6  },
+    medium: { cols: 15, rows: 12 },
+    hard:   { cols: 25, rows: 20 }
+};
+
+let cols, rows;
+const cellSize = 40;
+const wallThick = 4;
+
+let maze = [];
+let walls = [];
+let running = false;
+
+let player = { x: 0, y: 0, vx: 0, vy: 0, radius: 8 };
+let goal = { x: 0, y: 0, r: 14 };
+
+// Camera (smoothly follows player)
+let cam = { x: 0, y: 0 };
+
+// Trail
+let trail = [];
+const trailSpacing = 6; // min px between trail points
+
+// Bounce flash
+let bounceFlash = 0; // 0–1, decays each frame
+let bounceDir = { x: 0, y: 0 };
+
+// Squash/stretch
+let squashX = 1;
+let squashY = 1;
+
+// ── Keyboard input ──
+const keys = {};
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup",   e => keys[e.key] = false);
+
+// ── Gyro ──
 let gyro = { x: 0, y: 0 };
 let gyroEnabled = false;
 
 window.addEventListener("click", () => {
-    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+    if (typeof DeviceOrientationEvent !== "undefined" &&
+        typeof DeviceOrientationEvent.requestPermission === "function") {
         DeviceOrientationEvent.requestPermission().then(p => {
             if (p === "granted") gyroEnabled = true;
         });
@@ -81,22 +236,20 @@ window.addEventListener("click", () => {
     }
 }, { once: true });
 
-window.addEventListener("deviceorientation", (e) => {
+window.addEventListener("deviceorientation", e => {
     if (!gyroEnabled) return;
-
-    gyro.x = e.gamma || 0; // left/right
-    gyro.y = e.beta || 0;  // forward/back
+    gyro.x = e.gamma || 0;
+    gyro.y = e.beta  || 0;
 });
 
+// ── Maze generation ──
 function createGrid() {
     maze = [];
-
     for (let y = 0; y < rows; y++) {
         let row = [];
         for (let x = 0; x < cols; x++) {
             row.push({
-                x,
-                y,
+                x, y,
                 visited: false,
                 walls: { top: true, right: true, bottom: true, left: true }
             });
@@ -106,148 +259,289 @@ function createGrid() {
 }
 
 function generateMaze(x = 0, y = 0) {
-    let current = maze[y][x];
-    current.visited = true;
+    // Iterative DFS to avoid stack overflow on large mazes
+    const stack = [[x, y]];
+    maze[y][x].visited = true;
 
-    const directions = shuffle([
-        [0, -1, "top", "bottom"],
-        [1, 0, "right", "left"],
-        [0, 1, "bottom", "top"],
-        [-1, 0, "left", "right"]
-    ]);
+    while (stack.length > 0) {
+        const [cx, cy] = stack[stack.length - 1];
+        const current = maze[cy][cx];
 
-    for (let [dx, dy, wall, opposite] of directions) {
-        let nx = x + dx;
-        let ny = y + dy;
+        const dirs = shuffle([
+            [0, -1, "top", "bottom"],
+            [1,  0, "right", "left"],
+            [0,  1, "bottom", "top"],
+            [-1, 0, "left", "right"]
+        ]);
 
-        if (nx >= 0 && ny >= 0 && nx < cols && ny < rows) {
-            let next = maze[ny][nx];
-
-            if (!next.visited) {
+        let moved = false;
+        for (const [dx, dy, wall, opposite] of dirs) {
+            const nx = cx + dx;
+            const ny = cy + dy;
+            if (nx >= 0 && ny >= 0 && nx < cols && ny < rows && !maze[ny][nx].visited) {
                 current.walls[wall] = false;
-                next.walls[opposite] = false;
-
-                generateMaze(nx, ny);
+                maze[ny][nx].walls[opposite] = false;
+                maze[ny][nx].visited = true;
+                stack.push([nx, ny]);
+                moved = true;
+                break;
             }
         }
+        if (!moved) stack.pop();
     }
 }
 
 function shuffle(arr) {
-    return arr.sort(() => Math.random() - 0.5);
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
 }
 
 function buildWalls() {
     walls = [];
-
     maze.forEach(row => {
         row.forEach(cell => {
-            const x = cell.x * cellSize + offsetX;
-            const y = cell.y * cellSize + offsetY;
+            const x = cell.x * cellSize;
+            const y = cell.y * cellSize;
 
             if (cell.walls.top)
-                walls.push({ x, y, w: cellSize, h: 4 });
-
+                walls.push({ x, y, w: cellSize + wallThick, h: wallThick });
             if (cell.walls.left)
-                walls.push({ x, y, w: 4, h: cellSize });
-
+                walls.push({ x, y, w: wallThick, h: cellSize + wallThick });
             if (cell.walls.right)
-                walls.push({ x: x + cellSize, y, w: 4, h: cellSize });
-
+                walls.push({ x: x + cellSize, y, w: wallThick, h: cellSize + wallThick });
             if (cell.walls.bottom)
-                walls.push({ x, y: y + cellSize, w: cellSize, h: 4 });
+                walls.push({ x, y: y + cellSize, w: cellSize + wallThick, h: wallThick });
         });
     });
 }
 
-createGrid();
-generateMaze();
-buildWalls();
-
-player.x = 20;
-player.y = 20;
-
-goal.x = (cols - 1) * cellSize + 20;
-goal.y = (rows - 1) * cellSize + 20;
-
-
-function update() {
-const force = 0.2;
-
-player.vx += (gyro.x / 45) * force;
-player.vy += (gyro.y / 45) * force;
-
-player.vx *= 0.95;
-player.vy *= 0.95;
-player.x += player.vx;
-
-walls.forEach(w => {
-    if (
-        player.x + player.radius > w.x &&
-        player.x - player.radius < w.x + w.w &&
-        player.y + player.radius > w.y &&
-        player.y - player.radius < w.y + w.h
-    ) {
-        if (player.vx > 0) player.x = w.x - player.radius;
-        if (player.vx < 0) player.x = w.x + w.w + player.radius;
-
-        player.vx *= -0.5; // 50% bounce
-    }
-});
-
-player.y += player.vy;
-
-walls.forEach(w => {
-    if (
-        player.x + player.radius > w.x &&
-        player.x - player.radius < w.x + w.w &&
-        player.y + player.radius > w.y &&
-        player.y - player.radius < w.y + w.h
-    ) {
-        if (player.vy > 0) player.y = w.y - player.radius;
-        if (player.vy < 0) player.y = w.y + w.h + player.radius;
-
-        player.vy *= -0.5; // 50% bounce
-    }
-});
-const dx = player.x - goal.x;
-const dy = player.y - goal.y;
-
-if (Math.hypot(dx, dy) < player.radius + goal.r) {
-    alert("You win!");
+// ── Start / Reset ──
+function startMaze(diff) {
+    const p = presets[diff];
+    cols = p.cols;
+    rows = p.rows;
 
     createGrid();
     generateMaze();
     buildWalls();
 
-    player.x = 20;
-    player.y = 20;
+    // Place player in center of top-left cell
+    player.x = cellSize / 2;
+    player.y = cellSize / 2;
     player.vx = 0;
     player.vy = 0;
-}
+
+    // Goal in center of bottom-right cell
+    goal.x = (cols - 1) * cellSize + cellSize / 2;
+    goal.y = (rows - 1) * cellSize + cellSize / 2;
+
+    // Reset trail
+    trail = [{ x: player.x, y: player.y }];
+
+    // Reset camera
+    cam.x = player.x;
+    cam.y = player.y;
+
+    // Reset bounce fx
+    bounceFlash = 0;
+    squashX = 1;
+    squashY = 1;
+
+    document.getElementById("diffMenu").style.display = "none";
+    document.getElementById("winOverlay").style.display = "none";
+    running = true;
 }
 
+function showDiffMenu() {
+    running = false;
+    document.getElementById("winOverlay").style.display = "none";
+    document.getElementById("diffMenu").style.display = "flex";
+}
+
+function win() {
+    running = false;
+    document.getElementById("winOverlay").style.display = "flex";
+}
+
+// ── Physics ──
+function update() {
+    if (!running) return;
+
+    const force = 0.25;
+
+    // Keyboard
+    if (keys["ArrowLeft"]  || keys["a"]) player.vx -= force;
+    if (keys["ArrowRight"] || keys["d"]) player.vx += force;
+    if (keys["ArrowUp"]    || keys["w"]) player.vy -= force;
+    if (keys["ArrowDown"]  || keys["s"]) player.vy += force;
+
+    // Gyro
+    if (gyroEnabled) {
+        player.vx += (gyro.x / 45) * force;
+        player.vy += (gyro.y / 45) * force;
+    }
+
+    // Friction
+    player.vx *= 0.92;
+    player.vy *= 0.92;
+
+    // Decay squash/stretch back to normal
+    squashX += (1 - squashX) * 0.15;
+    squashY += (1 - squashY) * 0.15;
+    bounceFlash *= 0.9;
+
+    // Move X then resolve
+    player.x += player.vx;
+    for (const w of walls) {
+        if (
+            player.x + player.radius > w.x &&
+            player.x - player.radius < w.x + w.w &&
+            player.y + player.radius > w.y &&
+            player.y - player.radius < w.y + w.h
+        ) {
+            if (player.vx > 0) player.x = w.x - player.radius;
+            else                player.x = w.x + w.w + player.radius;
+
+            // Bounce + squash
+            const speed = Math.abs(player.vx);
+            player.vx *= -0.5;
+            if (speed > 0.5) {
+                bounceFlash = Math.min(1, speed / 4);
+                bounceDir = { x: Math.sign(player.vx), y: 0 };
+                squashX = 0.7;
+                squashY = 1.3;
+            }
+        }
+    }
+
+    // Move Y then resolve
+    player.y += player.vy;
+    for (const w of walls) {
+        if (
+            player.x + player.radius > w.x &&
+            player.x - player.radius < w.x + w.w &&
+            player.y + player.radius > w.y &&
+            player.y - player.radius < w.y + w.h
+        ) {
+            if (player.vy > 0) player.y = w.y - player.radius;
+            else                player.y = w.y + w.h + player.radius;
+
+            const speed = Math.abs(player.vy);
+            player.vy *= -0.5;
+            if (speed > 0.5) {
+                bounceFlash = Math.min(1, speed / 4);
+                bounceDir = { x: 0, y: Math.sign(player.vy) };
+                squashX = 1.3;
+                squashY = 0.7;
+            }
+        }
+    }
+
+    // Trail
+    const last = trail[trail.length - 1];
+    if (Math.hypot(player.x - last.x, player.y - last.y) > trailSpacing) {
+        trail.push({ x: player.x, y: player.y });
+    }
+
+    // Camera smooth follow
+    cam.x += (player.x - cam.x) * 0.08;
+    cam.y += (player.y - cam.y) * 0.08;
+
+    // Goal check
+    if (Math.hypot(player.x - goal.x, player.y - goal.y) < player.radius + goal.r) {
+        win();
+    }
+}
+
+// ── Drawing ──
 function draw() {
-
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = "#ff00ff";
-    walls.forEach(w => {
-        ctx.fillRect(w.x, w.y, w.w, w.h);
-    });
+    ctx.save();
 
+    // Camera transform: center player on screen
+    const tx = canvas.width / 2 - cam.x;
+    const ty = canvas.height / 2 - cam.y;
+    ctx.translate(tx, ty);
+
+    // Trail
+    if (trail.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(trail[0].x, trail[0].y);
+        for (let i = 1; i < trail.length; i++) {
+            ctx.lineTo(trail[i].x, trail[i].y);
+        }
+        ctx.strokeStyle = "rgba(255,0,255,0.35)";
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.stroke();
+
+        // Brighter near the head
+        const headLen = Math.min(trail.length, 20);
+        if (headLen > 1) {
+            ctx.beginPath();
+            ctx.moveTo(trail[trail.length - headLen].x, trail[trail.length - headLen].y);
+            for (let i = trail.length - headLen + 1; i < trail.length; i++) {
+                ctx.lineTo(trail[i].x, trail[i].y);
+            }
+            ctx.lineTo(player.x, player.y);
+            ctx.strokeStyle = "rgba(255,0,255,0.7)";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+    }
+
+    // Walls
+    ctx.fillStyle = "#ff00ff";
+    ctx.shadowColor = "#ff00ff";
+    ctx.shadowBlur = 6;
+    for (const w of walls) {
+        ctx.fillRect(w.x, w.y, w.w, w.h);
+    }
+    ctx.shadowBlur = 0;
+
+    // Goal glow
+    const gt = Date.now() * 0.003;
+    const gr = goal.r + Math.sin(gt) * 3;
     ctx.beginPath();
-    ctx.arc(goal.x, goal.y, goal.r, 0, Math.PI * 2);
+    ctx.arc(goal.x, goal.y, gr, 0, Math.PI * 2);
     ctx.fillStyle = "#00ffcc";
+    ctx.shadowColor = "#00ffcc";
+    ctx.shadowBlur = 20;
     ctx.fill();
-    
+    ctx.shadowBlur = 0;
+
+    // Bounce ring effect
+    if (bounceFlash > 0.05) {
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.radius + 8 + bounceFlash * 12, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${bounceFlash * 0.6})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    // Player ball with squash/stretch
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.scale(squashX, squashY);
     ctx.beginPath();
-    ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+    ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
     ctx.fillStyle = "#fff";
+    ctx.shadowColor = "#fff";
+    ctx.shadowBlur = 10;
     ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    ctx.restore();
 }
 
+// ── Loop ──
 function loop() {
     update();
     draw();
