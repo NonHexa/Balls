@@ -136,6 +136,52 @@ canvas {
     transform: scale(1.08);
     box-shadow: 0 0 20px rgba(0,255,204,0.5);
 }
+
+#customRow {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 4px;
+}
+
+#customRow input {
+    width: 60px;
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid rgba(255,170,0,0.4);
+    background: rgba(30,20,10,0.85);
+    color: #ffaa00;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+}
+#customRow input:focus {
+    border-color: #ffaa00;
+}
+
+#customRow span {
+    color: rgba(255,170,0,0.6);
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#customGo {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 2px solid rgba(255,170,0,0.4);
+    background: rgba(30,20,10,0.85);
+    color: #ffaa00;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+}
+#customGo:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 20px rgba(255,170,0,0.5);
+}
 </style>
 </head>
 
@@ -145,16 +191,26 @@ canvas {
     <h1>Choose Maze Size</h1>
     <button class="diffBtn easy" onclick="startMaze('easy')">
         Easy
-        <div class="diffDesc">8 × 6 — nice and chill</div>
+        <div class="diffDesc">50 × 40 — warm up</div>
     </button>
     <button class="diffBtn medium" onclick="startMaze('medium')">
         Medium
-        <div class="diffDesc">15 × 12 — a proper maze</div>
+        <div class="diffDesc">75 × 60 — a proper maze</div>
     </button>
     <button class="diffBtn hard" onclick="startMaze('hard')">
         Hard
-        <div class="diffDesc">25 × 20 — good luck</div>
+        <div class="diffDesc">100 × 80 — good luck</div>
     </button>
+    <button class="diffBtn" style="color:#ffaa00;border-color:rgba(255,170,0,0.4);" onclick="document.getElementById('customRow').style.display='flex'">
+        Custom
+        <div class="diffDesc">pick your own size</div>
+    </button>
+    <div id="customRow" style="display:none">
+        <input id="customCols" type="number" min="5" max="200" value="40" placeholder="W">
+        <span>×</span>
+        <input id="customRows" type="number" min="5" max="200" value="30" placeholder="H">
+        <button id="customGo" onclick="startCustomMaze()">Go</button>
+    </div>
 </div>
 
 <div id="winOverlay">
@@ -185,14 +241,15 @@ document.getElementById("backBtn").onclick = () => {
 
 // ── Difficulty presets ──
 const presets = {
-    easy:   { cols: 8,  rows: 6  },
-    medium: { cols: 15, rows: 12 },
-    hard:   { cols: 25, rows: 20 }
+    easy:   { cols: 50,  rows: 40  },
+    medium: { cols: 75,  rows: 60  },
+    hard:   { cols: 100, rows: 80  }
 };
 
 let cols, rows;
 const cellSize = 40;
 const wallThick = 4;
+const camZoom = 2.5; // how zoomed in the camera is
 
 let maze = [];
 let walls = [];
@@ -323,7 +380,16 @@ function startMaze(diff) {
     const p = presets[diff];
     cols = p.cols;
     rows = p.rows;
+    initMaze();
+}
 
+function startCustomMaze() {
+    cols = Math.max(5, Math.min(200, parseInt(document.getElementById('customCols').value) || 40));
+    rows = Math.max(5, Math.min(200, parseInt(document.getElementById('customRows').value) || 30));
+    initMaze();
+}
+
+function initMaze() {
     createGrid();
     generateMaze();
     buildWalls();
@@ -359,6 +425,7 @@ function showDiffMenu() {
     running = false;
     document.getElementById("winOverlay").style.display = "none";
     document.getElementById("diffMenu").style.display = "flex";
+    document.getElementById("customRow").style.display = "none";
 }
 
 function win() {
@@ -463,10 +530,11 @@ function draw() {
 
     ctx.save();
 
-    // Camera transform: center player on screen
-    const tx = canvas.width / 2 - cam.x;
-    const ty = canvas.height / 2 - cam.y;
+    // Camera transform: center player on screen, zoomed in
+    const tx = canvas.width / 2 - cam.x * camZoom;
+    const ty = canvas.height / 2 - cam.y * camZoom;
     ctx.translate(tx, ty);
+    ctx.scale(camZoom, camZoom);
 
     // Trail
     if (trail.length > 1) {
