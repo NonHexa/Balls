@@ -512,10 +512,104 @@
         0%   { transform: scale(1); box-shadow: 0 0 60px #ff00ff; }
         100% { transform: scale(1.4); box-shadow: 0 0 140px #ff00ff; }
     }
+
+    #difficultyMenu {
+        position: fixed;
+        inset: 0;
+        z-index: 300;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.92);
+        gap: 18px;
+    }
+
+    #difficultyMenu h1 {
+        color: #fff;
+        font-size: 36px;
+        letter-spacing: 3px;
+        margin-bottom: 24px;
+        text-shadow: 0 0 20px #ff00ff;
+    }
+
+    .diffBtn {
+        width: 260px;
+        padding: 16px 0;
+        border-radius: 12px;
+        border: 2px solid rgba(255,255,255,0.15);
+        background: rgba(20, 10, 30, 0.85);
+        color: #fff;
+        font-size: 22px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        cursor: pointer;
+        transition: transform 0.15s, box-shadow 0.2s, border-color 0.2s, background 0.2s;
+        text-shadow: 0 0 8px currentColor;
+    }
+
+    .diffBtn:hover {
+        transform: scale(1.08);
+    }
+
+    .diffBtn.bethan {
+        color: #88ffaa;
+        border-color: rgba(136,255,170,0.4);
+    }
+    .diffBtn.bethan:hover {
+        box-shadow: 0 0 30px rgba(136,255,170,0.5);
+        background: rgba(20, 60, 30, 0.85);
+    }
+
+    .diffBtn.normal {
+        color: #ff00ff;
+        border-color: rgba(255,0,255,0.4);
+    }
+    .diffBtn.normal:hover {
+        box-shadow: 0 0 30px rgba(255,0,255,0.5);
+        background: rgba(60, 10, 60, 0.85);
+    }
+
+    .diffBtn.curtis {
+        color: #ff2222;
+        border-color: rgba(255,34,34,0.4);
+    }
+    .diffBtn.curtis:hover {
+        box-shadow: 0 0 30px rgba(255,34,34,0.5);
+        background: rgba(60, 10, 10, 0.85);
+    }
+
+    .diffDesc {
+        font-size: 12px;
+        opacity: 0.6;
+        font-weight: normal;
+        margin-top: 4px;
+        letter-spacing: 0;
+    }
 </style>
 </head>
 <body>
 
+
+<div id="difficultyMenu">
+    <h1>Choose Difficulty</h1>
+    <button class="diffBtn bethan" onclick="chooseDifficulty('bethan')">
+        Bethan
+        <div class="diffDesc">Chill vibes • 5 HP • slow enemies</div>
+    </button>
+    <button class="diffBtn normal" onclick="chooseDifficulty('normal')">
+        Normal People
+        <div class="diffDesc">Balanced • 3 HP • standard pace</div>
+    </button>
+    <button class="diffBtn curtis" onclick="chooseDifficulty('curtis')">
+        <span style="position:relative;display:inline-block;">
+            <span style="position:absolute;top:-18px;left:-10px;font-size:16px;transform:rotate(-20deg);">😈</span>
+            Curtis
+            <span style="position:absolute;top:-18px;right:-10px;font-size:16px;transform:rotate(20deg) scaleX(-1);">😈</span>
+        </span>
+        <div class="diffDesc">Pain • 1 HP • fast &amp; relentless</div>
+    </button>
+</div>
 
 <div class="info" id="info">Points: 0</div>
 <div class="hpBar" id="hpBar"></div>
@@ -987,7 +1081,7 @@ class Enemy {
         const dy = center.y - this.y;
         const dist = Math.hypot(dx, dy);
 
-        const speedScale = 0.35 + (difficultyRamp * 0.4);
+        const speedScale = (0.35 + (difficultyRamp * 0.4)) * diffSpeedMul;
 
         this.vx += dx / dist * this.gravity * this.speedMultiplier * speedScale * dt;
         this.vy += dy / dist * this.gravity * this.speedMultiplier * speedScale * dt;
@@ -1015,6 +1109,13 @@ class Enemy {
                 this.vx *= slow;
                 this.vy *= slow;
             }
+        }
+
+        // Clamp to max speed
+        const spd = Math.hypot(this.vx, this.vy);
+        if (spd > ENEMY_MAX_SPEED) {
+            this.vx *= ENEMY_MAX_SPEED / spd;
+            this.vy *= ENEMY_MAX_SPEED / spd;
         }
 
         this.x += this.vx * dt;
@@ -1190,7 +1291,7 @@ function startEnemySpawn() {
         }
 
         
-        const delay = Math.max(300, 1500 - wave * 70) / gameSpeed;
+        const delay = Math.max(300, 1500 - wave * 70) * diffSpawnMul / gameSpeed;
 
         enemyInterval = setTimeout(spawnLoop, delay);
     }
@@ -1238,91 +1339,116 @@ let gyro = {
 
 let gyroEnabled = false;
 
-// ── Web Audio chord system ──
+// Web Sound Controls :)
 let audioCtx = null;
 let masterGain = null;
-let ballOscillators = [];  // { osc, gain } per orbit ball
 let audioStarted = false;
+let reverbNode = null;
 
-// Chord definitions: sets of frequency ratios from a root
+// Chord definitions (kept for future use)
 const chordBank = [
-    { name: "Em",   semitones: [0, 3, 7] },
-    { name: "Am",   semitones: [0, 3, 7] },
-    { name: "Cmaj", semitones: [0, 4, 7] },
-    { name: "Dm",   semitones: [0, 3, 7] },
-    { name: "G",    semitones: [0, 4, 7] },
-    { name: "Fmaj", semitones: [0, 4, 7] },
-    { name: "Bm",   semitones: [0, 3, 7] },
-    { name: "Am7",  semitones: [0, 3, 7, 10] }
+    { name: "Eb13",    semitones: [0, 4, 7, 10, 14, 21] },
+    { name: "Bbadd9",  semitones: [0, 4, 7, 14] },
+    { name: "Fm7",     semitones: [0, 3, 7, 10] },
+    { name: "Abadd9",  semitones: [0, 4, 7, 14] }
 ];
-// Root notes in Hz for each chord
-const chordRoots = [164.81, 220.00, 261.63, 293.66, 196.00, 174.61, 246.94, 220.00];
+const chordRoots = [155.56, 233.08, 174.61, 207.65];
+
+// Build a simple impulse-response buffer for convolution reverb
+function createReverbBuffer(ctx, duration, decay) {
+    const rate = ctx.sampleRate;
+    const len = rate * duration;
+    const buf = ctx.createBuffer(2, len, rate);
+    for (let ch = 0; ch < 2; ch++) {
+        const data = buf.getChannelData(ch);
+        for (let i = 0; i < len; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+        }
+    }
+    return buf;
+}
 
 function initAudio() {
     if (audioStarted) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.3;
-    masterGain.connect(audioCtx.destination);
+    masterGain.gain.value = 0.35;
+
+    // Reverb send
+    reverbNode = audioCtx.createConvolver();
+    reverbNode.buffer = createReverbBuffer(audioCtx, 2.2, 2.8);
+    const reverbGain = audioCtx.createGain();
+    reverbGain.gain.value = 0.45;  // wet mix
+    reverbNode.connect(reverbGain);
+    reverbGain.connect(audioCtx.destination);
+
+    masterGain.connect(audioCtx.destination); // dry
+    masterGain.connect(reverbNode);           // send to reverb
+
     audioStarted = true;
 }
 
-function updateOrbSounds() {
+// ── Collision chord dictionary ──────────────────────────────────
+// Add as many chords as you like — speed bands are auto-generated.
+const ENEMY_MAX_SPEED = 14;
+
+const collisionChordDict = [
+    { name: "C#maj13", root: 138.59, semitones: [0, 4, 7, 11, 14, 21] },
+    { name: "G#add9",  root: 207.65, semitones: [0, 4, 7, 14] },
+    { name: "D#m7",    root: 155.56, semitones: [0, 3, 7, 10] },
+    { name: "F#add9",  root: 184.99, semitones: [0, 4, 7, 14] }
+];
+
+function buildCollisionNotes() {
+    const notes = [];
+    for (const ch of collisionChordDict) {
+        for (const st of ch.semitones) {
+            notes.push(ch.root * Math.pow(2, st / 12));
+        }
+    }
+    return notes;
+}
+const collisionNotes = buildCollisionNotes();
+
+function buildSpeedBands(noteCount) {
+    const bands = [];
+    for (let i = 0; i < noteCount; i++) {
+        bands.push((i / noteCount) * ENEMY_MAX_SPEED);
+    }
+    return bands;
+}
+const ENEMY_SPEED_BANDS = buildSpeedBands(collisionNotes.length);
+
+function speedToNoteIndex(speed) {
+    let idx = 0;
+    for (let i = ENEMY_SPEED_BANDS.length - 1; i >= 0; i--) {
+        if (speed >= ENEMY_SPEED_BANDS[i]) { idx = i; break; }
+    }
+    return idx;
+}
+
+// Play a sine ping with soft attack + reverb tail on collision
+function playCollisionTone(speed) {
     if (!audioStarted || !audioCtx) return;
-    if (isPaused || gameOver) {
-        // Silence all
-        ballOscillators.forEach(bo => bo.gain.gain.value = 0);
-        return;
-    }
+    const idx = speedToNoteIndex(Math.min(speed, ENEMY_MAX_SPEED));
+    const freq = collisionNotes[idx];
 
-    const count = orbitBalls.length;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.value = 0;
+    osc.connect(gain);
+    gain.connect(masterGain); // goes to both dry + reverb send
 
-    // Create/remove oscillators to match ball count
-    while (ballOscillators.length < count) {
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        osc.type = "sine";
-        osc.frequency.value = 220;
-        g.gain.value = 0;
-        osc.connect(g);
-        g.connect(masterGain);
-        osc.start();
-        ballOscillators.push({ osc, gain: g });
-    }
-    while (ballOscillators.length > count) {
-        const bo = ballOscillators.pop();
-        bo.osc.stop();
-        bo.osc.disconnect();
-        bo.gain.disconnect();
-    }
-
-    // Pick chord based on wave
-    const ci = (wave - 1) % chordBank.length;
-    const chord = chordBank[ci];
-    const root = chordRoots[ci];
-
-    orbitBalls.forEach((ball, i) => {
-        const bo = ballOscillators[i];
-        if (!bo) return;
-
-        // Assign note from chord, cycling through semitones
-        const st = chord.semitones[i % chord.semitones.length];
-        // Octave offset based on ball index
-        const octave = Math.floor(i / chord.semitones.length);
-        const freq = root * Math.pow(2, st / 12 + octave);
-
-        // Gently slide to frequency
-        bo.osc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.1);
-
-        // Volume scales with angular speed
-        const vol = Math.min(0.35, 0.08 + ball.angularSpeed * 6);
-        bo.gain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.05);
-
-        // Waveform changes with speed
-        if (ball.angularSpeed > 0.06) bo.osc.type = "sawtooth";
-        else if (ball.angularSpeed > 0.04) bo.osc.type = "triangle";
-        else bo.osc.type = "sine";
-    });
+    const t = audioCtx.currentTime;
+    // Soft attack (~40ms rise), gentle sustain, long decay into reverb tail
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.22, t + 0.04);    // 40ms soft attack
+    gain.gain.setValueAtTime(0.22, t + 0.06);             // brief hold
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6); // 600ms fade into reverb
+    osc.start(t);
+    osc.stop(t + 0.65);
 }
 
 // Start audio on first user interaction
@@ -2377,6 +2503,9 @@ function checkCollisions() {
                 e.vx += nx * 3;
                 e.vy += ny * 3;
 
+                // Collision tone pitched by enemy speed
+                playCollisionTone(Math.hypot(e.vx, e.vy));
+
                 // Use takeDamage for shielded enemies
                 const orbDmg = b.damage || 1;
                 const hit = e.takeDamage ? e.takeDamage(orbDmg) : (e.life -= orbDmg, true);
@@ -2400,6 +2529,7 @@ function checkCollisions() {
                 const dist = Math.hypot(dx, dy);
                 if (dist < a.size + b.size) {
                     if (a.isBoss || b.isBoss) continue;
+                    playCollisionTone(Math.hypot(a.vx + b.vx, a.vy + b.vy) * 0.5);
                     for (let k = 0; k < 20; k++)
                         particles.push(new Particle(a.x, a.y, "#ff4444"));
                     enemies.splice(j, 1);
@@ -2484,8 +2614,6 @@ function animate(now = 0) {
         o.update(player.angle, i, orbitBalls.length, dt);
         o.draw();
     });
-
-    updateOrbSounds();
 
     if (player2) {
         player2.angle = player.angle + Math.PI;
@@ -2585,6 +2713,27 @@ function animate(now = 0) {
 let player = new PlayerBall();
 orbitBalls = [new OrbitBall(0)];
 
+// Difficulty presets
+const difficultyPresets = {
+    bethan: { hp: 5, spawnMul: 1.6, speedMul: 0.6, label: 'Bethan' },
+    normal: { hp: 3, spawnMul: 1.0, speedMul: 1.0, label: 'Normal People' },
+    curtis: { hp: 1, spawnMul: 0.5, speedMul: 1.5, label: 'Curtis' }
+};
+let difficultyMode = 'normal';
+let diffSpawnMul = 1;
+let diffSpeedMul = 1;
+
+function chooseDifficulty(mode) {
+    const preset = difficultyPresets[mode];
+    difficultyMode = mode;
+    diffSpawnMul = preset.spawnMul;
+    diffSpeedMul = preset.speedMul;
+    maxHP = preset.hp;
+    playerHP = maxHP;
+    document.getElementById('difficultyMenu').style.display = 'none';
+    startGame();
+}
+
 function startGame() {
     spawnCount = 0;
     points = 0;
@@ -2606,5 +2755,5 @@ function startGame() {
     openUpgradeMenu();
 }
 
-startGame();
+// startGame();
 </script>
