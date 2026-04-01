@@ -361,9 +361,129 @@ if(vibrateToggle){
     };
 }
 
-// Sound for collisions hehe is funny set sound to 0 so um it doesnt make a sound
-const collisionSound = new Audio("BallSounds.mp3")
-collisionSound.volume = 1;
+// ── Web Audio chord system ──────────────────────────────────
+let audioCtx = null;
+let masterGain = null;
+let audioStarted = false;
+let reverbNode = null;
+
+function createReverbBuffer(ctx, duration, decay) {
+    const rate = ctx.sampleRate;
+    const len = rate * duration;
+    const buf = ctx.createBuffer(2, len, rate);
+    for (let ch = 0; ch < 2; ch++) {
+        const data = buf.getChannelData(ch);
+        for (let i = 0; i < len; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+        }
+    }
+    return buf;
+}
+
+function initAudio() {
+    if (audioStarted) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.30;
+
+    reverbNode = audioCtx.createConvolver();
+    reverbNode.buffer = createReverbBuffer(audioCtx, 2.5, 3.0);
+    const reverbGain = audioCtx.createGain();
+    reverbGain.gain.value = 0.50;
+    reverbNode.connect(reverbGain);
+    reverbGain.connect(audioCtx.destination);
+
+    masterGain.connect(audioCtx.destination);
+    masterGain.connect(reverbNode);
+
+    audioStarted = true;
+}
+
+function ensureAudio() {
+    if (!audioStarted) initAudio();
+    else if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+}
+window.addEventListener("click", ensureAudio, { once: false });
+window.addEventListener("touchstart", ensureAudio, { once: false });
+
+// Chord dictionary — the system slowly crossfades between these
+const chordDict = [
+    { name: "Cmaj9",   root: 130.81, semitones: [0, 4, 7, 11, 14] },
+    { name: "Am7",     root: 110.00, semitones: [0, 3, 7, 10] },
+    { name: "Fmaj7",   root: 174.61, semitones: [0, 4, 7, 11] },
+    { name: "G13",     root: 196.00, semitones: [0, 4, 7, 10, 14, 21] },
+    { name: "Dm9",     root: 146.83, semitones: [0, 3, 7, 10, 14] },
+    { name: "Em7",     root: 164.81, semitones: [0, 3, 7, 10] }
+];
+
+let currentChordIdx = 0;
+let nextChordIdx = 1;
+let chordBlend = 0;          // 0 = fully current, 1 = fully next
+const CHORD_TRANSITION_TIME = 8000; // ms to fully cross-fade
+let chordTimer = 0;
+let lastChordTime = 0;
+
+function buildChordFreqs(chord) {
+    return chord.semitones.map(st => chord.root * Math.pow(2, st / 12));
+}
+
+// Get a blended note: pick from current or next chord based on blend amount
+function getCollisionFreq(speed) {
+    const curFreqs = buildChordFreqs(chordDict[currentChordIdx]);
+    const nxtFreqs = buildChordFreqs(chordDict[nextChordIdx]);
+
+    // Map collision speed to a note index within the chord
+    const maxSpeed = 12;
+    const norm = Math.min(speed, maxSpeed) / maxSpeed;
+
+    const curIdx = Math.floor(norm * (curFreqs.length - 1));
+    const nxtIdx = Math.floor(norm * (nxtFreqs.length - 1));
+
+    const curFreq = curFreqs[curIdx];
+    const nxtFreq = nxtFreqs[nxtIdx];
+
+    // Smooth blend between chords via logarithmic interpolation
+    const logCur = Math.log2(curFreq);
+    const logNxt = Math.log2(nxtFreq);
+    return Math.pow(2, logCur + (logNxt - logCur) * chordBlend);
+}
+
+function updateChordTransition(now) {
+    if (lastChordTime === 0) { lastChordTime = now; return; }
+
+    const elapsed = now - lastChordTime;
+    chordBlend = Math.min(1, elapsed / CHORD_TRANSITION_TIME);
+
+    if (chordBlend >= 1) {
+        // Transition complete — move to next chord pair
+        currentChordIdx = nextChordIdx;
+        nextChordIdx = (nextChordIdx + 1) % chordDict.length;
+        chordBlend = 0;
+        lastChordTime = now;
+    }
+}
+
+function playCollisionTone(speed) {
+    if (!audioStarted || !audioCtx) return;
+
+    const freq = getCollisionFreq(speed);
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.value = 0;
+    osc.connect(gain);
+    gain.connect(masterGain);
+
+    const t = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.18, t + 0.03);
+    gain.gain.setValueAtTime(0.18, t + 0.06);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+    osc.start(t);
+    osc.stop(t + 0.75);
+}
 
 
 let colorMode = "random";
@@ -797,6 +917,10 @@ function resolveCollisions() {
 
                 b2.vx += ix / m2;
                 b2.vy += iy / m2;
+
+                // Play chord tone based on collision impact speed
+                const impactSpeed = Math.abs(velAlongNormal);
+                if (impactSpeed > 0.5) playCollisionTone(impactSpeed);
             }
         }
     }
@@ -979,6 +1103,8 @@ function applyOrbit() {
 }
 
 function animate(){
+
+updateChordTransition(performance.now());
 
 ctx.fillStyle = `rgba(0,0,0,${trailEnabled ? trailAlpha : 1})`;
 ctx.fillRect(0,0,canvas.width,canvas.height);
