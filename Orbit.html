@@ -1203,8 +1203,8 @@ function rebuildFromUpgrades() {
     else player2 = null;
 
     const laserLevel = upgrades.find(u => u.name === "Laser").level;
-    laserDamage = 0.5 + laserLevel * 0.5;
-    laserFireDelay = Math.max(800, 3000 - laserLevel * 400);
+    laserDamage = 0.25 + laserLevel * 0.25;
+    laserFireDelay = Math.max(2000, 5000 - laserLevel * 400);
 
     const shieldUp = upgrades.find(u => u.name === "Shield").level;
     shieldLevel = shieldUp;
@@ -1448,8 +1448,8 @@ window.addEventListener("click", ensureAudio, { once: false });
 window.addEventListener("touchstart", ensureAudio, { once: false });
 
 let laserCooldown = 0;
-let laserFireDelay = 3000; 
-let laserDamage = 0.5;
+let laserFireDelay = 5000; 
+let laserDamage = 0.25;
 
 let shieldLevel = 0;
 let shieldRadius = 60;
@@ -2328,8 +2328,8 @@ function applyUpgrade(name) {
         }
 
         if (name === "Laser") {
-            laserDamage = 0.5 + u.level * 0.5;
-            laserFireDelay = Math.max(800, 7000 - u.level * 400);
+            laserDamage = 0.25 + u.level * 0.25;
+            laserFireDelay = Math.max(2000, 5000 - u.level * 400);
         }
 
         if (name === "Shield") {
