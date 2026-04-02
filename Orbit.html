@@ -1211,7 +1211,7 @@ function rebuildFromUpgrades() {
     shieldRadius = 60;
     shieldBounce = 4 + shieldUp * 1.5;
     shieldDamage = shieldUp * 0.5;
-    shieldBounceCooldown = shieldUp > 0 ? (21 - shieldUp) * 1000 : 20000;
+    shieldBounceCooldown = shieldUp > 0 ? (16 - shieldUp) * 1000 : 20000;
     shieldBounceTimer = 0;
 
     const magnetUp = upgrades.find(u => u.name === "Magnet").level;
