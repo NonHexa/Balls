@@ -469,16 +469,17 @@
         box-shadow: 0 0 20px #ff00ff66;
     }
 
-    #upCryo    { top: 10px;  left: 50%;  --base-transform: translateX(-50%); }
+    #upDamage  { top: 10px;  left: 50%;  --base-transform: translateX(-50%); }
     #upLaser   { top: 155px; left: 17%;  --base-transform: translateX(-50%); }
     #upShield  { top: 155px; left: 50%;  --base-transform: translateX(-50%); }
     #upMagnet  { top: 155px; left: 83%;  --base-transform: translateX(-50%); }
     #upPierce  { top: 300px; left: 17%;  --base-transform: translateX(-50%); }
     #upDash    { top: 300px; left: 50%;  --base-transform: translateX(-50%); }
     #upDual    { top: 300px; left: 83%;  --base-transform: translateX(-50%); }
-    #upGravity { top: 445px; left: 17%;  --base-transform: translateX(-50%); }
-    #upNova    { top: 445px; left: 50%;  --base-transform: translateX(-50%); }
-    #upMulti   { top: 445px; left: 83%;  --base-transform: translateX(-50%); }
+    #upGravity { top: 445px; left: 12%;  --base-transform: translateX(-50%); }
+    #upCryo    { top: 445px; left: 37%;  --base-transform: translateX(-50%); }
+    #upNova    { top: 445px; left: 63%;  --base-transform: translateX(-50%); }
+    #upMulti   { top: 445px; left: 88%;  --base-transform: translateX(-50%); }
     #upRegen   { top: 590px; left: 50%;  --base-transform: translateX(-50%); }
 
     @media (max-width: 800px) {
@@ -644,9 +645,9 @@
     <div id="treeContent">
     <div id="upgradeStarContainer">
 
-        <div class="upgradeNode" id="upCryo">
+        <div class="upgradeNode" id="upDamage">
             <canvas class="iconCanvas" width="60" height="60"></canvas>
-            <div class="uName">Cryo</div>
+            <div class="uName">Damage</div>
             <div class="progressBar"><div></div></div>
         </div>
 
@@ -685,6 +686,11 @@
         <div class="upgradeNode inner" id="upGravity">
             <canvas class="iconCanvas" width="60" height="60"></canvas>
             <div class="uName">Gravity</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upCryo">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Cryo</div>
             <div class="progressBar"><div></div></div>
         </div>
         <div class="upgradeNode inner" id="upNova">
@@ -785,7 +791,7 @@ let novaLevel = 0;
 let novaCooldown = 0;
 let novaMaxCooldown = 8000;
 let novaRadius = 150;
-let novaDamage = 2;
+let novaDamage = 1;
 let novaFlash = 0;
 let regenLevel = 0;
 let regenTimer = 0;
@@ -934,7 +940,7 @@ class OrbitBall {
         this.orbitRadius = 60;
         this.size = 14;
         this.angularSpeed = 0.02;
-        this.damage = 1;
+        this.damage = 0.25;
     }
 
     update(centerAngle, i, total, dt) {
@@ -1181,10 +1187,13 @@ function rebuildFromUpgrades() {
     const speedLevel  = prestigeUpgrades.find(u => u.name === "Speed").level;
     const dualLevel   = upgrades.find(u => u.name === "Dual").level;
 
+    const dUp = upgrades.find(u => u.name === "Damage").level;
+    damageBonus = dUp;
+
     for (let i = 0; i < 1 + orbitLevel; i++) {
         const o = new OrbitBall(Math.random() * Math.PI * 2);
         o.angularSpeed += speedLevel * 0.015;
-        o.damage = 1 + speedLevel;
+        o.damage = 0.25 + damageBonus * 0.25 + speedLevel * 0.125;
         orbitBalls.push(o);
     }
 
@@ -1194,14 +1203,14 @@ function rebuildFromUpgrades() {
     else player2 = null;
 
     const laserLevel = upgrades.find(u => u.name === "Laser").level;
-    laserDamage = 1 + laserLevel;
+    laserDamage = 0.5 + laserLevel * 0.5;
     laserFireDelay = Math.max(800, 3000 - laserLevel * 400);
 
     const shieldUp = upgrades.find(u => u.name === "Shield").level;
     shieldLevel = shieldUp;
     shieldRadius = 60 + shieldUp * 12;
     shieldBounce = 4 + shieldUp * 1.5;
-    shieldDamage = shieldUp;
+    shieldDamage = shieldUp * 0.5;
 
     const magnetUp = upgrades.find(u => u.name === "Magnet").level;
     magnetLevel = magnetUp;
@@ -1231,7 +1240,7 @@ function rebuildFromUpgrades() {
     novaLevel = nUp;
     novaMaxCooldown = nUp > 0 ? Math.max(3000, 8000 - nUp * 1500) : 8000;
     novaRadius = 150 + nUp * 40;
-    novaDamage = 2 + nUp;
+    novaDamage = 1 + nUp * 0.5;
     novaCooldown = 0;
 
     const rUp = upgrades.find(u => u.name === "Regen").level;
@@ -1438,7 +1447,7 @@ window.addEventListener("touchstart", ensureAudio, { once: false });
 
 let laserCooldown = 0;
 let laserFireDelay = 3000;   // ms between laser shots
-let laserDamage = 1;
+let laserDamage = 0.5;
 
 let shieldLevel = 0;
 let shieldRadius = 60;
@@ -1940,7 +1949,6 @@ function endBossFight() {
     // Award prestige star
     prestigeStars += 1 + Math.floor(bossLevel / 2);
     document.getElementById("prestigeStarCount").textContent = prestigeStars;
-    prestigeOrbEl.style.display = "block";
 
     // Spawn burst for next wave
     for (let i = 0; i < 3 + wave * 2; i++) {
@@ -1960,18 +1968,20 @@ function drawDashIcon(ctx) {
     ctx.stroke();
 }
 // The upgradesss - now with level-based requirements
+let damageBonus = 0;
 const upgrades = [
-    { name: "Cryo",    cost: 8,   level: 0, max: 3, requires: [] },
-    { name: "Laser",   cost: 12,  level: 0, max: 5, requires: [{name:"Cryo", level:1}] },
-    { name: "Shield",  cost: 14,  level: 0, max: 5, requires: [{name:"Cryo", level:1}] },
-    { name: "Magnet",  cost: 14,  level: 0, max: 5, requires: [{name:"Cryo", level:1}] },
+    { name: "Damage",  cost: 5,   level: 0, max: 5, requires: [] },
+    { name: "Laser",   cost: 12,  level: 0, max: 5, requires: [{name:"Damage", level:1}] },
+    { name: "Shield",  cost: 14,  level: 0, max: 5, requires: [{name:"Damage", level:1}] },
+    { name: "Magnet",  cost: 14,  level: 0, max: 5, requires: [{name:"Damage", level:1}] },
     { name: "Pierce",  cost: 18,  level: 0, max: 3, requires: [{name:"Laser", level:2}] },
     { name: "Dash",    cost: 18,  level: 0, max: 5, requires: [{name:"Shield", level:1}, {name:"Magnet", level:1}] },
     { name: "Dual",    cost: 30,  level: 0, max: 1, requires: [{name:"Laser", level:2}] },
     { name: "Gravity", cost: 22,  level: 0, max: 3, requires: [{name:"Magnet", level:3}] },
     { name: "Nova",    cost: 22,  level: 0, max: 3, requires: [{name:"Dash", level:2}] },
     { name: "Multi",   cost: 35,  level: 0, max: 2, requires: [{name:"Pierce", level:2}, {name:"Dual", level:1}] },
-    { name: "Regen",   cost: 28,  level: 0, max: 3, requires: [{name:"Cryo", level:2}, {name:"Nova", level:1}] }
+    { name: "Cryo",    cost: 18,  level: 0, max: 3, requires: [{name:"Shield", level:2}] },
+    { name: "Regen",   cost: 28,  level: 0, max: 3, requires: [{name:"Cryo", level:1}, {name:"Nova", level:1}] }
 ];
 
 // Prestige tree — orbit-related upgrades earned with prestige stars from boss kills
@@ -2143,9 +2153,9 @@ function drawConnectionLines() {
     }
 
     const pairs = [
-        [upCryo,    upLaser],
-        [upCryo,    upShield],
-        [upCryo,    upMagnet],
+        [upDamage,  upLaser],
+        [upDamage,  upShield],
+        [upDamage,  upMagnet],
         [upLaser,   upPierce],
         [upLaser,   upDual],
         [upShield,  upDash],
@@ -2154,11 +2164,15 @@ function drawConnectionLines() {
         [upPierce,  upMulti],
         [upDual,    upMulti],
         [upDash,    upNova],
+        [upShield,  upCryo],
         [upCryo,    upRegen],
         [upNova,    upRegen]
     ];
 
     pairs.forEach(([A, B]) => {
+        // Skip lines to hidden nodes
+        if (A.style.display === "none" || B.style.display === "none") return;
+
         const a = centerOf(A);
         const b = centerOf(B);
 
@@ -2227,7 +2241,7 @@ function applyPrestigeUpgrade(name) {
             const speedLvl = prestigeUpgrades.find(x => x.name === "Speed").level;
             const o = new OrbitBall(Math.random() * Math.PI * 2);
             o.angularSpeed += speedLvl * 0.015;
-            o.damage = 1 + speedLvl;
+            o.damage = 0.25 + damageBonus * 0.25 + speedLvl * 0.125;
             orbitBalls.push(o);
         }
         if (name === "Radius")
@@ -2235,7 +2249,7 @@ function applyPrestigeUpgrade(name) {
         if (name === "Speed") {
             orbitBalls.forEach(o => {
                 o.angularSpeed += 0.015;
-                o.damage = u.level;
+                o.damage = 0.25 + damageBonus * 0.25 + u.level * 0.125;
             });
         }
 
@@ -2299,8 +2313,13 @@ function applyUpgrade(name) {
         infoDiv.textContent = `Wave ${wave} | Points: ${points}`;
         u.level++;
 
+        if (name === "Damage") {
+            damageBonus = u.level;
+            orbitBalls.forEach(o => { o.damage = 0.25 + damageBonus * 0.25; });
+        }
+
         if (name === "Laser") {
-            laserDamage = 1 + u.level;
+            laserDamage = 0.5 + u.level * 0.5;
             laserFireDelay = Math.max(800, 3000 - u.level * 400);
         }
 
@@ -2370,17 +2389,24 @@ function applyUpgrade(name) {
 }
 
 function updateBars() {
+    let allMaxed = true;
     document.querySelectorAll(".upgradeNode").forEach(node => {
         const name = node.querySelector(".uName").textContent;
         const u = upgrades.find(x => x.name === name);
         if (!u) return;
-        if (!canBuyUpgrade(u)) {
-            node.style.opacity = 0.3;
-            node.style.filter = "grayscale(1)";
-        } else {
-            node.style.opacity = 1;
-            node.style.filter = "none";
+
+        if (u.level < u.max) allMaxed = false;
+
+        // Hide nodes whose requirements aren't met yet (and have no levels)
+        if (!canBuyUpgrade(u) && u.level === 0) {
+            node.style.display = "none";
+            return;
         }
+
+        node.style.display = "";
+        node.style.opacity = 1;
+        node.style.filter = "none";
+
         node.querySelector(".progressBar div").style.width =
             (u.level / u.max) * 100 + "%";
 
@@ -2407,9 +2433,14 @@ function updateBars() {
             reqEl.textContent = "";
         }
     });
+
+    // Show prestige orb when all main upgrades are maxed
+    if (allMaxed) {
+        prestigeOrbEl.style.display = "block";
+    }
 }
 
-upCryo.onclick   = () => applyUpgrade("Cryo");
+upDamage.onclick = () => applyUpgrade("Damage");
 upLaser.onclick  = () => applyUpgrade("Laser");
 upShield.onclick = () => applyUpgrade("Shield");
 upMagnet.onclick = () => applyUpgrade("Magnet");
@@ -2420,6 +2451,7 @@ upMulti.onclick  = () => applyUpgrade("Multi");
 upNova.onclick   = () => applyUpgrade("Nova");
 upRegen.onclick  = () => applyUpgrade("Regen");
 upDual.onclick   = () => applyUpgrade("Dual");
+upCryo.onclick   = () => applyUpgrade("Cryo");
 
 // Prestige node clicks
 pOrbit.onclick  = () => applyPrestigeUpgrade("Orbit");
