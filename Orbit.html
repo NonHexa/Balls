@@ -1229,7 +1229,7 @@ function rebuildFromUpgrades() {
 
     const cUp = upgrades.find(u => u.name === "Cryo").level;
     cryoLevel = cUp;
-    cryoRadius = cUp > 0 ? 120 + cUp * 60 : 0;
+    cryoRadius = cUp > 0 ? 60 + cUp * 60 : 0;
     cryoSlow = cUp > 0 ? 0.99 - cUp * 0.005 : 1;
 
     const gUp = upgrades.find(u => u.name === "Gravity").level;
