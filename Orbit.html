@@ -1091,14 +1091,11 @@ class Enemy {
             this.visible = Math.sin(this.phaseTimer) > -0.3;
         }
 
-        // Cryo slowdown
-        if (cryoLevel > 0) {
-            const cd = Math.hypot(this.x - center.x, this.y - center.y);
-            if (cd < cryoRadius) {
-                const slow = Math.pow(cryoSlow, dt);
-                this.vx *= slow;
-                this.vy *= slow;
-            }
+        // Cryo slowdown — affects all enemies globally except bosses and purple
+        if (cryoLevel > 0 && !this.isBoss && this.color !== "#8800ff") {
+            const slow = Math.pow(cryoSlow, dt);
+            this.vx *= slow;
+            this.vy *= slow;
         }
 
         // Clamp to max speed
@@ -1208,7 +1205,7 @@ function rebuildFromUpgrades() {
 
     const shieldUp = upgrades.find(u => u.name === "Shield").level;
     shieldLevel = shieldUp;
-    shieldRadius = 60 + shieldUp * 12;
+    shieldRadius = 60;
     shieldBounce = 4 + shieldUp * 1.5;
     shieldDamage = shieldUp * 0.5;
     shieldBounceCooldown = shieldUp > 0 ? (21 - shieldUp) * 1000 : 20000;
@@ -1229,8 +1226,7 @@ function rebuildFromUpgrades() {
 
     const cUp = upgrades.find(u => u.name === "Cryo").level;
     cryoLevel = cUp;
-    cryoRadius = cUp > 0 ? 120 + cUp * 60 : 0;
-    cryoSlow = cUp > 0 ? 0.97 - cUp * 0.02 : 1;
+    cryoSlow = cUp > 0 ? 0.99 - cUp * 0.005 : 1;
 
     const gUp = upgrades.find(u => u.name === "Gravity").level;
     gravityLevel = gUp;
@@ -2362,8 +2358,8 @@ function applyUpgrade(name) {
 
         if (name === "Cryo") {
             cryoLevel = u.level;
-            cryoRadius = 80 + u.level * 30;
-            cryoSlow = 0.99 - u.level * 0.02;
+            cryoRadius = 50 + u.level * 30;
+            cryoSlow = 0.99;
         }
 
         if (name === "Gravity") {
