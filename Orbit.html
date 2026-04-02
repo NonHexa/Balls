@@ -1211,6 +1211,8 @@ function rebuildFromUpgrades() {
     shieldRadius = 60 + shieldUp * 12;
     shieldBounce = 4 + shieldUp * 1.5;
     shieldDamage = shieldUp * 0.5;
+    shieldBounceCooldown = shieldUp > 0 ? (21 - shieldUp) * 1000 : 20000;
+    shieldBounceTimer = 0;
 
     const magnetUp = upgrades.find(u => u.name === "Magnet").level;
     magnetLevel = magnetUp;
@@ -1446,7 +1448,7 @@ window.addEventListener("click", ensureAudio, { once: false });
 window.addEventListener("touchstart", ensureAudio, { once: false });
 
 let laserCooldown = 0;
-let laserFireDelay = 3000;   // ms between laser shots
+let laserFireDelay = 3000; 
 let laserDamage = 0.5;
 
 let shieldLevel = 0;
@@ -1454,6 +1456,8 @@ let shieldRadius = 60;
 let shieldBounce = 4;
 let shieldDamage = 0;
 let shieldPulseTime = 0;
+let shieldBounceCooldown = 20000;
+let shieldBounceTimer = 0;
 
 let magnetLevel = 0;
 let magnetStrength = 0.04;
@@ -1576,9 +1580,10 @@ function drawShield(dt) {
     const pulse = Math.sin(shieldPulseTime) * 6;
     const r = shieldRadius + pulse;
 
+    const alpha = shieldBounceTimer > 0 ? 0.3 : 0.8;
     ctx.beginPath();
-    ctx.arc(player.x, player.y, r, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(255,0,255,0.8)";
+    ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255,0,255,${alpha})`;
     ctx.lineWidth = 3 + Math.sin(shieldPulseTime) * 1.5;
     ctx.shadowBlur = 25;
     ctx.shadowColor = "#ff00ff";
@@ -1675,9 +1680,10 @@ function updateWaveProgress() {
 
 function updateShieldCollision(e) {
     if (shieldLevel === 0) return;
+    if (shieldBounceTimer > 0) return;
 
-    const dx = e.x - player.x;
-    const dy = e.y - player.y;
+    const dx = e.x - center.x;
+    const dy = e.y - center.y;
     const dist = Math.hypot(dx, dy);
 
     if (dist < shieldRadius + e.size) {
@@ -1690,6 +1696,9 @@ function updateShieldCollision(e) {
         if (e.takeDamage) e.takeDamage(shieldDamage);
         else e.life -= shieldDamage;
         points++;
+
+        playCollisionTone(Math.hypot(e.vx, e.vy));
+        shieldBounceTimer = shieldBounceCooldown;
 
         for (let i = 0; i < 6; i++)
             particles.push(new Particle(e.x, e.y, "#ff00ff"));
@@ -2320,14 +2329,16 @@ function applyUpgrade(name) {
 
         if (name === "Laser") {
             laserDamage = 0.5 + u.level * 0.5;
-            laserFireDelay = Math.max(800, 3000 - u.level * 400);
+            laserFireDelay = Math.max(800, 7000 - u.level * 400);
         }
 
         if (name === "Shield") {
             shieldLevel++;
-            shieldRadius += 12;
+            shieldRadius += 0;
             shieldBounce += 1.5;
-            shieldDamage += 1;
+            shieldDamage += 0.5;
+            shieldBounceCooldown = (21 - shieldLevel) * 1000;
+            shieldBounceTimer = 0;
         }
 
         if (name === "Dual") {
@@ -2351,8 +2362,8 @@ function applyUpgrade(name) {
 
         if (name === "Cryo") {
             cryoLevel = u.level;
-            cryoRadius = 120 + u.level * 60;
-            cryoSlow = 0.97 - u.level * 0.02;
+            cryoRadius = 80 + u.level * 30;
+            cryoSlow = 0.5 - u.level * 0.02;
         }
 
         if (name === "Gravity") {
@@ -2686,6 +2697,7 @@ function animate(now = 0) {
     updateNova(delta * gameSpeed);
     updateRegen(delta * gameSpeed);
     drawLaserBeams(dt);
+    if (shieldBounceTimer > 0) shieldBounceTimer -= delta * gameSpeed;
     drawShield(dt);
     drawCryoField();
     drawNovaFlash(dt);
@@ -2746,5 +2758,4 @@ function startGame() {
     openUpgradeMenu();
 }
 
-// startGame();
 </script>
