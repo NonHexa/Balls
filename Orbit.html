@@ -2363,7 +2363,7 @@ function applyUpgrade(name) {
         if (name === "Cryo") {
             cryoLevel = u.level;
             cryoRadius = 80 + u.level * 30;
-            cryoSlow = 0.5 - u.level * 0.02;
+            cryoSlow = 0.99 - u.level * 0.02;
         }
 
         if (name === "Gravity") {

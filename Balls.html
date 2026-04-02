@@ -223,8 +223,8 @@ canvas {
     </div>
 
     <div class="gui-row">
-        <label>Gravity strength: <span id="gravityStrengthValue">0.2</span></label>
-        <input type="range" id="gravityStrengthSlider" min="0" max="1" step="0.01" value="0.2">
+        <label>Gravity (m/s²): <span id="gravityStrengthValue">9.81</span></label>
+        <input type="range" id="gravityStrengthSlider" min="0" max="30" step="0.01" value="9.81">
     </div>
 
     <div class="gui-row">
@@ -338,7 +338,8 @@ let gravityEnabled = false;
 
 let gravityX = 0;
 let gravityY = 0;
-let gravityStrength = 0.2;
+let gravityStrength = 9.81;
+const GRAVITY_SCALE = 0.009;
 let motionListenerAdded = false;
 
 const supportsDeviceMotion = typeof DeviceMotionEvent !== "undefined";
@@ -534,8 +535,8 @@ function handleMotion(event){
     let ay = acc.y;
 
     // scale to match existing gravity strength
-    gravityX = (-ax / 9.8) * gravityStrength;
-    gravityY = (ay / 9.8) * gravityStrength;
+    gravityX = (-ax / 9.8) * gravityStrength * GRAVITY_SCALE;
+    gravityY = (ay / 9.8) * gravityStrength * GRAVITY_SCALE;
 
     lastMotionAt = performance.now();
 }
@@ -589,8 +590,8 @@ function handleOrientation(event){
     tiltX = Math.max(-45, Math.min(45, tiltX)) / 45;
     tiltY = Math.max(-45, Math.min(45, tiltY)) / 45;
 
-    gravityX = tiltX * gravityStrength;
-    gravityY = tiltY * gravityStrength;
+    gravityX = tiltX * gravityStrength * GRAVITY_SCALE;
+    gravityY = tiltY * gravityStrength * GRAVITY_SCALE;
 
     lastMotionAt = performance.now();
 }
@@ -765,7 +766,7 @@ applyForces(){
 
         // If we haven't received motion/orientation data recently, fall back to a simple downward gravity.
         if(!supportsDeviceMotion || !hasRecentMotion){
-            this.vy += gravityStrength * 0.5;
+            this.vy += gravityStrength * GRAVITY_SCALE;
         } else {
             this.vx += gravityX;
             this.vy += gravityY;
