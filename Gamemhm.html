@@ -75,6 +75,7 @@
     <button class="tbtn" id="btnTrails">Trails</button>
     <button class="tbtn" id="btnRepel">Repel</button>
     <button class="tbtn" id="btnRainbow">Rainbow</button>
+    <button class="tbtn active" id="btnFriction">Friction</button>
     <button class="tbtn" id="btnClear">Clear All</button>
 </div>
 
@@ -121,6 +122,7 @@ let gravity = true;
 let trails = false;
 let repelMode = false;
 let rainbowMode = false;
+let frictionEnabled = true;
 const balls = [];
 const GRAVITY = 0.35;
 const FRICTION = 0.998;
@@ -155,8 +157,9 @@ class Ball {
     }
     update(dt) {
         if (gravity) this.vy += GRAVITY * dt;
-        this.vx *= FRICTION;
-        this.vy *= FRICTION;
+        const f = frictionEnabled ? FRICTION : 1;
+        this.vx *= f;
+        this.vy *= f;
         this.x += this.vx * dt;
         this.y += this.vy * dt;
 
@@ -387,6 +390,7 @@ toggle(document.getElementById("btnGravity"), () => gravity, v => gravity = v);
 toggle(document.getElementById("btnTrails"), () => trails, v => trails = v);
 toggle(document.getElementById("btnRepel"), () => repelMode, v => repelMode = v);
 toggle(document.getElementById("btnRainbow"), () => rainbowMode, v => rainbowMode = v);
+toggle(document.getElementById("btnFriction"), () => frictionEnabled, v => frictionEnabled = v);
 document.getElementById("btnClear").addEventListener("click", () => { balls.length = 0; });
 
 // ── Main Loop ──
