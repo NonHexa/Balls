@@ -1091,11 +1091,14 @@ class Enemy {
             this.visible = Math.sin(this.phaseTimer) > -0.3;
         }
 
-        // Cryo slowdown — affects all enemies globally except bosses and purple
+        // Cryo slowdown — affects enemies in area except bosses and purple
         if (cryoLevel > 0 && !this.isBoss && this.color !== "#8800ff") {
-            const slow = Math.pow(cryoSlow, dt);
-            this.vx *= slow;
-            this.vy *= slow;
+            const cd = Math.hypot(this.x - center.x, this.y - center.y);
+            if (cd < cryoRadius) {
+                const slow = Math.pow(cryoSlow, dt);
+                this.vx *= slow;
+                this.vy *= slow;
+            }
         }
 
         // Clamp to max speed
@@ -1226,6 +1229,7 @@ function rebuildFromUpgrades() {
 
     const cUp = upgrades.find(u => u.name === "Cryo").level;
     cryoLevel = cUp;
+    cryoRadius = cUp > 0 ? 120 + cUp * 60 : 0;
     cryoSlow = cUp > 0 ? 0.99 - cUp * 0.005 : 1;
 
     const gUp = upgrades.find(u => u.name === "Gravity").level;
