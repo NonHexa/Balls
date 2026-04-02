@@ -118,8 +118,56 @@ canvas {
 #winOverlay h2 {
     color: #00ffcc;
     font-size: 48px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
     text-shadow: 0 0 20px #00ffcc;
+}
+
+#winStats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 18px;
+    font-size: 16px;
+}
+#winStats .stat {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+#winStats .stat-label {
+    color: rgba(255,255,255,0.5);
+}
+#winTime {
+    color: #fff;
+    font-weight: bold;
+    font-size: 22px;
+}
+#winYourPath {
+    color: #ff00ff;
+    font-weight: bold;
+}
+#winBestPath {
+    color: #00ff88;
+    font-weight: bold;
+}
+
+.legend {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 14px;
+    font-size: 13px;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255,255,255,0.7);
+}
+.legend-swatch {
+    width: 18px;
+    height: 4px;
+    border-radius: 2px;
 }
 
 #winOverlay button {
@@ -298,7 +346,7 @@ canvas {
     <h1>Choose Maze Size</h1>
     <button class="diffBtn easy" onclick="startMaze('easy')">
         Easy
-        <div class="diffDesc">50 × 40 — warm up</div>
+        <div class="diffDesc">30 × 20 — warm up</div>
     </button>
     <button class="diffBtn medium" onclick="startMaze('medium')">
         Medium
@@ -322,6 +370,15 @@ canvas {
 
 <div id="winOverlay">
     <h2>Dont worry knew you could do it :)</h2>
+    <div id="winStats">
+        <div class="stat"><span class="stat-label">Time:</span><span id="winTime">0:00</span></div>
+        <div class="stat"><span class="stat-label">Your path:</span><span id="winYourPath">0</span><span class="stat-label">cells</span></div>
+        <div class="stat"><span class="stat-label">Optimal path:</span><span id="winBestPath">0</span><span class="stat-label">cells</span></div>
+    </div>
+    <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#ff00ff"></div>Your path</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#00ff88"></div>Optimal path</div>
+    </div>
     <button onclick="showDiffMenu()">Play Again</button>
 </div>
 
@@ -360,7 +417,7 @@ document.getElementById("backBtn").onclick = () => {
 
 // ── Difficulty presets ──
 const presets = {
-    easy:   { cols: 50,  rows: 40  },
+    easy:   { cols: 30,  rows: 20  },
     medium: { cols: 75,  rows: 60  },
     hard:   { cols: 100, rows: 80  }
 };
@@ -394,6 +451,13 @@ let bounceDir = { x: 0, y: 0 };
 let squashX = 1;
 let squashY = 1;
 
+// Timer & results
+let startTime = 0;
+let elapsedTime = 0;
+let optimalPath = [];
+let showingResult = false;
+let revealProgress = 0; // 0→1 for camera zoom-out animation
+
 // ── Keyboard input ──
 const keys = {};
 window.addEventListener("keydown", e => keys[e.key] = true);
@@ -420,7 +484,7 @@ window.addEventListener("deviceorientation", e => {
     gyro.y = e.beta  || 0;
 });
 
-// ── Maze generation ──
+// ── Maze generation (Kruskal's — harder, more branching) ──
 function createGrid() {
     maze = [];
     for (let y = 0; y < rows; y++) {
@@ -436,36 +500,56 @@ function createGrid() {
     }
 }
 
-function generateMaze(x = 0, y = 0) {
-    // Iterative DFS to avoid stack overflow on large mazes
-    const stack = [[x, y]];
-    maze[y][x].visited = true;
-
-    while (stack.length > 0) {
-        const [cx, cy] = stack[stack.length - 1];
-        const current = maze[cy][cx];
-
-        const dirs = shuffle([
-            [0, -1, "top", "bottom"],
-            [1,  0, "right", "left"],
-            [0,  1, "bottom", "top"],
-            [-1, 0, "left", "right"]
-        ]);
-
-        let moved = false;
-        for (const [dx, dy, wall, opposite] of dirs) {
-            const nx = cx + dx;
-            const ny = cy + dy;
-            if (nx >= 0 && ny >= 0 && nx < cols && ny < rows && !maze[ny][nx].visited) {
-                current.walls[wall] = false;
-                maze[ny][nx].walls[opposite] = false;
-                maze[ny][nx].visited = true;
-                stack.push([nx, ny]);
-                moved = true;
-                break;
-            }
+// Union-Find for Kruskal's
+function makeUF(n) {
+    const parent = new Int32Array(n);
+    const rank   = new Uint8Array(n);
+    for (let i = 0; i < n; i++) parent[i] = i;
+    return {
+        find(a) {
+            while (parent[a] !== a) a = parent[a] = parent[parent[a]];
+            return a;
+        },
+        union(a, b) {
+            a = this.find(a); b = this.find(b);
+            if (a === b) return false;
+            if (rank[a] < rank[b]) [a, b] = [b, a];
+            parent[b] = a;
+            if (rank[a] === rank[b]) rank[a]++;
+            return true;
         }
-        if (!moved) stack.pop();
+    };
+}
+
+function generateMaze() {
+    // Build list of all internal edges
+    const edges = [];
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            if (x + 1 < cols) edges.push([x, y, "right", x + 1, y, "left"]);
+            if (y + 1 < rows) edges.push([x, y, "bottom", x, y + 1, "top"]);
+        }
+    }
+    shuffle(edges);
+
+    const uf = makeUF(cols * rows);
+    const id = (x, y) => y * cols + x;
+
+    // Kruskal: join cells by removing walls
+    for (const [x1, y1, w1, x2, y2, w2] of edges) {
+        if (uf.union(id(x1, y1), id(x2, y2))) {
+            maze[y1][x1].walls[w1] = false;
+            maze[y2][x2].walls[w2] = false;
+        }
+    }
+
+    // Extra wall removal to create loops (makes wall-following fail)
+    const loopRate = 0.06; // 6 % of remaining walls get removed
+    for (const [x1, y1, w1, x2, y2, w2] of edges) {
+        if (maze[y1][x1].walls[w1] && Math.random() < loopRate) {
+            maze[y1][x1].walls[w1] = false;
+            maze[y2][x2].walls[w2] = false;
+        }
     }
 }
 
@@ -494,6 +578,54 @@ function buildWalls() {
                 walls.push({ x, y: y + cellSize, w: cellSize + wallThick, h: wallThick });
         });
     });
+}
+
+// ── BFS to find shortest path ──
+function computeOptimalPath() {
+    const start = { x: 0, y: 0 };
+    const end   = { x: cols - 1, y: rows - 1 };
+
+    const visited = Array.from({ length: rows }, () => new Uint8Array(cols));
+    const parent  = Array.from({ length: rows }, () => new Array(cols).fill(null));
+
+    const queue = [start];
+    visited[0][0] = 1;
+
+    const dirs = [
+        { dx: 0, dy: -1, wall: "top",    opp: "bottom" },
+        { dx: 1, dy:  0, wall: "right",  opp: "left"   },
+        { dx: 0, dy:  1, wall: "bottom", opp: "top"    },
+        { dx:-1, dy:  0, wall: "left",   opp: "right"  }
+    ];
+
+    while (queue.length > 0) {
+        const cur = queue.shift();
+        if (cur.x === end.x && cur.y === end.y) break;
+
+        for (const d of dirs) {
+            const nx = cur.x + d.dx;
+            const ny = cur.y + d.dy;
+            if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
+            if (visited[ny][nx]) continue;
+            if (maze[cur.y][cur.x].walls[d.wall]) continue; // wall blocks
+            visited[ny][nx] = 1;
+            parent[ny][nx] = cur;
+            queue.push({ x: nx, y: ny });
+        }
+    }
+
+    // Reconstruct path as pixel coords (cell centers)
+    const path = [];
+    let c = end;
+    while (c) {
+        path.push({
+            x: c.x * cellSize + cellSize / 2,
+            y: c.y * cellSize + cellSize / 2
+        });
+        c = parent[c.y][c.x];
+    }
+    path.reverse();
+    return path;
 }
 
 // ── Start / Reset ──
@@ -537,6 +669,12 @@ function initMaze() {
     squashX = 1;
     squashY = 1;
 
+    // Timer & results
+    startTime = performance.now();
+    optimalPath = [];
+    showingResult = false;
+    revealProgress = 0;
+
     document.getElementById("diffMenu").style.display = "none";
     document.getElementById("winOverlay").style.display = "none";
     running = true;
@@ -544,6 +682,7 @@ function initMaze() {
 
 function showDiffMenu() {
     running = false;
+    showingResult = false;
     document.getElementById("winOverlay").style.display = "none";
     document.getElementById("diffMenu").style.display = "flex";
     document.getElementById("customRow").style.display = "none";
@@ -551,7 +690,28 @@ function showDiffMenu() {
 
 function win() {
     running = false;
-    document.getElementById("winOverlay").style.display = "flex";
+
+    // Compute time
+    elapsedTime = (performance.now() - startTime) / 1000;
+    const mins = Math.floor(elapsedTime / 60);
+    const secs = (elapsedTime % 60).toFixed(1);
+    document.getElementById("winTime").textContent = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+
+    // Compute optimal path
+    optimalPath = computeOptimalPath();
+
+    // Fill in stats
+    document.getElementById("winYourPath").textContent = trail.length;
+    document.getElementById("winBestPath").textContent = optimalPath.length;
+
+    // Start reveal animation (zoom out to show full maze + paths)
+    showingResult = true;
+    revealProgress = 0;
+
+    // Show overlay after camera finishes zooming out
+    setTimeout(() => {
+        document.getElementById("winOverlay").style.display = "flex";
+    }, 1500);
 }
 
 // ── Physics ──
@@ -583,8 +743,8 @@ function update() {
     player.vy *= 0.92;
 
     // Decay squash/stretch back to normal
-    squashX += (1 - squashX) * 0.15;
-    squashY += (1 - squashY) * 0.15;
+    squashX += (1 - squashX) * 0.25;
+    squashY += (1 - squashY) * 0.25;
     bounceFlash *= 0.9;
 
     // Move X then resolve
@@ -657,44 +817,92 @@ function draw() {
 
     ctx.save();
 
-    // Camera transform: center player on screen, zoomed in
-    const tx = canvas.width / 2 - cam.x * camZoom;
-    const ty = canvas.height / 2 - cam.y * camZoom;
-    ctx.translate(tx, ty);
-    ctx.scale(camZoom, camZoom);
+    // During reveal, smoothly zoom out to show full maze
+    if (showingResult) {
+        revealProgress = Math.min(1, revealProgress + 0.015);
+        const t = revealProgress * revealProgress * (3 - 2 * revealProgress); // smoothstep
 
-    // Trail
+        const mazeCx = (cols * cellSize) / 2;
+        const mazeCy = (rows * cellSize) / 2;
+        const fitZoom = Math.min(
+            canvas.width  / (cols * cellSize + 40),
+            canvas.height / (rows * cellSize + 40)
+        );
+
+        const rZoom = camZoom + (fitZoom - camZoom) * t;
+        const rCamX = cam.x + (mazeCx - cam.x) * t;
+        const rCamY = cam.y + (mazeCy - cam.y) * t;
+
+        const tx = canvas.width / 2 - rCamX * rZoom;
+        const ty = canvas.height / 2 - rCamY * rZoom;
+        ctx.translate(tx, ty);
+        ctx.scale(rZoom, rZoom);
+    } else {
+        // Normal camera
+        const tx = canvas.width / 2 - cam.x * camZoom;
+        const ty = canvas.height / 2 - cam.y * camZoom;
+        ctx.translate(tx, ty);
+        ctx.scale(camZoom, camZoom);
+    }
+
+    // Optimal path (draw underneath player trail)
+    if (showingResult && optimalPath.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(optimalPath[0].x, optimalPath[0].y);
+        for (let i = 1; i < optimalPath.length; i++) {
+            ctx.lineTo(optimalPath[i].x, optimalPath[i].y);
+        }
+        ctx.strokeStyle = "#00ff88";
+        ctx.lineWidth = 5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.globalAlpha = 0.5;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+    }
+
+    // Player trail
     if (trail.length > 1) {
         ctx.beginPath();
         ctx.moveTo(trail[0].x, trail[0].y);
         for (let i = 1; i < trail.length; i++) {
             ctx.lineTo(trail[i].x, trail[i].y);
         }
-        ctx.strokeStyle = "rgba(0,255,255)";
-        ctx.lineWidth = 3;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        ctx.stroke();
-
-        // Brighter near the head
-        const headLen = Math.min(trail.length, 20);
-        if (headLen > 1) {
-            ctx.beginPath();
-            ctx.moveTo(trail[trail.length - headLen].x, trail[trail.length - headLen].y);
-            for (let i = trail.length - headLen + 1; i < trail.length; i++) {
-                ctx.lineTo(trail[i].x, trail[i].y);
-            }
-            ctx.lineTo(player.x, player.y);
-            ctx.strokeStyle = "rgba(255,0,255,0.7)";
+        if (showingResult) {
+            ctx.strokeStyle = "#ff00ff";
             ctx.lineWidth = 3;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.globalAlpha = 0.8;
             ctx.stroke();
+            ctx.globalAlpha = 1;
+        } else {
+            ctx.strokeStyle = "rgba(0,255,255)";
+            ctx.lineWidth = 3;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.stroke();
+
+            // Brighter near the head
+            const headLen = Math.min(trail.length, 20);
+            if (headLen > 1) {
+                ctx.beginPath();
+                ctx.moveTo(trail[trail.length - headLen].x, trail[trail.length - headLen].y);
+                for (let i = trail.length - headLen + 1; i < trail.length; i++) {
+                    ctx.lineTo(trail[i].x, trail[i].y);
+                }
+                ctx.lineTo(player.x, player.y);
+                ctx.strokeStyle = "rgba(255,0,255,0.7)";
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
         }
     }
 
     // Walls
     ctx.fillStyle = "#ff00ff";
     ctx.shadowColor = "#ff00ff";
-    ctx.shadowBlur = 6;
+    ctx.shadowBlur = showingResult ? 2 : 6;
     for (const w of walls) {
         ctx.fillRect(w.x, w.y, w.w, w.h);
     }
@@ -711,27 +919,40 @@ function draw() {
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Bounce ring effect
-    if (bounceFlash > 0.05) {
+    if (!showingResult) {
+        // Bounce ring effect
+        if (bounceFlash > 0.05) {
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius + 8 + bounceFlash * 12, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255,255,255,${bounceFlash * 0.6})`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // Player ball with squash/stretch
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.scale(squashX, squashY);
         ctx.beginPath();
-        ctx.arc(player.x, player.y, player.radius + 8 + bounceFlash * 12, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(255,255,255,${bounceFlash * 0.6})`;
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff";
+        ctx.shadowColor = "#fff";
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.restore();
     }
 
-    // Player ball with squash/stretch
-    ctx.save();
-    ctx.translate(player.x, player.y);
-    ctx.scale(squashX, squashY);
-    ctx.beginPath();
-    ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
-    ctx.fillStyle = "#fff";
-    ctx.shadowColor = "#fff";
-    ctx.shadowBlur = 10;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.restore();
+    // Start marker (during reveal)
+    if (showingResult) {
+        ctx.beginPath();
+        ctx.arc(cellSize / 2, cellSize / 2, 10, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff";
+        ctx.shadowColor = "#fff";
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
 
     ctx.restore();
 }
