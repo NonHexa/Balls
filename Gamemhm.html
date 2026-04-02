@@ -198,17 +198,18 @@ class Ball {
         }
     }
     draw() {
-        // Trail
+        // Trail with per-segment fading
         if (this.trail.length > 1) {
-            ctx.beginPath();
-            ctx.moveTo(this.trail[0].x, this.trail[0].y);
             for (let i = 1; i < this.trail.length; i++) {
+                const alpha = (i / this.trail.length) * 0.4;
+                ctx.beginPath();
+                ctx.moveTo(this.trail[i - 1].x, this.trail[i - 1].y);
                 ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                ctx.strokeStyle = this.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+                ctx.lineWidth = this.r * 0.8 * (i / this.trail.length);
+                ctx.lineCap = "round";
+                ctx.stroke();
             }
-            ctx.strokeStyle = this.color + "40";
-            ctx.lineWidth = this.r * 0.8;
-            ctx.lineCap = "round";
-            ctx.stroke();
         }
 
         // Ball with squash/stretch
@@ -400,12 +401,8 @@ function frame(now) {
     lastTime = now;
     const dt = delta / 16.67;
 
-    // Background
-    if (trails) {
-        ctx.fillStyle = "rgba(10,10,10,0.12)";
-    } else {
-        ctx.fillStyle = "#0a0a0a";
-    }
+    // Background — always full clear
+    ctx.fillStyle = "#0a0a0a";
     ctx.fillRect(0, 0, W, H);
 
     applyRepel();

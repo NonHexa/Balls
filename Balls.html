@@ -729,10 +729,29 @@ this.vy=(Math.random()-0.5)*6;
 this.mass=r*r;
 
 this.hue=Math.random()*360;
+this.trail = [];
 
 }
 
 draw(){
+
+    // Trail
+    if(trailEnabled && this.trail.length > 1){
+        for(let i = 1; i < this.trail.length; i++){
+            const alpha = (i / this.trail.length) * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(this.trail[i-1].x, this.trail[i-1].y);
+            ctx.lineTo(this.trail[i].x, this.trail[i].y);
+            const a = Math.floor(alpha * 255).toString(16).padStart(2,'0');
+            let fillColor;
+            if(colorMode === "fixed") fillColor = fixedColor;
+            else fillColor = `hsl(${this.hue},100%,60%)`;
+            ctx.strokeStyle = fillColor + a;
+            ctx.lineWidth = this.radius * 0.8 * (i / this.trail.length);
+            ctx.lineCap = "round";
+            ctx.stroke();
+        }
+    }
 
     ctx.beginPath();
     ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
@@ -814,6 +833,13 @@ update(){
     this.applyForces();
     this.integrate();
     this.walls();
+
+    if(trailEnabled){
+        this.trail.push({x: this.x, y: this.y});
+        if(this.trail.length > 30) this.trail.shift();
+    } else if(this.trail.length){
+        this.trail = [];
+    }
 
     if(colorMode === "hueCycle"){
         this.hue += 0.1;
@@ -1107,7 +1133,7 @@ function animate(){
 
 updateChordTransition(performance.now());
 
-ctx.fillStyle = `rgba(0,0,0,${trailEnabled ? trailAlpha : 1})`;
+ctx.fillStyle = `rgba(0,0,0,1)`;
 ctx.fillRect(0,0,canvas.width,canvas.height);
 
 for(let s=0;s<physicsSteps;s++){

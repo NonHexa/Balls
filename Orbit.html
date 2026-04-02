@@ -900,8 +900,11 @@ class Particle {
         this.life -= dt / 60;
     }
     draw() {
+        const alpha = Math.max(0, this.life / 0.5);
+        ctx.globalAlpha = alpha;
         ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, 3, 3);
+        ctx.globalAlpha = 1;
     }
 }
 
@@ -2601,7 +2604,7 @@ function animate(now = 0) {
     }
 
     screenShake(dt);
-    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Core
