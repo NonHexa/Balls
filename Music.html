@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Balls</title>
+    <style>
+        :root {
+            --bg: #05060d;
+            --panel: rgba(13, 10, 28, 0.84);
+            --panel-strong: rgba(20, 14, 40, 0.92);
+            --ink: #f4f2ff;
+            --accent: #ff3dc8;
+            --accent-2: #03d8ff;
+            --good: #7bff6a;
+            --edge: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 16% 16%, rgba(255, 0, 196, 0.2), transparent 28%),
+                radial-gradient(circle at 82% 80%, rgba(0, 255, 255, 0.14), transparent 34%),
+                linear-gradient(180deg, #090612 0%, #090c1f 42%, #04040a 100%);
+            display: grid;
+            place-items: center;
+            padding: 1rem;
+        }
+
+        .app {
+            width: min(980px, 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            background: var(--panel);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--edge);
+            animation: fade-in 650ms ease-out;
+        }
+
+        .header {
+            background: linear-gradient(120deg, rgba(47, 16, 60, 0.94), rgba(16, 12, 46, 0.94));
+            padding: 1.1rem 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .title-wrap h1 {
+            margin: 0;
+            font-size: clamp(1.35rem, 2.9vw, 2.15rem);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            text-shadow: 0 0 14px rgba(255, 61, 200, 0.5);
+        }
+
+        .title-wrap p {
+            margin: 0.2rem 0 0;
+            font-size: 0.95rem;
+            max-width: 48ch;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(130px, 1fr));
+            gap: 0.6rem;
+            padding: 1rem;
+            background: var(--panel-strong);
+            border-top: 1px solid var(--edge);
+            border-bottom: 1px solid var(--edge);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .control-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 0.55rem 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            color: #fff;
+            cursor: pointer;
+            transition: transform 120ms ease, filter 120ms ease;
+            box-shadow: 0 0 14px rgba(255, 255, 255, 0.18);
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.05);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .btn-accent { background: linear-gradient(140deg, #ff2fc3, #a80fff); }
+        .btn-blue { background: linear-gradient(140deg, #00f2ff, #0b88d8); }
+        .btn-green { background: linear-gradient(140deg, #7bff6a, #1ccb87); color: #0d1720; }
+
+        select,
+        input[type="range"] {
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(8, 10, 25, 0.75);
+            color: #fff;
+            padding: 0.35rem;
+            font: inherit;
+        }
+
+        .canvas-wrap {
+            position: relative;
+            background: linear-gradient(180deg, rgba(9, 13, 29, 0.78), rgba(6, 6, 14, 0.94));
+            min-height: 340px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: clamp(300px, 52vh, 520px);
+            background: transparent;
+        }
+
+        .chord-row {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .chord-row select {
+            width: auto;
+            min-width: 110px;
+            flex: 1;
+        }
+
+        .status {
+            position: absolute;
+            bottom: 10px;
+            right: 12px;
+            background: rgba(6, 8, 20, 0.82);
+            border-radius: 999px;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.82rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hint {
+            padding: 0.9rem 1rem 1.05rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        .hint strong {
+            color: #03d8ff;
+        }
+
+        #backBtn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 101;
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background: rgba(30, 30, 30, 0.85);
+            color: #ccc;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: none;
+            letter-spacing: 0;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+
+        #backBtn:hover {
+            background: rgba(60, 60, 60, 0.95);
+            color: #fff;
+            border-color: #888;
+        }
+
+        #backBtn:active {
+            transform: none;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(8px) scale(0.988);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button id="backBtn" onclick="window.location.href='index.html'">← Menu</button>
+    <main class="app">
+        <section class="header">
+            <div class="title-wrap">
+                <h1>Music Balls Program</h1>
+                <p>Each bouncing ball plays notes. Click inside the stage to add a ball and make your own groove.</p>
+            </div>
+            <div class="row">
+                <button id="startSongBtn" class="btn-accent">Start Song</button>
+                <button id="stopSongBtn" class="btn-blue">Stop Song</button>
+            </div>
+        </section>
+
+        <section class="controls" aria-label="Music ball controls">
+            <div class="control-group">
+                <label>Chord</label>
+                <div class="chord-row">
+                    <select id="keySelect">
+                        <option value="C">C</option>
+                        <option value="C#">C# / Db</option>
+                        <option value="D">D</option>
+                        <option value="D#">D# / Eb</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="F#">F# / Gb</option>
+                        <option value="G">G</option>
+                        <option value="G#">G# / Ab</option>
+                        <option value="A" selected>A</option>
+                        <option value="A#">A# / Bb</option>
+                        <option value="B">B</option>
+                    </select>
+                    <select id="chordSelect">
+                        <option value="major">Major</option>
+                        <option value="minor">Minor</option>
+                        <option value="7">7th</option>
+                        <option value="maj7">Maj7</option>
+                        <option value="min7">Min7</option>
+                        <option value="dim">Dim</option>
+                        <option value="aug">Aug</option>
+                        <option value="sus2">Sus2</option>
+                        <option value="sus4">Sus4</option>
+                        <option value="add9">Add9</option>
+                        <option value="min9">Min9</option>
+                        <option value="9">9th</option>
+                        <option value="13">13th</option>
+                        <option value="pent" selected>Pentatonic</option>
+                        <option value="minpent">Minor Pent</option>
+                        <option value="blues">Blues</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label for="volumeRange">Volume</label>
+                <input id="volumeRange" type="range" min="0" max="100" value="45">
+            </div>
+            <div class="control-group full">
+                <div class="row">
+                    <button id="addBallBtn" class="btn-green">Add Ball</button>
+                    <button id="burstBtn" class="btn-accent">Beat Burst</button>
+                    <button id="clearBtn" class="btn-blue">Clear Balls</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="canvas-wrap">
+            <canvas id="stage" aria-label="Music Balls Animation"></canvas>
+            <div id="status" class="status">Balls: 0 | Song: Off</div>
+        </section>
+
+        <p class="hint"><strong>Tip:</strong> tap or click anywhere in the canvas to spawn a new music ball.</p>
+    </main>
+
+    <script>
+        const canvas = document.getElementById("stage");
+        const ctx = canvas.getContext("2d");
+
+        const startSongBtn = document.getElementById("startSongBtn");
+        const stopSongBtn = document.getElementById("stopSongBtn");
+        const addBallBtn = document.getElementById("addBallBtn");
+        const burstBtn = document.getElementById("burstBtn");
+        const clearBtn = document.getElementById("clearBtn");
+        const volumeRange = document.getElementById("volumeRange");
+        const keySelect = document.getElementById("keySelect");
+        const chordSelect = document.getElementById("chordSelect");
+        const status = document.getElementById("status");
+
+        const gravity = 0.24;
+        const bounce = 1.0;
+        const friction = 1.0;
+        const maxBalls = 50;
+        const minSoundVelocity = 1.1;
+        const soundCooldownMs = 70;
+
+        let balls = [];
+        let songTimer = null;
+        let isSongRunning = false;
+        let songStep = 0;
+
+        // semitone offsets from root for each chord type
+        const chordShapes = {
+            major:   [0, 4, 7],
+            minor:   [0, 3, 7],
+            '7':     [0, 4, 7, 10],
+            maj7:    [0, 4, 7, 11],
+            min7:    [0, 3, 7, 10],
+            dim:     [0, 3, 6],
+            aug:     [0, 4, 8],
+            sus2:    [0, 2, 7],
+            sus4:    [0, 5, 7],
+            add9:    [0, 4, 7, 14],
+            min9:    [0, 3, 7, 10, 14],
+            '9':     [0, 4, 7, 10, 14],
+            '13':    [0, 4, 7, 10, 14, 21],
+            pent:    [0, 2, 4, 7, 9],
+            minpent: [0, 3, 5, 7, 10],
+            blues:   [0, 3, 5, 6, 7, 10]
+        };
+
+        const noteNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+        // Build note frequencies across two octaves from a key + chord
+        function buildScale(rootName, chordName) {
+            const shape = chordShapes[chordName] || chordShapes.pent;
+            const rootIndex = noteNames.indexOf(rootName);
+            const rootMidi = 60 + rootIndex;
+            const freqs = [];
+            for (let oct = 0; oct < 2; oct++) {
+                for (const st of shape) {
+                    const midi = rootMidi + st + oct * 12;
+                    freqs.push(440 * Math.pow(2, (midi - 69) / 12));
+                }
+            }
+            return freqs;
+        }
+
+        // Current selector scale (used for new ball spawns)
+        function getScale() {
+            return buildScale(keySelect.value, chordSelect.value);
+        }
+
+        let audioContext = null;
+
+        function ensureAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === "suspended") {
+                audioContext.resume();
+            }
+        }
+
+        function currentVolume() {
+            return Number(volumeRange.value) / 100;
+        }
+
+        function playTone(freq, duration = 0.16, type = "sine") {
+            ensureAudioContext();
+            const now = audioContext.currentTime;
+
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, now);
+
+            const amp = Math.max(0.02, currentVolume() * 0.24);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(amp, now + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+
+            osc.start(now);
+            osc.stop(now + duration + 0.02);
+        }
+
+        function resizeCanvas() {
+            const ratio = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = Math.floor(rect.width * ratio);
+            canvas.height = Math.floor(rect.height * ratio);
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        }
+
+        function randomBetween(min, max) {
+            return min + Math.random() * (max - min);
+        }
+
+        function makeBall(x = randomBetween(40, canvas.clientWidth - 40), y = randomBetween(40, 170)) {
+            const ballKey = keySelect.value;
+            const ballChord = chordSelect.value;
+            const scale = buildScale(ballKey, ballChord);
+            const frequency = scale[Math.floor(Math.random() * scale.length)];
+            const hue = Math.floor(randomBetween(12, 340));
+
+            return {
+                x,
+                y,
+                vx: randomBetween(-2.2, 2.2),
+                vy: randomBetween(-2.2, 1.5),
+                r: randomBetween(12, 24),
+                hue,
+                frequency,
+                ballKey,
+                ballChord,
+                pulse: 0,
+                lastSoundTime: 0
+            };
+        }
+
+        function addBall(x, y) {
+            if (balls.length >= maxBalls) {
+                balls.shift();
+            }
+            balls.push(makeBall(x, y));
+            updateStatus();
+        }
+
+        function beatBurst() {
+            const count = Math.min(9, maxBalls - balls.length);
+            for (let i = 0; i < count; i++) {
+                addBall(randomBetween(60, canvas.clientWidth - 60), randomBetween(50, 150));
+            }
+            playTone(164.81, 0.24, "triangle");
+        }
+
+        function updateStatus() {
+            const songText = isSongRunning ? "On" : "Off";
+            status.textContent = `Balls: ${balls.length} | Song: ${songText}`;
+        }
+
+        function hitWallSound(ball, axis) {
+            const nowMs = performance.now();
+            if (nowMs - ball.lastSoundTime < soundCooldownMs) {
+                return;
+            }
+
+            const scale = buildScale(ball.ballKey, ball.ballChord);
+            const octaveShift = axis === "y" ? 1.0 : 0.5;
+            const pitch = ball.frequency * octaveShift;
+            const tone = scale.reduce((prev, cur) => {
+                return Math.abs(cur - pitch) < Math.abs(prev - pitch) ? cur : prev;
+            }, scale[0]);
+            playTone(tone, axis === "y" ? 0.16 : 0.11, axis === "y" ? "square" : "sine");
+            ball.pulse = 1;
+            ball.lastSoundTime = nowMs;
+        }
+
+        function updateBall(ball) {
+            ball.vy += gravity;
+            ball.vx *= friction;
+            ball.vy *= friction;
+
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            const w = canvas.clientWidth;
+            const h = canvas.clientHeight;
+
+            if (ball.x - ball.r <= 0) {
+                const impact = Math.abs(ball.vx);
+                ball.x = ball.r;
+                ball.vx = Math.abs(ball.vx) * bounce;
+                if (impact > minSoundVelocity) {
+                    hitWallSound(ball, "x");
+                }
+            } else if (ball.x + ball.r >= w) {
+                const impact = Math.abs(ball.vx);
+                ball.x = w - ball.r;
+                ball.vx = -Math.abs(ball.vx) * bounce;
+                if (impact > minSoundVelocity) {
+                    hitWallSound(ball, "x");
+                }
+            }
+
+            if (ball.y - ball.r <= 0) {
+                const impact = Math.abs(ball.vy);
+                ball.y = ball.r;
+                ball.vy = Math.abs(ball.vy) * bounce;
+                if (impact > minSoundVelocity) {
+                    hitWallSound(ball, "y");
+                }
+            } else if (ball.y + ball.r >= h) {
+                const impact = Math.abs(ball.vy);
+                ball.y = h - ball.r;
+                ball.vy = -Math.abs(ball.vy) * bounce;
+                if (impact > minSoundVelocity) {
+                    hitWallSound(ball, "y");
+                }
+            }
+
+            ball.pulse *= 0.9;
+        }
+
+        function drawBall(ball) {
+            const glow = 0.32 + ball.pulse * 0.45;
+            const radius = ball.r + ball.pulse * 5;
+            const sat = 90;
+            const lit = 60;
+
+            // outer neon glow aura
+            ctx.save();
+            ctx.shadowBlur = 18 + ball.pulse * 28;
+            ctx.shadowColor = `hsla(${ball.hue}, ${sat}%, ${lit}%, ${0.55 + ball.pulse * 0.4})`;
+
+            // main body gradient
+            const gradient = ctx.createRadialGradient(
+                ball.x - ball.r * 0.28,
+                ball.y - ball.r * 0.32,
+                1,
+                ball.x,
+                ball.y,
+                radius
+            );
+            gradient.addColorStop(0, `hsla(${ball.hue + 40}, 100%, 88%, 0.97)`);
+            gradient.addColorStop(0.35, `hsla(${ball.hue + 15}, ${sat}%, ${lit + 18}%, 0.92)`);
+            gradient.addColorStop(0.72, `hsla(${ball.hue}, ${sat}%, ${lit}%, 0.88)`);
+            gradient.addColorStop(1, `hsla(${ball.hue - 25}, ${sat - 10}%, ${lit - 18}%, 0.95)`);
+
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            ctx.restore();
+
+            // bright outer ring
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, radius + 1.5, 0, Math.PI * 2);
+            ctx.strokeStyle = `hsla(${ball.hue + 20}, 100%, 72%, ${0.25 + ball.pulse * 0.55})`;
+            ctx.lineWidth = 1.8 + ball.pulse * 1.2;
+            ctx.stroke();
+
+            // specular highlight
+            ctx.beginPath();
+            ctx.arc(ball.x - ball.r * 0.32, ball.y - ball.r * 0.36, ball.r * 0.28, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.48 + ball.pulse * 0.22})`;
+            ctx.fill();
+
+            // small secondary highlight
+            ctx.beginPath();
+            ctx.arc(ball.x + ball.r * 0.18, ball.y + ball.r * 0.22, ball.r * 0.1, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, 0.18)`;
+            ctx.fill();
+        }
+
+        // motion trail buffer
+        let trailCanvas = null;
+        let trailCtx = null;
+
+        function ensureTrailCanvas(w, h) {
+            if (!trailCanvas) {
+                trailCanvas = document.createElement('canvas');
+                trailCtx = trailCanvas.getContext('2d');
+            }
+            if (trailCanvas.width !== canvas.width || trailCanvas.height !== canvas.height) {
+                trailCanvas.width = canvas.width;
+                trailCanvas.height = canvas.height;
+            }
+        }
+
+        function animate() {
+            const w = canvas.clientWidth;
+            const h = canvas.clientHeight;
+            const ratio = window.devicePixelRatio || 1;
+            ensureTrailCanvas(w, h);
+
+            // fade the trail buffer to create motion streaks
+            trailCtx.save();
+            trailCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+            trailCtx.fillStyle = 'rgba(5, 6, 13, 0.18)';
+            trailCtx.fillRect(0, 0, w, h);
+            trailCtx.restore();
+
+            // draw balls into the trail buffer at low opacity for glow streaks
+            trailCtx.save();
+            trailCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+            trailCtx.globalAlpha = 0.4;
+            for (const ball of balls) {
+                trailCtx.beginPath();
+                trailCtx.arc(ball.x, ball.y, ball.r * 0.7, 0, Math.PI * 2);
+                trailCtx.fillStyle = `hsla(${ball.hue}, 90%, 55%, 0.6)`;
+                trailCtx.fill();
+            }
+            trailCtx.globalAlpha = 1;
+            trailCtx.restore();
+
+            // clear main canvas and paint background
+            ctx.clearRect(0, 0, w, h);
+
+            const bg = ctx.createLinearGradient(0, 0, 0, h);
+            bg.addColorStop(0, "rgba(45, 14, 66, 0.35)");
+            bg.addColorStop(1, "rgba(4, 11, 26, 0.42)");
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, w, h);
+
+            // composite trail layer
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.globalAlpha = 0.6;
+            ctx.drawImage(trailCanvas, 0, 0);
+            ctx.globalAlpha = 1;
+            ctx.restore();
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+            for (const ball of balls) {
+                updateBall(ball);
+                drawBall(ball);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function startSong() {
+            if (isSongRunning) {
+                return;
+            }
+            ensureAudioContext();
+            isSongRunning = true;
+            updateStatus();
+
+            const rhythm = [0, 2, 1, 3, 2, 4, 3, 5];
+            songTimer = setInterval(() => {
+                // Song plays notes from a random ball's own chord, or the selector if no balls
+                const srcBall = balls.length > 0 ? balls[Math.floor(Math.random() * balls.length)] : null;
+                const scale = srcBall ? buildScale(srcBall.ballKey, srcBall.ballChord) : getScale();
+                const idx = rhythm[songStep % rhythm.length] % scale.length;
+                const note = scale[idx];
+                playTone(note, 0.18, "triangle");
+
+                if (balls.length < maxBalls && Math.random() > 0.62) {
+                    addBall(randomBetween(70, canvas.clientWidth - 70), randomBetween(45, 130));
+                }
+                songStep++;
+            }, 240);
+        }
+
+        function stopSong() {
+            if (songTimer) {
+                clearInterval(songTimer);
+                songTimer = null;
+            }
+            isSongRunning = false;
+            updateStatus();
+        }
+
+        addBallBtn.addEventListener("click", () => addBall());
+        burstBtn.addEventListener("click", beatBurst);
+        clearBtn.addEventListener("click", () => {
+            balls = [];
+            updateStatus();
+        });
+        startSongBtn.addEventListener("click", startSong);
+        stopSongBtn.addEventListener("click", stopSong);
+
+        canvas.addEventListener("pointerdown", (event) => {
+            const rect = canvas.getBoundingClientRect();
+            addBall(event.clientX - rect.left, event.clientY - rect.top);
+            playTone(getScale()[Math.floor(Math.random() * getScale().length)], 0.13, "sine");
+        });
+
+        window.addEventListener("resize", resizeCanvas);
+
+        resizeCanvas();
+        for (let i = 0; i < 7; i++) {
+            addBall();
+        }
+        updateStatus();
+        animate();
+    </script>
+</body>
+</html>
