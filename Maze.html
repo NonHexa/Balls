@@ -442,6 +442,7 @@ let cam = { x: 0, y: 0 };
 // Trail
 let trail = [];
 const trailSpacing = 6; // min px between trail points
+let visitedCells = new Set();
 
 // Bounce flash
 let bounceFlash = 0; // 0–1, decays each frame
@@ -659,6 +660,8 @@ function initMaze() {
 
     // Reset trail
     trail = [{ x: player.x, y: player.y }];
+    visitedCells = new Set();
+    visitedCells.add('0,0');
 
     // Reset camera
     cam.x = player.x;
@@ -701,7 +704,7 @@ function win() {
     optimalPath = computeOptimalPath();
 
     // Fill in stats
-    document.getElementById("winYourPath").textContent = trail.length;
+    document.getElementById("winYourPath").textContent = visitedCells.size;
     document.getElementById("winBestPath").textContent = optimalPath.length;
 
     // Start reveal animation (zoom out to show full maze + paths)
@@ -799,6 +802,11 @@ function update() {
     if (Math.hypot(player.x - last.x, player.y - last.y) > trailSpacing) {
         trail.push({ x: player.x, y: player.y });
     }
+
+    // Track unique cells visited
+    const cellX = Math.floor(player.x / cellSize);
+    const cellY = Math.floor(player.y / cellSize);
+    visitedCells.add(cellX + ',' + cellY);
 
     // Camera smooth follow
     cam.x += (player.x - cam.x) * 0.08;
