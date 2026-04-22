@@ -306,7 +306,7 @@
     #upgradeStarContainer {
         position: relative;
         width: 900px;
-        height: 760px;
+        height: 1260px;
         margin: 0 auto;
     }
 
@@ -474,13 +474,57 @@
     #upShield  { top: 155px; left: 50%;  --base-transform: translateX(-50%); }
     #upMagnet  { top: 155px; left: 83%;  --base-transform: translateX(-50%); }
     #upPierce  { top: 300px; left: 17%;  --base-transform: translateX(-50%); }
-    #upDash    { top: 300px; left: 50%;  --base-transform: translateX(-50%); }
     #upDual    { top: 300px; left: 83%;  --base-transform: translateX(-50%); }
     #upGravity { top: 445px; left: 12%;  --base-transform: translateX(-50%); }
     #upCryo    { top: 445px; left: 37%;  --base-transform: translateX(-50%); }
     #upNova    { top: 445px; left: 63%;  --base-transform: translateX(-50%); }
     #upMulti   { top: 445px; left: 88%;  --base-transform: translateX(-50%); }
     #upRegen   { top: 590px; left: 50%;  --base-transform: translateX(-50%); }
+    #upOvercharge { top: 735px; left: 15%; --base-transform: translateX(-50%); }
+    #upFortress   { top: 735px; left: 33%; --base-transform: translateX(-50%); }
+    #upVortex     { top: 735px; left: 50%; --base-transform: translateX(-50%); }
+    #upChain      { top: 735px; left: 67%; --base-transform: translateX(-50%); }
+    #upHyper      { top: 735px; left: 85%; --base-transform: translateX(-50%); }
+    #upStarfire   { top: 875px; left: 50%; --base-transform: translateX(-50%); }
+    #upPulseArmor   { top: 1020px; left: 12%; --base-transform: translateX(-50%); }
+    #upRiftMine     { top: 1020px; left: 30%; --base-transform: translateX(-50%); }
+    #upBloodNova    { top: 1020px; left: 50%; --base-transform: translateX(-50%); }
+    #upFreezeShatter{ top: 1020px; left: 70%; --base-transform: translateX(-50%); }
+    #upOrbitEcho    { top: 1020px; left: 88%; --base-transform: translateX(-50%); }
+    #upPhaseShield  { top: 1160px; left: 50%; --base-transform: translateX(-50%); }
+
+    #prestigeResetBtn {
+        margin-top: 20px;
+        min-width: 280px;
+        padding: 14px 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(0, 170, 255, 0.6);
+        background: linear-gradient(135deg, rgba(0, 80, 140, 0.65), rgba(0, 40, 80, 0.75));
+        color: #c8eeff;
+        font-size: 18px;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    }
+
+    #prestigeResetBtn:hover:not(:disabled) {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(0, 170, 255, 0.4);
+    }
+
+    #prestigeResetBtn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        filter: grayscale(0.6);
+    }
+
+    #prestigeHint {
+        margin-top: 8px;
+        color: #88ddff;
+        font-size: 12px;
+        opacity: 0.8;
+        text-align: center;
+    }
 
     @media (max-width: 800px) {
         #closeGlass, #closePrestige {
@@ -672,11 +716,6 @@
             <div class="uName">Pierce</div>
             <div class="progressBar"><div></div></div>
         </div>
-        <div class="upgradeNode inner" id="upDash">
-            <canvas class="iconCanvas" width="60" height="60"></canvas>
-            <div class="uName">Dash</div>
-            <div class="progressBar"><div></div></div>
-        </div>
         <div class="upgradeNode inner" id="upDual">
             <canvas class="iconCanvas" width="60" height="60"></canvas>
             <div class="uName">Dual</div>
@@ -710,7 +749,69 @@
             <div class="progressBar"><div></div></div>
         </div>
 
-        <canvas id="lineCanvas" width="900" height="760"></canvas>
+        <div class="upgradeNode inner" id="upOvercharge">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Overcharge</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upFortress">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Fortress</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upVortex">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Vortex</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upChain">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Chain</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upHyper">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Hyper</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upStarfire">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">Starfire</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+
+        <div class="upgradeNode inner" id="upPulseArmor">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">PulseArmor</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upRiftMine">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">RiftMine</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upBloodNova">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">BloodNova</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upFreezeShatter">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">FreezeShatter</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upOrbitEcho">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">OrbitEcho</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+        <div class="upgradeNode inner" id="upPhaseShield">
+            <canvas class="iconCanvas" width="60" height="60"></canvas>
+            <div class="uName">PhaseShield</div>
+            <div class="progressBar"><div></div></div>
+        </div>
+
+        <canvas id="lineCanvas" width="900" height="1260"></canvas>
 
         </div>
         </div>
@@ -739,6 +840,8 @@
             </div>
             <canvas id="prestigeLineCanvas" width="500" height="400"></canvas>
         </div>
+        <button id="prestigeResetBtn">Ascend Reset</button>
+        <div id="prestigeHint">Resets your run, makes enemies stronger, and unlocks ascended upgrades.</div>
     </div>
     <div id="closePrestige">×</div>
 </div>
@@ -776,6 +879,8 @@ let enemiesKilledThisWave = 0;
 let enemiesToNextBoss = 30;
 
 let bossLevel = 0;
+let prestigeCount = 0;
+let postPrestigeUnlocked = false;
 
 let playerHP = 3;
 let maxHP = 3;
@@ -796,6 +901,35 @@ let novaFlash = 0;
 let regenLevel = 0;
 let regenTimer = 0;
 let regenInterval = 15000;
+
+let overchargeLevel = 0;
+let fortressLevel = 0;
+let vortexLevel = 0;
+let chainLevel = 0;
+let hyperLevel = 0;
+let starfireLevel = 0;
+let orbitDamageBoost = 0;
+let pierceRange = 200;
+let pulseArmorLevel = 0;
+let pulseArmorTimer = 0;
+let pulseArmorInterval = 7000;
+let pulseArmorRadius = 90;
+let pulseArmorDamage = 0;
+let riftMineLevel = 0;
+let mineSpawnTimer = 0;
+let mineSpawnInterval = 9000;
+let mineRadius = 70;
+let mineDamage = 1;
+let bloodNovaLevel = 0;
+let freezeShatterLevel = 0;
+let orbitEchoLevel = 0;
+let orbitEchoSpawnTimer = 0;
+let phaseShieldLevel = 0;
+let phaseShieldReady = false;
+let phaseShieldCooldownTimer = 0;
+let centerInvulnTimer = 0;
+let mines = [];
+let orbitEchoes = [];
 
 let lastFrameTime = 0;
 
@@ -992,7 +1126,12 @@ const enemyTypes = {
     zigzag:   { color: "#00ff88", size: 10, gravity: 0.12, life: 2, speedMultiplier: 1.2, pts: 2, zigzags: true },
     shielded: { color: "#ffff00", size: 16, gravity: 0.08, life: 3, speedMultiplier: 0.6, pts: 3, hasShield: true },
     splitter: { color: "#ff4488", size: 18, gravity: 0.07, life: 2, speedMultiplier: 0.7, pts: 2, splits: true },
-    ghost:    { color: "#8888ff", size: 12, gravity: 0.10, life: 1, speedMultiplier: 1.0, pts: 3, phases: true }
+    ghost:    { color: "#8888ff", size: 12, gravity: 0.10, life: 1, speedMultiplier: 1.0, pts: 3, phases: true },
+    hunter:   { color: "#ff6677", size: 10, gravity: 0.14, life: 2, speedMultiplier: 1.4, pts: 3, huntsPlayer: true },
+    brute:    { color: "#7a3311", size: 24, gravity: 0.05, life: 12, speedMultiplier: 0.33, pts: 4, armored: true },
+    bomber:   { color: "#ffa500", size: 15, gravity: 0.09, life: 3, speedMultiplier: 0.75, pts: 3, explodes: true },
+    wisp:     { color: "#77ddff", size: 9, gravity: 0.11, life: 1, speedMultiplier: 1.5, pts: 2, jitters: true },
+    orbiter:  { color: "#66ffbb", size: 11, gravity: 0.08, life: 3, speedMultiplier: 1.0, pts: 4, orbitsCenter: true }
 };
 
 class Enemy {
@@ -1015,6 +1154,11 @@ class Enemy {
             if (wave >= 4) pool.push({ type: enemyTypes.shielded, w: 8 });
             if (wave >= 5) pool.push({ type: enemyTypes.splitter, w: 8 });
             if (wave >= 6) pool.push({ type: enemyTypes.ghost,    w: 7 });
+            if (wave >= 7) pool.push({ type: enemyTypes.hunter,   w: 8 });
+            if (wave >= 8) pool.push({ type: enemyTypes.wisp,     w: 8 });
+            if (wave >= 9) pool.push({ type: enemyTypes.bomber,   w: 7 });
+            if (wave >= 10) pool.push({ type: enemyTypes.brute,   w: 6 });
+            if (wave >= 11) pool.push({ type: enemyTypes.orbiter, w: 6 });
 
             const totalW = pool.reduce((s, p) => s + p.w, 0);
             let r = Math.random() * totalW;
@@ -1028,7 +1172,8 @@ class Enemy {
         Object.assign(this, JSON.parse(JSON.stringify(t)));
 
         // Scale health with difficulty
-        const healthScale = 1.2 + (difficultyRamp * 0.8);
+        const prestigeStatMul = 1 + prestigeCount * PRESTIGE_ENEMY_STAT_BONUS;
+        const healthScale = (1.2 + (difficultyRamp * 0.8)) * prestigeStatMul;
         this.life = Math.ceil(this.life * healthScale);
 
         // Wave scaling: enemies get tougher
@@ -1036,6 +1181,7 @@ class Enemy {
             this.life += Math.floor((wave - 5) * 0.3);
             this.speedMultiplier *= 1 + (wave - 5) * 0.02;
         }
+        this.speedMultiplier *= prestigeStatMul;
 
         // Type-specific init
         if (this.zigzags) this.zigTimer = Math.random() * Math.PI * 2;
@@ -1044,6 +1190,10 @@ class Enemy {
             this.visible = true;
         }
         if (this.hasShield) this.shielded = true;
+        if (this.orbitsCenter) {
+            this.orbitAngle = Math.random() * Math.PI * 2;
+            this.orbitDist = 130 + Math.random() * 120;
+        }
 
         // Spawn at edge
         const e = Math.random();
@@ -1065,13 +1215,23 @@ class Enemy {
                 particles.push(new Particle(this.x, this.y, "#ffff00"));
             return false;
         }
+        if (this.armored) {
+            dmg *= 0.65;
+        }
         this.life -= dmg;
         return true;
     }
 
     update(dt) {
-        const dx = center.x - this.x;
-        const dy = center.y - this.y;
+        let tx = center.x;
+        let ty = center.y;
+        if (this.huntsPlayer && player) {
+            tx = player.x;
+            ty = player.y;
+        }
+
+        const dx = tx - this.x;
+        const dy = ty - this.y;
         const dist = Math.hypot(dx, dy);
 
         const speedScale = (0.35 + (difficultyRamp * 0.4)) * diffSpeedMul;
@@ -1092,6 +1252,20 @@ class Enemy {
         if (this.phases) {
             this.phaseTimer += 0.025 * dt;
             this.visible = Math.sin(this.phaseTimer) > -0.3;
+        }
+
+        if (this.jitters) {
+            this.vx += (Math.random() - 0.5) * 0.45 * dt;
+            this.vy += (Math.random() - 0.5) * 0.45 * dt;
+        }
+
+        if (this.orbitsCenter) {
+            this.orbitAngle += 0.02 * dt;
+            const ox = center.x + Math.cos(this.orbitAngle) * this.orbitDist;
+            const oy = center.y + Math.sin(this.orbitAngle) * this.orbitDist;
+            this.vx += (ox - this.x) * 0.0025 * dt;
+            this.vy += (oy - this.y) * 0.0025 * dt;
+            this.orbitDist = Math.max(40, this.orbitDist - 0.03 * dt);
         }
 
         // Cryo slowdown — affects enemies in area except bosses and purple
@@ -1129,6 +1303,13 @@ class Enemy {
             ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size + 5, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        if (this.armored) {
+            ctx.strokeStyle = "rgba(255,180,80,0.65)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size + 3, 0, Math.PI * 2);
             ctx.stroke();
         }
         ctx.restore();
@@ -1221,11 +1402,6 @@ function rebuildFromUpgrades() {
     magnetLevel = magnetUp;
     magnetStrength = 0.04 + magnetUp * 0.02;
 
-    const dashUp = upgrades.find(u => u.name === "Dash").level;
-    dashLevel = dashUp;
-    dashCooldown = Math.max(800, 2500 - dashUp * 300);
-    dashInvulTime = 300 + dashUp * 80;
-
     // New upgrades
     const pUp = upgrades.find(u => u.name === "Pierce").level;
     pierceLevel = pUp;
@@ -1252,6 +1428,69 @@ function rebuildFromUpgrades() {
     regenLevel = rUp;
     regenInterval = rUp > 0 ? Math.max(6000, 15000 - rUp * 3000) : 15000;
     regenTimer = 0;
+
+    const oUp = upgrades.find(u => u.name === "Overcharge").level;
+    overchargeLevel = oUp;
+    laserDamage += oUp * 0.3;
+    laserFireDelay = Math.max(1200, laserFireDelay - oUp * 220);
+
+    const fUp = upgrades.find(u => u.name === "Fortress").level;
+    fortressLevel = fUp;
+    maxHP = difficultyPresets[difficultyMode].hp + fortressLevel;
+    playerHP = Math.min(playerHP || maxHP, maxHP);
+
+    const vUp = upgrades.find(u => u.name === "Vortex").level;
+    vortexLevel = vUp;
+
+    const chUp = upgrades.find(u => u.name === "Chain").level;
+    chainLevel = chUp;
+    pierceRange = 200 + chainLevel * 70;
+
+    const hUp = upgrades.find(u => u.name === "Hyper").level;
+    hyperLevel = hUp;
+    orbitDamageBoost = hyperLevel * 0.2;
+    orbitBalls.forEach(o => {
+        o.damage += orbitDamageBoost;
+        o.angularSpeed += hyperLevel * 0.006;
+    });
+
+    const sUp = upgrades.find(u => u.name === "Starfire").level;
+    starfireLevel = sUp;
+    novaRadius += sUp * 25;
+    novaDamage += sUp * 0.7;
+
+    const paUp = upgrades.find(u => u.name === "PulseArmor").level;
+    pulseArmorLevel = paUp;
+    pulseArmorInterval = Math.max(2200, 7000 - paUp * 900);
+    pulseArmorRadius = 90 + paUp * 25;
+    pulseArmorDamage = paUp * 0.55;
+    pulseArmorTimer = pulseArmorInterval;
+
+    const rmUp = upgrades.find(u => u.name === "RiftMine").level;
+    riftMineLevel = rmUp;
+    mineSpawnInterval = Math.max(2600, 9000 - rmUp * 1100);
+    mineRadius = 70 + rmUp * 18;
+    mineDamage = 0.8 + rmUp * 0.65;
+    mineSpawnTimer = mineSpawnInterval;
+
+    const bnUp = upgrades.find(u => u.name === "BloodNova").level;
+    bloodNovaLevel = bnUp;
+
+    const fsUp = upgrades.find(u => u.name === "FreezeShatter").level;
+    freezeShatterLevel = fsUp;
+
+    const oeUp = upgrades.find(u => u.name === "OrbitEcho").level;
+    orbitEchoLevel = oeUp;
+    orbitEchoSpawnTimer = Math.max(70, 220 - oeUp * 40);
+
+    const psUp = upgrades.find(u => u.name === "PhaseShield").level;
+    phaseShieldLevel = psUp;
+    phaseShieldReady = psUp > 0;
+    phaseShieldCooldownTimer = 0;
+    centerInvulnTimer = 0;
+
+    mines = [];
+    orbitEchoes = [];
 }
 
 function startEnemySpawn() {
@@ -1289,7 +1528,8 @@ function startEnemySpawn() {
         }
 
         
-        const delay = Math.max(300, 1500 - wave * 70) * diffSpawnMul / gameSpeed;
+        const prestigeSpawnMul = 1 + prestigeCount * PRESTIGE_SPAWN_BONUS;
+        const delay = Math.max(220, 1500 - wave * 70) * diffSpawnMul / (gameSpeed * prestigeSpawnMul);
 
         enemyInterval = setTimeout(spawnLoop, delay);
     }
@@ -1303,15 +1543,10 @@ canvas.addEventListener("mousemove", e => {
     mouse.y = e.clientY;
 });
 
-// Touch controls for mobile — drag finger to aim, two-finger tap to dash
+// Touch controls for mobile — drag finger to aim
 let touchActive = false;
 canvas.addEventListener("touchstart", e => {
     e.preventDefault();
-    // Two-finger tap = dash
-    if (e.touches.length >= 2) {
-        tryDash();
-        return;
-    }
     touchActive = true;
     const t = e.touches[0];
     mouse.x = t.clientX;
@@ -1464,17 +1699,11 @@ let shieldBounceTimer = 0;
 
 let magnetLevel = 0;
 let magnetStrength = 0.04;
-
-let dashLevel = 0;
-let dashCooldown = 2500;
-let dashInvulTime = 300;
-let dashReady = true;
-let dashVulnerable = true;
-
-let dashCooldownProgress = 0;
-let dashTrail = [];
 let savedPoints = 0;
 let restartAfterMenu = false;
+
+const PRESTIGE_ENEMY_STAT_BONUS = 0.15;
+const PRESTIGE_SPAWN_BONUS = 0.10;
 
 
 let activeLaserBeams = [];
@@ -1525,7 +1754,7 @@ function fireLaserChain(startEnemy, dmg) {
             if (hit.has(e)) continue;
             if (e.phases && !e.visible) continue;
             const d = Math.hypot(e.x - last.x, e.y - last.y);
-            if (d < nd && d < 200) { nd = d; nearest = e; }
+            if (d < nd && d < pierceRange) { nd = d; nearest = e; }
         }
         if (!nearest) break;
         targets.push(nearest);
@@ -1607,7 +1836,7 @@ function drawCryoField() {
 
 function applyGravityWell(dt) {
     if (gravityLevel === 0) return;
-    const pull = 0.002 * gravityLevel * dt;
+    const pull = 0.002 * (gravityLevel + vortexLevel * 0.9) * dt;
     for (let i = 0; i < enemies.length; i++) {
         for (let j = i + 1; j < enemies.length; j++) {
             const a = enemies[i], b = enemies[j];
@@ -1629,12 +1858,22 @@ function updateNova(delta) {
     novaCooldown -= delta;
     if (novaCooldown > 0) return;
     novaCooldown = novaMaxCooldown;
+    let hits = 0;
     for (let e of enemies) {
         const d = Math.hypot(e.x - center.x, e.y - center.y);
         if (d < novaRadius) {
             e.life -= novaDamage;
+            hits++;
             for (let i = 0; i < 5; i++)
                 particles.push(new Particle(e.x, e.y, "#ff8800"));
+        }
+    }
+    if (bloodNovaLevel > 0 && hits > 0) {
+        const healEvery = Math.max(2, 5 - bloodNovaLevel);
+        const heal = Math.floor(hits / healEvery);
+        if (heal > 0) {
+            playerHP = Math.min(maxHP, playerHP + heal);
+            updateHPDisplay();
         }
     }
     novaFlash = 1;
@@ -1663,6 +1902,189 @@ function updateRegen(delta) {
     updateHPDisplay();
     for (let i = 0; i < 12; i++)
         particles.push(new Particle(center.x, center.y, "#00ff88"));
+}
+
+function updatePulseArmor(delta) {
+    if (pulseArmorLevel === 0) return;
+    pulseArmorTimer -= delta;
+    if (pulseArmorTimer > 0) return;
+
+    pulseArmorTimer = pulseArmorInterval;
+    const r = pulseArmorRadius;
+    for (const e of enemies) {
+        const dx = e.x - center.x;
+        const dy = e.y - center.y;
+        const d = Math.hypot(dx, dy);
+        if (d <= r + e.size) {
+            const nx = dx / (d || 1);
+            const ny = dy / (d || 1);
+            e.vx += nx * (2 + pulseArmorLevel * 0.5);
+            e.vy += ny * (2 + pulseArmorLevel * 0.5);
+            if (e.takeDamage) e.takeDamage(pulseArmorDamage);
+            else e.life -= pulseArmorDamage;
+        }
+    }
+
+    for (let i = 0; i < 20; i++) {
+        const a = (Math.PI * 2 / 20) * i;
+        particles.push(new Particle(
+            center.x + Math.cos(a) * r,
+            center.y + Math.sin(a) * r,
+            "#66eeff"
+        ));
+    }
+}
+
+function spawnRiftMine() {
+    mines.push({
+        x: player.x,
+        y: player.y,
+        life: 5000 + riftMineLevel * 1200,
+        radius: mineRadius,
+        damage: mineDamage
+    });
+}
+
+function explodeMine(m) {
+    for (const e of enemies) {
+        const d = Math.hypot(e.x - m.x, e.y - m.y);
+        if (d <= m.radius + e.size) {
+            if (e.takeDamage) e.takeDamage(m.damage);
+            else e.life -= m.damage;
+            const nx = (e.x - m.x) / (d || 1);
+            const ny = (e.y - m.y) / (d || 1);
+            e.vx += nx * 2.8;
+            e.vy += ny * 2.8;
+        }
+    }
+    for (let i = 0; i < 16; i++)
+        particles.push(new Particle(m.x, m.y, "#aa66ff"));
+}
+
+function updateRiftMines(delta) {
+    if (riftMineLevel > 0) {
+        mineSpawnTimer -= delta;
+        if (mineSpawnTimer <= 0) {
+            mineSpawnTimer = mineSpawnInterval;
+            spawnRiftMine();
+        }
+    }
+
+    const survivors = [];
+    for (const m of mines) {
+        m.life -= delta;
+        let detonated = m.life <= 0;
+        if (!detonated) {
+            for (const e of enemies) {
+                if (Math.hypot(e.x - m.x, e.y - m.y) < m.radius * 0.45 + e.size) {
+                    detonated = true;
+                    break;
+                }
+            }
+        }
+        if (detonated) explodeMine(m);
+        else survivors.push(m);
+    }
+    mines = survivors;
+}
+
+function drawRiftMines(dt) {
+    for (const m of mines) {
+        const alpha = Math.max(0.25, Math.min(1, m.life / 3500));
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, 8 + Math.sin(Date.now() * 0.01) * 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(170,90,255,${alpha})`;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, m.radius * 0.45, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(180,120,255,${0.15 + alpha * 0.2})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+}
+
+function triggerFreezeShatter(x, y) {
+    if (freezeShatterLevel === 0) return;
+    const radius = 70 + freezeShatterLevel * 30;
+    const damage = 0.6 + freezeShatterLevel * 0.4;
+    for (const e of enemies) {
+        const d = Math.hypot(e.x - x, e.y - y);
+        if (d <= radius + e.size) {
+            if (e.takeDamage) e.takeDamage(damage);
+            else e.life -= damage;
+        }
+    }
+    for (let i = 0; i < 14; i++)
+        particles.push(new Particle(x, y, "#66ddff"));
+}
+
+function updateOrbitEchoes(delta) {
+    if (orbitEchoLevel > 0) {
+        orbitEchoSpawnTimer -= delta;
+        if (orbitEchoSpawnTimer <= 0) {
+            orbitEchoSpawnTimer = Math.max(70, 220 - orbitEchoLevel * 40);
+            orbitBalls.forEach(o => {
+                orbitEchoes.push({
+                    x: o.x,
+                    y: o.y,
+                    life: 600,
+                    radius: 16 + orbitEchoLevel * 2,
+                    damage: 0.15 + orbitEchoLevel * 0.12,
+                    hitCooldown: 0
+                });
+            });
+        }
+    }
+
+    orbitEchoes.forEach(echo => {
+        echo.life -= delta;
+        echo.hitCooldown -= delta;
+        if (echo.hitCooldown <= 0) {
+            for (const e of enemies) {
+                const d = Math.hypot(e.x - echo.x, e.y - echo.y);
+                if (d <= echo.radius + e.size) {
+                    if (e.takeDamage) e.takeDamage(echo.damage);
+                    else e.life -= echo.damage;
+                    echo.hitCooldown = 120;
+                    break;
+                }
+            }
+        }
+    });
+
+    orbitEchoes = orbitEchoes.filter(e => e.life > 0);
+}
+
+function drawOrbitEchoes() {
+    orbitEchoes.forEach(echo => {
+        const alpha = Math.max(0, echo.life / 600) * 0.5;
+        ctx.beginPath();
+        ctx.arc(echo.x, echo.y, echo.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(120,255,255,${alpha})`;
+        ctx.fill();
+    });
+}
+
+function updatePhaseShield(delta) {
+    if (phaseShieldLevel === 0) return;
+    if (!phaseShieldReady) {
+        phaseShieldCooldownTimer -= delta;
+        if (phaseShieldCooldownTimer <= 0) {
+            phaseShieldReady = true;
+            phaseShieldCooldownTimer = 0;
+        }
+    }
+    if (centerInvulnTimer > 0) centerInvulnTimer -= delta;
+}
+
+function drawPhaseShieldVisual() {
+    if (centerInvulnTimer <= 0) return;
+    const alpha = Math.min(0.8, centerInvulnTimer / 1200);
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, 42, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(120,255,255,${alpha})`;
+    ctx.lineWidth = 4;
+    ctx.stroke();
 }
 
 function updateHPDisplay() {
@@ -1708,91 +2130,6 @@ function updateShieldCollision(e) {
     }
 }
 
-
-function applyMagnetUpgrade() {
-    magnetLevel++;
-    magnetStrength += 0.02;
-}
-
-
-function tryDash() {
-    if (isPaused) return;
-    if (!dashReady) return;
-
-    dashReady = false;
-    dashVulnerable = false;
-    dashCooldownProgress = 0;
-
-    dashTrail.push({ x: player.x, y: player.y, alpha: 1 });
-
-    playerBlink();
-
-    if (mouse.x != null) {
-        player.angle = Math.atan2(mouse.y - center.y, mouse.x - center.x);
-    }
-
-    for (let i = 0; i < 15; i++)
-        particles.push(new Particle(player.x, player.y, "#ff00ff"));
-
-    setTimeout(() => dashVulnerable = true, dashInvulTime);
-    setTimeout(() => dashReady = true, dashCooldown);
-}
-
-// The warping animation :)
-function playerBlink() {
-    player.blink = 1;
-
-    setTimeout(() => player.blink = 0, 100);
-    setTimeout(() => player.blink = 2, 150);
-    setTimeout(() => player.blink = 0, 250);
-}
-
-// Warping Partiles when it is moving :]
-function drawDashTrail(dt) {
-    dashTrail.forEach(t => {
-        ctx.strokeStyle = `rgba(255,0,255,${t.alpha})`;
-        ctx.lineWidth = 8;
-
-        ctx.beginPath();
-        ctx.moveTo(player.x, player.y);
-        ctx.lineTo(t.x, t.y);
-        ctx.stroke();
-
-        t.alpha -= 0.06 * dt;
-    });
-
-    dashTrail = dashTrail.filter(t => t.alpha > 0);
-}
-
-
-window.addEventListener("keydown", e => {
-    if (e.key === "Shift") tryDash();
-});
-canvas.addEventListener("contextmenu", e => {
-    e.preventDefault();
-    tryDash();
-});
-
-
-function drawCooldownWheel() {
-    const node = document.querySelector("#upDash");
-    const canv = node.querySelector("canvas");
-    const ctx2 = canv.getContext("2d");
-
-    ctx2.clearRect(0, 0, 60, 60);
-
-    drawDashIcon(ctx2);
-
-    if (dashReady) return;
-
-    const pct = dashCooldownProgress;
-    ctx2.strokeStyle = "rgba(255,0,255,0.7)";
-    ctx2.lineWidth = 6;
-
-    ctx2.beginPath();
-    ctx2.arc(30, 30, 24, -Math.PI / 2, -Math.PI / 2 + pct * 2 * Math.PI);
-    ctx2.stroke();
-}
 
 function checkWaveProgression() {
     if (inBossFight) return;
@@ -1968,17 +2305,6 @@ function endBossFight() {
     }
 }
 
-// Ions 
-function drawDashIcon(ctx) {
-    ctx.strokeStyle = "#ff00ff";
-    ctx.lineWidth = 4;
-
-    ctx.beginPath();
-    ctx.moveTo(20, 20);
-    ctx.lineTo(40, 30);
-    ctx.lineTo(20, 40);
-    ctx.stroke();
-}
 // The upgradesss - now with level-based requirements
 let damageBonus = 0;
 const upgrades = [
@@ -1987,13 +2313,24 @@ const upgrades = [
     { name: "Shield",  cost: 14,  level: 0, max: 5, requires: [{name:"Damage", level:1}] },
     { name: "Magnet",  cost: 14,  level: 0, max: 5, requires: [{name:"Damage", level:1}] },
     { name: "Pierce",  cost: 18,  level: 0, max: 3, requires: [{name:"Laser", level:2}] },
-    { name: "Dash",    cost: 18,  level: 0, max: 5, requires: [{name:"Shield", level:1}, {name:"Magnet", level:1}] },
     { name: "Dual",    cost: 30,  level: 0, max: 1, requires: [{name:"Laser", level:2}] },
     { name: "Gravity", cost: 22,  level: 0, max: 3, requires: [{name:"Magnet", level:3}] },
-    { name: "Nova",    cost: 22,  level: 0, max: 3, requires: [{name:"Dash", level:2}] },
+    { name: "Nova",    cost: 22,  level: 0, max: 3, requires: [{name:"Laser", level:3}, {name:"Shield", level:2}] },
     { name: "Multi",   cost: 35,  level: 0, max: 2, requires: [{name:"Pierce", level:2}, {name:"Dual", level:1}] },
     { name: "Cryo",    cost: 18,  level: 0, max: 3, requires: [{name:"Shield", level:2}] },
-    { name: "Regen",   cost: 28,  level: 0, max: 3, requires: [{name:"Cryo", level:1}, {name:"Nova", level:1}] }
+    { name: "Regen",   cost: 28,  level: 0, max: 3, requires: [{name:"Cryo", level:1}, {name:"Nova", level:1}] },
+    { name: "Overcharge", cost: 34, level: 0, max: 4, requires: [{name:"Laser", level:3}], postPrestige: true },
+    { name: "Fortress",   cost: 32, level: 0, max: 3, requires: [{name:"Shield", level:3}], postPrestige: true },
+    { name: "Vortex",     cost: 36, level: 0, max: 4, requires: [{name:"Gravity", level:2}], postPrestige: true },
+    { name: "Chain",      cost: 35, level: 0, max: 3, requires: [{name:"Pierce", level:2}], postPrestige: true },
+    { name: "Hyper",      cost: 40, level: 0, max: 3, requires: [{name:"Dual", level:1}], postPrestige: true },
+    { name: "Starfire",   cost: 58, level: 0, max: 2, requires: [{name:"Nova", level:2}, {name:"Vortex", level:2}], postPrestige: true },
+    { name: "PulseArmor", cost: 46, level: 0, max: 3, requires: [{name:"Fortress", level:2}], postPrestige: true },
+    { name: "RiftMine",   cost: 48, level: 0, max: 3, requires: [{name:"Vortex", level:1}, {name:"Hyper", level:1}], postPrestige: true },
+    { name: "BloodNova",  cost: 55, level: 0, max: 3, requires: [{name:"Starfire", level:1}, {name:"Regen", level:2}], postPrestige: true },
+    { name: "FreezeShatter", cost: 44, level: 0, max: 3, requires: [{name:"Cryo", level:3}, {name:"Vortex", level:1}], postPrestige: true },
+    { name: "OrbitEcho",  cost: 52, level: 0, max: 3, requires: [{name:"Hyper", level:1}, {name:"Overcharge", level:1}], postPrestige: true },
+    { name: "PhaseShield", cost: 64, level: 0, max: 2, requires: [{name:"Fortress", level:2}, {name:"Regen", level:2}], postPrestige: true }
 ];
 
 // Prestige tree — orbit-related upgrades earned with prestige stars from boss kills
@@ -2009,6 +2346,70 @@ const orb   = document.getElementById("upgradeOrb");
 const closeGlass = document.getElementById("closeGlass");
 const prestigeGlass = document.getElementById("prestigeGlass");
 const prestigeOrbEl = document.getElementById("prestigeOrb");
+const prestigeResetBtn = document.getElementById("prestigeResetBtn");
+
+function isUpgradeAvailable(u) {
+    return !u.postPrestige || postPrestigeUnlocked;
+}
+
+function canPrestigeNow() {
+    const available = upgrades.filter(isUpgradeAvailable);
+    return available.length > 0 && available.every(u => u.level >= u.max);
+}
+
+function updatePrestigeResetButton() {
+    const ready = canPrestigeNow();
+    prestigeResetBtn.disabled = !ready;
+    prestigeResetBtn.textContent = ready
+        ? `Ascend Reset (Prestige ${prestigeCount + 1})`
+        : "Ascend Reset (Max all available upgrades first)";
+}
+
+function doPrestigeReset() {
+    if (!canPrestigeNow()) return;
+
+    prestigeCount++;
+    postPrestigeUnlocked = true;
+
+    upgrades.forEach(u => { u.level = 0; });
+
+    spawnCount = 0;
+    wave = 1;
+    bossLevel = 0;
+    enemiesToNextBoss = 30;
+    enemiesKilledThisWave = 0;
+    difficultyRamp = 0;
+    inBossFight = false;
+    points = 0;
+    gameOver = false;
+    isPaused = false;
+    enemies = [];
+    particles = [];
+
+    laserCooldown = 0;
+    novaCooldown = 0;
+    novaFlash = 0;
+    regenTimer = 0;
+    pulseArmorTimer = pulseArmorInterval;
+    mineSpawnTimer = mineSpawnInterval;
+    mines = [];
+    orbitEchoes = [];
+    centerInvulnTimer = 0;
+    phaseShieldReady = phaseShieldLevel > 0;
+    phaseShieldCooldownTimer = 0;
+
+    rebuildFromUpgrades();
+    playerHP = maxHP;
+    updateHPDisplay();
+
+    prestigeGlass.classList.remove("open");
+    prestigeGlass.style.display = "none";
+
+    infoDiv.textContent = `Wave ${wave} | Points: ${points} | Prestige ${prestigeCount}`;
+    updateBars();
+    startEnemySpawn();
+    ensureAudio();
+}
 
 function openUpgradeMenu() {
     isPaused = true;
@@ -2028,6 +2429,7 @@ function openPrestigeMenu() {
         drawPrestigeConnectionLines();
     });
     updatePrestigeBars();
+    updatePrestigeResetButton();
 }
 
 function closePrestigeMenu() {
@@ -2039,6 +2441,7 @@ function closePrestigeMenu() {
 }
 
 function canBuyUpgrade(u) {
+    if (!isUpgradeAvailable(u)) return false;
     // Check requires against both upgrade pools
     return u.requires.every(req => {
         const up = upgrades.find(x => x.name === req.name) || prestigeUpgrades.find(x => x.name === req.name);
@@ -2100,15 +2503,19 @@ function closeUpgradeMenu() {
             points = Math.floor(savedPoints * 0.7) + 5;
             infoDiv.textContent = "Wave 1 | Points: " + points;
 
-            // Reset timing and cooldowns so laser/dash work immediately
+            // Reset timing and cooldowns so combat systems work immediately
             lastFrameTime = 0;
             laserCooldown = 0;
-            dashReady = true;
-            dashVulnerable = true;
-            dashCooldownProgress = 0;
             novaCooldown = 0;
             novaFlash = 0;
             regenTimer = 0;
+            pulseArmorTimer = pulseArmorInterval;
+            mineSpawnTimer = mineSpawnInterval;
+            mines = [];
+            orbitEchoes = [];
+            centerInvulnTimer = 0;
+            phaseShieldReady = phaseShieldLevel > 0;
+            phaseShieldCooldownTimer = 0;
             playerHP = maxHP;
             updateHPDisplay();
             enemiesKilledThisWave = 0;
@@ -2157,10 +2564,14 @@ function drawConnectionLines() {
     lctx.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
     lctx.globalAlpha = 1;
 
+    const starRect = star.getBoundingClientRect();
+
     function centerOf(node) {
+        const r = node.getBoundingClientRect();
+        const s = Math.max(scale, 0.0001);
         return {
-            x: node.offsetLeft + node.offsetWidth / 2,
-            y: node.offsetTop  + node.offsetHeight / 2
+            x: (r.left - starRect.left + r.width / 2) / s,
+            y: (r.top - starRect.top + r.height / 2) / s
         };
     }
 
@@ -2170,15 +2581,33 @@ function drawConnectionLines() {
         [upDamage,  upMagnet],
         [upLaser,   upPierce],
         [upLaser,   upDual],
-        [upShield,  upDash],
-        [upMagnet,  upDash],
         [upMagnet,  upGravity],
         [upPierce,  upMulti],
         [upDual,    upMulti],
-        [upDash,    upNova],
+        [upLaser,   upNova],
+        [upShield,  upNova],
         [upShield,  upCryo],
         [upCryo,    upRegen],
-        [upNova,    upRegen]
+        [upNova,    upRegen],
+        [upLaser,   upOvercharge],
+        [upShield,  upFortress],
+        [upGravity, upVortex],
+        [upPierce,  upChain],
+        [upDual,    upHyper],
+        [upNova,    upStarfire],
+        [upVortex,  upStarfire],
+        [upChain,   upStarfire],
+        [upFortress, upPulseArmor],
+        [upVortex,  upRiftMine],
+        [upHyper,   upRiftMine],
+        [upStarfire, upBloodNova],
+        [upRegen,   upBloodNova],
+        [upCryo,    upFreezeShatter],
+        [upVortex,  upFreezeShatter],
+        [upHyper,   upOrbitEcho],
+        [upOvercharge, upOrbitEcho],
+        [upFortress, upPhaseShield],
+        [upRegen,   upPhaseShield]
     ];
 
     pairs.forEach(([A, B]) => {
@@ -2212,10 +2641,13 @@ function drawPrestigeConnectionLines() {
     lineCanvas.height = Math.max(1, Math.floor(container.clientHeight));
     lctx.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
 
+    const containerRect = container.getBoundingClientRect();
+
     function centerOf(node) {
+        const r = node.getBoundingClientRect();
         return {
-            x: node.offsetLeft + node.offsetWidth / 2,
-            y: node.offsetTop  + node.offsetHeight / 2
+            x: r.left - containerRect.left + r.width / 2,
+            y: r.top  - containerRect.top  + r.height / 2
         };
     }
 
@@ -2353,12 +2785,6 @@ function applyUpgrade(name) {
             magnetStrength += 0.02;
         }
 
-        if (name === "Dash") {
-            dashLevel++;
-            dashCooldown = Math.max(800, dashCooldown - 300);
-            dashInvulTime += 80;
-        }
-
         if (name === "Pierce") {
             pierceLevel = u.level;
         }
@@ -2389,6 +2815,78 @@ function applyUpgrade(name) {
             regenInterval = Math.max(6000, 15000 - u.level * 3000);
         }
 
+        if (name === "Overcharge") {
+            overchargeLevel = u.level;
+            laserDamage += 0.3;
+            laserFireDelay = Math.max(1200, laserFireDelay - 220);
+        }
+
+        if (name === "Fortress") {
+            fortressLevel = u.level;
+            maxHP = difficultyPresets[difficultyMode].hp + fortressLevel;
+            playerHP = maxHP;
+            updateHPDisplay();
+        }
+
+        if (name === "Vortex") {
+            vortexLevel = u.level;
+        }
+
+        if (name === "Chain") {
+            chainLevel = u.level;
+            pierceRange = 200 + chainLevel * 70;
+        }
+
+        if (name === "Hyper") {
+            hyperLevel = u.level;
+            orbitDamageBoost = hyperLevel * 0.2;
+            orbitBalls.forEach(o => {
+                o.damage += 0.2;
+                o.angularSpeed += 0.006;
+            });
+        }
+
+        if (name === "Starfire") {
+            starfireLevel = u.level;
+            novaRadius += 25;
+            novaDamage += 0.7;
+        }
+
+        if (name === "PulseArmor") {
+            pulseArmorLevel = u.level;
+            pulseArmorInterval = Math.max(2200, 7000 - pulseArmorLevel * 900);
+            pulseArmorRadius = 90 + pulseArmorLevel * 25;
+            pulseArmorDamage = pulseArmorLevel * 0.55;
+            pulseArmorTimer = 0;
+        }
+
+        if (name === "RiftMine") {
+            riftMineLevel = u.level;
+            mineSpawnInterval = Math.max(2600, 9000 - riftMineLevel * 1100);
+            mineRadius = 70 + riftMineLevel * 18;
+            mineDamage = 0.8 + riftMineLevel * 0.65;
+            mineSpawnTimer = 0;
+        }
+
+        if (name === "BloodNova") {
+            bloodNovaLevel = u.level;
+        }
+
+        if (name === "FreezeShatter") {
+            freezeShatterLevel = u.level;
+        }
+
+        if (name === "OrbitEcho") {
+            orbitEchoLevel = u.level;
+            orbitEchoSpawnTimer = 0;
+        }
+
+        if (name === "PhaseShield") {
+            phaseShieldLevel = u.level;
+            phaseShieldReady = true;
+            phaseShieldCooldownTimer = 0;
+        }
+
         const node = upgradeNodes.find(n => n.dataset.name === u.name);
 
         node.classList.add("unlocked");
@@ -2408,6 +2906,11 @@ function updateBars() {
         const name = node.querySelector(".uName").textContent;
         const u = upgrades.find(x => x.name === name);
         if (!u) return;
+
+        if (!isUpgradeAvailable(u)) {
+            node.style.display = "none";
+            return;
+        }
 
         if (u.level < u.max) allMaxed = false;
 
@@ -2449,16 +2952,14 @@ function updateBars() {
     });
 
     // Show prestige orb when all main upgrades are maxed
-    if (allMaxed) {
-        prestigeOrbEl.style.display = "block";
-    }
+    prestigeOrbEl.style.display = allMaxed ? "block" : "none";
+    drawConnectionLines();
 }
 
 upDamage.onclick = () => applyUpgrade("Damage");
 upLaser.onclick  = () => applyUpgrade("Laser");
 upShield.onclick = () => applyUpgrade("Shield");
 upMagnet.onclick = () => applyUpgrade("Magnet");
-upDash.onclick   = () => applyUpgrade("Dash");
 upPierce.onclick = () => applyUpgrade("Pierce");
 upGravity.onclick = () => applyUpgrade("Gravity");
 upMulti.onclick  = () => applyUpgrade("Multi");
@@ -2466,6 +2967,18 @@ upNova.onclick   = () => applyUpgrade("Nova");
 upRegen.onclick  = () => applyUpgrade("Regen");
 upDual.onclick   = () => applyUpgrade("Dual");
 upCryo.onclick   = () => applyUpgrade("Cryo");
+upOvercharge.onclick = () => applyUpgrade("Overcharge");
+upFortress.onclick = () => applyUpgrade("Fortress");
+upVortex.onclick = () => applyUpgrade("Vortex");
+upChain.onclick = () => applyUpgrade("Chain");
+upHyper.onclick = () => applyUpgrade("Hyper");
+upStarfire.onclick = () => applyUpgrade("Starfire");
+upPulseArmor.onclick = () => applyUpgrade("PulseArmor");
+upRiftMine.onclick = () => applyUpgrade("RiftMine");
+upBloodNova.onclick = () => applyUpgrade("BloodNova");
+upFreezeShatter.onclick = () => applyUpgrade("FreezeShatter");
+upOrbitEcho.onclick = () => applyUpgrade("OrbitEcho");
+upPhaseShield.onclick = () => applyUpgrade("PhaseShield");
 
 // Prestige node clicks
 pOrbit.onclick  = () => applyPrestigeUpgrade("Orbit");
@@ -2480,13 +2993,7 @@ document.querySelectorAll(".prestigeNode").forEach(n => {
 // Prestige orb opens prestige menu
 prestigeOrbEl.onclick = () => openPrestigeMenu();
 document.getElementById("closePrestige").onclick = () => closePrestigeMenu();
-
-function updateDashCooldown(delta) {
-    if (!dashReady) {
-        dashCooldownProgress += delta / dashCooldown;
-        if (dashCooldownProgress > 1) dashCooldownProgress = 1;
-    }
-}
+prestigeResetBtn.onclick = () => doPrestigeReset();
 
 function checkCollisions() {
     for (let e of enemies) {
@@ -2550,7 +3057,22 @@ function checkCollisions() {
 
         // Enemy hits center → lose HP instead of instant death
         if (Math.hypot(e.x - center.x, e.y - center.y) < 20) {
-            if (!dashVulnerable) continue;
+            if (centerInvulnTimer > 0) {
+                e.life = 0;
+                continue;
+            }
+
+            if (phaseShieldLevel > 0 && phaseShieldReady && playerHP <= 1) {
+                phaseShieldReady = false;
+                centerInvulnTimer = 900 + phaseShieldLevel * 250;
+                phaseShieldCooldownTimer = Math.max(9000, 24000 - phaseShieldLevel * 4500);
+                playerHP = 1;
+                updateHPDisplay();
+                e.life = 0;
+                for (let i = 0; i < 24; i++)
+                    particles.push(new Particle(center.x, center.y, "#77ffff"));
+                continue;
+            }
 
             playerHP--;
             updateHPDisplay();
@@ -2593,7 +3115,6 @@ function animate(now = 0) {
     // dt = 1.0 at 60fps, scales proportionally; gameSpeed lets player fast-forward
     const dt = Math.min(delta / 16.67, 3) * gameSpeed;
 
-    drawCooldownWheel();
     difficultyRamp += 0.00004 * dt;
     if (difficultyRamp > 1) difficultyRamp = 1;
 
@@ -2630,6 +3151,10 @@ function animate(now = 0) {
 
     // New systems
     applyGravityWell(dt);
+    updatePulseArmor(delta * gameSpeed);
+    updateRiftMines(delta * gameSpeed);
+    updateOrbitEchoes(delta * gameSpeed);
+    updatePhaseShield(delta * gameSpeed);
 
     enemies.forEach(e => {
         e.update(dt);
@@ -2645,6 +3170,8 @@ function animate(now = 0) {
 
     enemies = enemies.filter(e => {
         if (e.life > 0) return true;
+
+        const diedInCryoZone = cryoLevel > 0 && Math.hypot(e.x - center.x, e.y - center.y) < cryoRadius;
 
         // Boss splitting
         if (e.isBoss && e.generation !== undefined && e.generation < e.maxGeneration) {
@@ -2685,6 +3212,24 @@ function animate(now = 0) {
                 particles.push(new Particle(e.x, e.y, "#ff4488"));
         }
 
+        if (e.explodes) {
+            for (let i = 0; i < 3; i++) {
+                const angle = (Math.PI * 2 / 3) * i;
+                const child = new Enemy(enemyTypes.wisp);
+                child.x = e.x + Math.cos(angle) * 8;
+                child.y = e.y + Math.sin(angle) * 8;
+                child.vx = Math.cos(angle) * 2.2;
+                child.vy = Math.sin(angle) * 2.2;
+                newEnemies.push(child);
+            }
+            for (let i = 0; i < 12; i++)
+                particles.push(new Particle(e.x, e.y, "#ffaa33"));
+        }
+
+        if (!e.isBoss && diedInCryoZone) {
+            triggerFreezeShatter(e.x, e.y);
+        }
+
         if (!e.isBoss) enemiesKilledThisWave++;
         return false;
     });
@@ -2700,16 +3245,17 @@ function animate(now = 0) {
     updateNova(delta * gameSpeed);
     updateRegen(delta * gameSpeed);
     drawLaserBeams(dt);
+    drawRiftMines(dt);
+    drawOrbitEchoes();
     if (shieldBounceTimer > 0) shieldBounceTimer -= delta * gameSpeed;
     drawShield(dt);
     drawCryoField();
+    drawPhaseShieldVisual();
     drawNovaFlash(dt);
-    drawDashTrail(dt);
-    updateDashCooldown(delta * gameSpeed);
     updateWaveProgress();
 
     // Update HUD
-    infoDiv.textContent = `Wave ${wave} | Points: ${points}`;
+    infoDiv.textContent = `Wave ${wave} | Points: ${points} | Prestige ${prestigeCount}`;
 
     ctx.restore();
 
@@ -2753,7 +3299,7 @@ function startGame() {
     player = new PlayerBall();
     orbitBalls = [new OrbitBall(0)];
 
-    infoDiv.textContent = "Wave 1 | Points: 0";
+    infoDiv.textContent = `Wave 1 | Points: 0 | Prestige ${prestigeCount}`;
     updateHPDisplay();
     startEnemySpawn();
     animate();
