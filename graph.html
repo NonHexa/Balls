@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Graph and Bouncing Balls</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <style>
+    body, html { margin: 0; padding: 0; background: #111; color: #eee; font-family: system-ui, sans-serif; }
+    #controls { padding: 14px 14px 10px; background: #161616; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+    .control-group { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    label { font-size: 14px; color: #ddd; display: flex; align-items: center; gap: 6px; }
+    input[type=text], input[type=number] { width: 220px; padding: 7px 10px; border-radius: 6px; border: 1px solid #444; background: #1c1c1c; color: #fff; }
+    input[type=number] { width: 100px; }
+    button { padding: 9px 14px; border: none; border-radius: 6px; background: #2a7d2a; color: #fff; cursor: pointer; font-weight: 600; }
+    button:hover { background: #3aa33a; }
+    #linesContainer { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; }
+    .line-row { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; background: #191919; padding: 10px 12px; border: 1px solid #333; border-radius: 10px; }
+    .line-row-main { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; align-items: center; }
+    .line-color { width: 14px; height: 14px; border-radius: 50%; display: inline-block; border: 1px solid #444; }
+    .line-input { min-width: 240px; width: 360px; }
+    .line-preview { color: #bbb; font-size: 12px; line-height: 1.4; margin-left: 22px; }
+    .frac { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; vertical-align: middle; }
+    .frac .top, .frac .bottom { display: block; padding: 0 4px; }
+    .frac .bar { width: 100%; height: 1px; background: #ddd; margin: 1px 0; }
+    .remove-line { background: #7d2a2a; }
+    .remove-line:hover { background: #a63030; }
+    canvas { display: block; width: 100vw; height: calc(100vh - 132px); background: #080808; }
+    .note { font-size: 13px; color: #bbb; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <div class="control-group">
+      <button id="addLine">Add Line</button>
+      <button id="draw">Draw Graph</button>
+      <button id="addBall">Add Ball</button>
+      <button id="reset">Reset</button>
+      <button id="zoomIn">Zoom In</button>
+      <button id="zoomOut">Zoom Out</button>
+      <label><input id="shadeArea" type="checkbox"> Shade Area</label>
+    </div>
+    <div class="control-group">
+      <label>X scale <input id="xScale" type="number" step="0.1" value="25"></label>
+      <label>Y scale <input id="yScale" type="number" step="0.1" value="40"></label>
+      <label>X offset <input id="xOffset" type="number" step="1" value="0"></label>
+      <label>Y offset <input id="yOffset" type="number" step="1" value="200"></label>
+    </div>
+    <div id="linesContainer"></div>
+  </div>
+  <canvas id="canvas"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const linesContainer = document.getElementById('linesContainer');
+    const xScaleInput = document.getElementById('xScale');
+    const yScaleInput = document.getElementById('yScale');
+    const xOffsetInput = document.getElementById('xOffset');
+    const yOffsetInput = document.getElementById('yOffset');
+    const drawButton = document.getElementById('draw');
+    const addLineButton = document.getElementById('addLine');
+    const addBallButton = document.getElementById('addBall');
+    const resetButton = document.getElementById('reset');
+    const zoomInButton = document.getElementById('zoomIn');
+    const zoomOutButton = document.getElementById('zoomOut');
+    const shadeAreaCheckbox = document.getElementById('shadeArea');
+
+    let lines = [];
+    let graphLines = [];
+    let combinedGraph = [];
+    let balls = [];
+    let vectorFields = [];
+    const gravity = 0.4;
+    const bounce = 0.7;
+    let isDragging = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    function randomColor() {
+      return `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`;
+    }
+
+    function circle(cx, cy, r, x, side = 1) {
+      const dx = x - cx;
+      const inside = r * r - dx * dx;
+      return inside < 0 ? NaN : cy + side * Math.sqrt(inside);
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[ch]));
+    }
+
+    function exprToLaTeX(expr) {
+      let latex = expr;
+      latex = latex.replace(/\blog_([A-Za-z0-9_]+)\s*\(/g, '\\log_{$1}(');
+      latex = latex.replace(/_([A-Za-z0-9])/g, '_{$1}');
+      latex = latex.replace(/\^\s*\(([^)]+)\)/g, '^{$1}');
+      latex = latex.replace(/\^\s*([A-Za-z0-9_]+)/g, '^{$1}');
+      latex = latex.replace(/([A-Za-z0-9\)\]]+)\s*\/\s*([A-Za-z0-9\(\[]+)/g, '\\frac{$1}{$2}');
+      latex = latex.replace(/sqrt\s*\(/g, '\\sqrt{');
+      latex = latex.replace(/nthroot\s*\(/g, '\\sqrt[');
+      latex = latex.replace(/ln\s*\(/g, '\\ln(');
+      latex = latex.replace(/log\s*\(/g, '\\log(');
+      latex = latex.replace(/circle\s*\(/g, '\\bigcirc(');
+      latex = latex.replace(/\|([^|]+)\|/g, '\\left|$1\\right|');
+      latex = latex.replace(/d\/dx\s*/g, '\\frac{d}{dx} ');
+      latex = latex.replace(/\bsin\s*\(/g, '\\sin(');
+      latex = latex.replace(/\bcos\s*\(/g, '\\cos(');
+      latex = latex.replace(/\btan\s*\(/g, '\\tan(');
+      latex = latex.replace(/\bsec\s*\(/g, '\\sec(');
+      latex = latex.replace(/\bcsc\s*\(/g, '\\csc(');
+      latex = latex.replace(/\bcot\s*\(/g, '\\cot(');
+      latex = latex.replace(/\bpi\b/g, '\\pi');
+      latex = latex.replace(/\be\b/g, 'e');
+      return latex;
+    }
+
+    function formatMathDisplay(expr) {
+      try {
+        const latex = exprToLaTeX(expr);
+        return katex.renderToString(latex, { throwOnError: false });
+      } catch (error) {
+        return escapeHtml(expr);
+      }
+    }
+
+    // Token types
+    const TokenType = {
+      NUMBER: 'NUMBER',
+      IDENTIFIER: 'IDENTIFIER',
+      OPERATOR: 'OPERATOR',
+      LPAREN: 'LPAREN',
+      RPAREN: 'RPAREN',
+      COMMA: 'COMMA',
+      EOF: 'EOF'
+    };
+
+    // AST Node types
+    const NodeType = {
+      BINARY: 'BINARY',
+      UNARY: 'UNARY',
+      FUNCTION: 'FUNCTION',
+      VARIABLE: 'VARIABLE',
+      NUMBER: 'NUMBER'
+    };
+
+    class Token {
+      constructor(type, value, position) {
+        this.type = type;
+        this.value = value;
+        this.position = position;
+      }
+    }
+
+    class Lexer {
+      constructor(input) {
+        this.input = input;
+        this.position = 0;
+        this.currentChar = input[0];
+      }
+
+      advance() {
+        this.position++;
+        this.currentChar = this.position < this.input.length ? this.input[this.position] : null;
+      }
+
+      skipWhitespace() {
+        while (this.currentChar && /\s/.test(this.currentChar)) {
+          this.advance();
+        }
+      }
+
+      readNumber() {
+        let result = '';
+        while (this.currentChar && /\d|\./.test(this.currentChar)) {
+          result += this.currentChar;
+          this.advance();
+        }
+        return parseFloat(result);
+      }
+
+      readIdentifier() {
+        let result = '';
+        while (this.currentChar && /[a-zA-Z_0-9]/.test(this.currentChar)) {
+          result += this.currentChar;
+          this.advance();
+        }
+        return result;
+      }
+
+      tokenize() {
+        const tokens = [];
+        while (this.currentChar !== null) {
+          if (/\s/.test(this.currentChar)) {
+            this.skipWhitespace();
+            continue;
+          }
+          if (/\d/.test(this.currentChar)) {
+            tokens.push(new Token(TokenType.NUMBER, this.readNumber(), this.position));
+            continue;
+          }
+          if (/[a-zA-Z_]/.test(this.currentChar)) {
+            tokens.push(new Token(TokenType.IDENTIFIER, this.readIdentifier(), this.position));
+            continue;
+          }
+          if (this.currentChar === '(') {
+            tokens.push(new Token(TokenType.LPAREN, '(', this.position));
+            this.advance();
+            continue;
+          }
+          if (this.currentChar === ')') {
+            tokens.push(new Token(TokenType.RPAREN, ')', this.position));
+            this.advance();
+            continue;
+          }
+          if (this.currentChar === ',') {
+            tokens.push(new Token(TokenType.COMMA, ',', this.position));
+            this.advance();
+            continue;
+          }
+          if ('+-*/^'.includes(this.currentChar)) {
+            tokens.push(new Token(TokenType.OPERATOR, this.currentChar, this.position));
+            this.advance();
+            continue;
+          }
+          this.advance();
+        }
+        tokens.push(new Token(TokenType.EOF, null, this.position));
+        return tokens;
+      }
+    }
+
+    class Parser {
+      constructor(tokens) {
+        this.tokens = tokens;
+        this.position = 0;
+        this.currentToken = tokens[0];
+      }
+
+      advance() {
+        this.position++;
+        this.currentToken = this.position < this.tokens.length ? this.tokens[this.position] : null;
+      }
+
+      parse() {
+        const expr = this.expression();
+        if (this.currentToken.type !== TokenType.EOF) {
+          throw new Error('Unexpected token after expression');
+        }
+        return expr;
+      }
+
+      expression() {
+        return this.additive();
+      }
+
+      additive() {
+        let node = this.multiplicative();
+        while (this.currentToken && this.currentToken.type === TokenType.OPERATOR && '+-'.includes(this.currentToken.value)) {
+          const op = this.currentToken.value;
+          this.advance();
+          const right = this.multiplicative();
+          node = { type: NodeType.BINARY, operator: op, left: node, right };
+        }
+        return node;
+      }
+
+      multiplicative() {
+        let node = this.power();
+        while (this.currentToken && this.currentToken.type === TokenType.OPERATOR && '*/'.includes(this.currentToken.value)) {
+          const op = this.currentToken.value;
+          this.advance();
+          const right = this.power();
+          node = { type: NodeType.BINARY, operator: op, left: node, right };
+        }
+        return node;
+      }
+
+      power() {
+        let node = this.unary();
+        if (this.currentToken && this.currentToken.type === TokenType.OPERATOR && this.currentToken.value === '^') {
+          this.advance();
+          const right = this.power();
+          node = { type: NodeType.BINARY, operator: '^', left: node, right };
+        }
+        return node;
+      }
+
+      unary() {
+        if (this.currentToken && this.currentToken.type === TokenType.OPERATOR && '+-'.includes(this.currentToken.value)) {
+          const op = this.currentToken.value;
+          this.advance();
+          return { type: NodeType.UNARY, operator: op, operand: this.unary() };
+        }
+        return this.primary();
+      }
+
+      primary() {
+        if (!this.currentToken) {
+          return { type: NodeType.NUMBER, value: 0 };
+        }
+        if (this.currentToken.type === TokenType.NUMBER) {
+          const value = this.currentToken.value;
+          this.advance();
+          return { type: NodeType.NUMBER, value };
+        }
+        if (this.currentToken.type === TokenType.IDENTIFIER) {
+          const name = this.currentToken.value;
+          this.advance();
+          if (this.currentToken && this.currentToken.type === TokenType.LPAREN) {
+            this.advance();
+            const args = [];
+            if (!this.currentToken || this.currentToken.type !== TokenType.RPAREN) {
+              if (this.currentToken && this.currentToken.type !== TokenType.EOF) {
+                args.push(this.expression());
+                while (this.currentToken && this.currentToken.type === TokenType.COMMA) {
+                  this.advance();
+                  if (this.currentToken && this.currentToken.type !== TokenType.RPAREN) {
+                    args.push(this.expression());
+                  }
+                }
+              }
+            }
+            if (this.currentToken && this.currentToken.type === TokenType.RPAREN) {
+              this.advance();
+            }
+            return { type: NodeType.FUNCTION, name, args };
+          } else {
+            return { type: NodeType.VARIABLE, name };
+          }
+        }
+        if (this.currentToken.type === TokenType.LPAREN) {
+          this.advance();
+          if (this.currentToken && this.currentToken.type !== TokenType.RPAREN && this.currentToken.type !== TokenType.EOF) {
+            const expr = this.expression();
+            if (this.currentToken && this.currentToken.type === TokenType.RPAREN) {
+              this.advance();
+            }
+            return expr;
+          }
+          return { type: NodeType.NUMBER, value: 0 };
+        }
+        return { type: NodeType.NUMBER, value: 0 };
+      }
+    }
+
+    function compileAST(node) {
+      if (!node) return '0';
+      if (node.type === NodeType.NUMBER) {
+        return `(${node.value})`;
+      }
+      if (node.type === NodeType.VARIABLE) {
+        return node.name;
+      }
+      if (node.type === NodeType.BINARY) {
+        const left = compileAST(node.left);
+        const right = compileAST(node.right);
+        if (node.operator === '^') {
+          return `Math.pow(${left}, ${right})`;
+        }
+        return `(${left} ${node.operator} ${right})`;
+      }
+      if (node.type === NodeType.UNARY) {
+        const operand = compileAST(node.operand);
+        return `(${node.operator}${operand})`;
+      }
+      if (node.type === NodeType.FUNCTION) {
+        const args = (node.args || []).map(compileAST).join(', ');
+        return `${node.name}(${args})`;
+      }
+      return '0';
+    }
+
+    function derivative(fn, x, h = 1e-5) {
+      try {
+        return (fn(x + h) - fn(x - h)) / (2 * h);
+      } catch (error) {
+        return 0;
+      }
+    }
+
+    const astCache = new Map();
+
+    function createEvaluator(ast) {
+      if (!ast) return () => 0;
+      try {
+        const code = compileAST(ast);
+        const helperCode = 'const { sin, cos, tan, asin, acos, atan, sqrt, abs, exp, pow, min, max, floor, ceil, round, PI, E } = Math; '
+          + 'const csc = (x) => 1 / sin(x); '
+          + 'const sec = (x) => 1 / cos(x); '
+          + 'const cot = (x) => 1 / tan(x); '
+          + 'const arcsin = asin; const arccos = acos; const arctan = atan; '
+          + 'const ln = Math.log; const log = (x) => Math.log10(x); '
+          + 'const logBase = (base, x) => Math.log(x) / Math.log(base); '
+          + 'const nthroot = (n, x) => Math.pow(x, 1 / n); '
+          + 'const circle = (cx, cy, r, x, side = 1) => { const dx = x - cx; const inside = r * r - dx * dx; return inside < 0 ? NaN : cy + side * Math.sqrt(inside); }; ';
+        return new Function('x', 'y', 't', 'theta', helperCode + 'return ' + code + ';');
+      } catch (error) {
+        return () => 0;
+      }
+    }
+
+    function parseFunction(text) {
+      if (!text || text.trim() === '') return { implicit: false, fn: () => 0 };
+      
+      let safeText = text.replace(/\^/g, '**');
+      safeText = safeText.replace(/\blog_([A-Za-z0-9_]+)\s*\(/g, 'logBase($1, ');
+      safeText = safeText.replace(/\b(arcsin|arccos|arctan)\s*\(/g, (match, p1) => p1.replace('arc', 'a') + '(');
+      safeText = safeText.replace(/\|([^|]+)\|/g, 'abs($1)');
+      safeText = safeText.replace(/\bln\s*\(/g, 'ln(');
+      safeText = safeText.replace(/\blog\s*\(/g, 'log(');
+      safeText = safeText.replace(/(\d)\s*([A-Za-z\(])/g, '$1*$2');
+      safeText = safeText.replace(/\b(arcsin|arccos|arctan)\s*\(/g, (match, p1) => p1.replace('arc', 'a') + '(');
+      safeText = safeText.replace(/\b(sin|cos|tan|csc|sec|cot|asin|acos|atan|sqrt|abs|exp|ln|log|circle|nthroot)\s*\(/g, '$1(');
+
+      // Check for derivative: d/dx ...
+      if (safeText.startsWith('d/dx ')) {
+        const innerExpr = safeText.slice(5);
+        try {
+          const lexer = new Lexer(innerExpr);
+          const tokens = lexer.tokenize();
+          const parser = new Parser(tokens);
+          const ast = parser.parse();
+          const innerFn = createEvaluator(ast);
+          const derivFn = (x) => derivative((xx) => innerFn(xx, 0, 0, 0), x);
+          return { implicit: false, fn: derivFn };
+        } catch (error) {
+          return { implicit: false, fn: () => 0 };
+        }
+      }
+
+      // Check for parametric: x=..., y=...
+      const parametricMatch = safeText.match(/^x\s*=\s*(.+),\s*y\s*=\s*(.+)$/i);
+      if (parametricMatch) {
+        const xtExpr = parametricMatch[1].trim();
+        const ytExpr = parametricMatch[2].trim();
+        try {
+          const lexerX = new Lexer(xtExpr);
+          const tokensX = lexerX.tokenize();
+          const parserX = new Parser(tokensX);
+          const astX = parserX.parse();
+          const xt = createEvaluator(astX);
+
+          const lexerY = new Lexer(ytExpr);
+          const tokensY = lexerY.tokenize();
+          const parserY = new Parser(tokensY);
+          const astY = parserY.parse();
+          const yt = createEvaluator(astY);
+          return { parametric: true, xt, yt };
+        } catch (error) {
+          return { parametric: true, xt: () => 0, yt: () => 0 };
+        }
+      }
+
+      // Check for vector field: vector: fx, fy
+      const vectorMatch = safeText.match(/^vector:\s*(.+),\s*(.+)$/i);
+      if (vectorMatch) {
+        const fxExpr = vectorMatch[1].trim();
+        const fyExpr = vectorMatch[2].trim();
+        try {
+          const lexerX = new Lexer(fxExpr);
+          const tokensX = lexerX.tokenize();
+          const parserX = new Parser(tokensX);
+          const astX = parserX.parse();
+          const fx = createEvaluator(astX);
+
+          const lexerY = new Lexer(fyExpr);
+          const tokensY = lexerY.tokenize();
+          const parserY = new Parser(tokensY);
+          const astY = parserY.parse();
+          const fy = createEvaluator(astY);
+          return { vector: true, fx, fy };
+        } catch (error) {
+          return { vector: true, fx: () => 0, fy: () => 0 };
+        }
+      }
+
+      // Check for polar: r=...
+      const polarMatch = safeText.match(/^r\s*=\s*(.+)$/i);
+      if (polarMatch) {
+        const rExpr = polarMatch[1].trim();
+        try {
+          const lexer = new Lexer(rExpr);
+          const tokens = lexer.tokenize();
+          const parser = new Parser(tokens);
+          const ast = parser.parse();
+          const r = createEvaluator(ast);
+          return { polar: true, r };
+        } catch (error) {
+          return { polar: true, r: () => 0 };
+        }
+      }
+
+      const explicitMatch = safeText.match(/^\s*([^=]+?)\s*=\s*(.+)$/);
+      if (explicitMatch) {
+        const left = explicitMatch[1].trim();
+        const right = explicitMatch[2].trim();
+        if (/^(y|f\([^)]*\))$/i.test(left)) {
+          safeText = right;
+        } else {
+          try {
+            const lexer = new Lexer(safeText);
+            const tokens = lexer.tokenize();
+            const parser = new Parser(tokens);
+            const ast = parser.parse();
+            const fxy = createEvaluator(ast);
+            return { implicit: true, fxy };
+          } catch (error) {
+            return { implicit: true, fxy: () => NaN };
+          }
+        }
+      }
+
+      try {
+        const lexer = new Lexer(safeText);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        const ast = parser.parse();
+        const fn = createEvaluator(ast);
+        return { implicit: false, fn };
+      } catch (error) {
+        return { implicit: false, fn: () => 0 };
+      }
+    }
+
+    function createLine(expr = 'sin(x)') {
+      lines.push({ expr, color: randomColor() });
+      renderLineList();
+      buildGraph();
+    }
+
+    function renderLineList() {
+      linesContainer.innerHTML = '';
+      lines.forEach((line, index) => {
+        const row = document.createElement('div');
+        row.className = 'line-row';
+
+        const main = document.createElement('div');
+        main.className = 'line-row-main';
+
+        const colorDot = document.createElement('span');
+        colorDot.className = 'line-color';
+        colorDot.style.background = line.color;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = line.expr;
+        input.className = 'line-input';
+        input.placeholder = 'sin(x)';
+
+        const preview = document.createElement('span');
+        preview.className = 'line-preview';
+        preview.innerHTML = formatMathDisplay(line.expr);
+
+        let lineDebounceTimer = null;
+        input.addEventListener('input', (event) => {
+          line.expr = event.target.value;
+          preview.innerHTML = formatMathDisplay(line.expr);
+          clearTimeout(lineDebounceTimer);
+          lineDebounceTimer = setTimeout(() => buildGraph(), 150);
+        });
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.textContent = 'Delete';
+        removeButton.className = 'remove-line';
+        removeButton.addEventListener('click', () => {
+          lines.splice(index, 1);
+          if (lines.length === 0) {
+            createLine('sin(x)');
+          } else {
+            renderLineList();
+            buildGraph();
+          }
+        });
+
+        main.append(colorDot, input, removeButton);
+        row.append(main, preview);
+        linesContainer.append(row);
+      });
+    }
+
+    function solveImplicitY(x, fxy, yMin, yMax) {
+      const roots = [];
+      const samples = 80;
+      const step = (yMax - yMin) / samples;
+      let y0 = yMin;
+      let f0 = fxy(x, y0);
+
+      for (let i = 1; i <= samples; i++) {
+        const y1 = yMin + step * i;
+        const f1 = fxy(x, y1);
+
+        if (Number.isFinite(f0) && Math.abs(f0) < 1e-6) {
+          roots.push(y0);
+        }
+        if (Number.isFinite(f0) && Number.isFinite(f1) && f0 * f1 <= 0) {
+          let a = y0;
+          let b = y1;
+          let fa = f0;
+          let fb = f1;
+          for (let j = 0; j < 20; j++) {
+            const m = (a + b) / 2;
+            const fm = fxy(x, m);
+            if (!Number.isFinite(fm)) break;
+            if (Math.abs(fm) < 1e-7) {
+              a = b = m;
+              break;
+            }
+            if (fa * fm <= 0) {
+              b = m;
+              fb = fm;
+            } else {
+              a = m;
+              fa = fm;
+            }
+          }
+          const root = (a + b) / 2;
+          if (Number.isFinite(root)) {
+            roots.push(root);
+          }
+        }
+
+        y0 = y1;
+        f0 = f1;
+      }
+
+      return Array.from(new Set(roots.map((value) => Number(value.toFixed(4))))).sort((a, b) => a - b);
+    }
+
+    let lastBuildParams = null;
+    let cachedGraphLines = [];
+    let cachedCombinedGraph = [];
+
+    function buildGraph() {
+      const xScale = parseFloat(xScaleInput.value) || 1;
+      const yScale = parseFloat(yScaleInput.value) || 1;
+      const xOffset = parseFloat(xOffsetInput.value) || 0;
+      const yOffset = parseFloat(yOffsetInput.value) || 0;
+      const yMax = (canvas.height - yOffset) / yScale;
+      const yMin = -yOffset / yScale;
+
+      const buildParams = JSON.stringify({ expressions: lines.map(l => l.expr), xScale, yScale, xOffset, yOffset, width: canvas.width, height: canvas.height });
+      if (lastBuildParams === buildParams && cachedGraphLines.length > 0) {
+        graphLines = cachedGraphLines;
+        combinedGraph = cachedCombinedGraph;
+        return;
+      }
+
+      graphLines = [];
+      vectorFields = [];
+      lines.forEach((line) => {
+        try {
+          const parsed = parseFunction(line.expr);
+          if (parsed.vector) {
+            vectorFields.push({ fx: parsed.fx, fy: parsed.fy, color: line.color });
+          } else if (parsed.parametric) {
+            const points = [];
+            const tMin = -10;
+            const tMax = 10;
+            const steps = 800;
+            for (let i = 0; i <= steps; i++) {
+              const t = tMin + (tMax - tMin) * i / steps;
+              const x = parsed.xt(t);
+              const y = parsed.yt(t);
+              if (Number.isFinite(x) && Number.isFinite(y)) {
+                const px = (x - xOffset) * xScale;
+                const py = canvas.height - (y * yScale + yOffset);
+                points.push({ x: px, y: py });
+              }
+            }
+            graphLines.push({ points, color: line.color });
+          } else if (parsed.polar) {
+            const points = [];
+            const thetaMin = 0;
+            const thetaMax = 2 * Math.PI;
+            const steps = 800;
+            for (let i = 0; i <= steps; i++) {
+              const theta = thetaMin + (thetaMax - thetaMin) * i / steps;
+              const r = parsed.r(theta);
+              if (Number.isFinite(r)) {
+                const x = r * Math.cos(theta);
+                const y = r * Math.sin(theta);
+                const px = (x - xOffset) * xScale;
+                const py = canvas.height - (y * yScale + yOffset);
+                points.push({ x: px, y: py });
+              }
+            }
+            graphLines.push({ points, color: line.color });
+          } else if (parsed.implicit) {
+            const branches = [];
+            for (let px = 0; px <= canvas.width; px += 2) {
+              const x = px / xScale + xOffset;
+              const ys = solveImplicitY(x, parsed.fxy, yMin, yMax);
+              ys.forEach((y, index) => {
+                const py = canvas.height - (y * yScale + yOffset);
+                if (!branches[index]) branches[index] = [];
+                branches[index].push({ x: px, y: py });
+              });
+            }
+            branches.forEach((points) => graphLines.push({ points, color: line.color }));
+          } else {
+            const points = [];
+            for (let px = 0; px <= canvas.width; px += 2) {
+              const x = px / xScale + xOffset;
+              let y = parsed.fn(x);
+              if (!Number.isFinite(y)) {
+                y = 0;
+              }
+              const py = canvas.height - (y * yScale + yOffset);
+              points.push({ x: px, y: py });
+            }
+            graphLines.push({ points, color: line.color });
+          }
+        } catch (error) {
+          console.error('Error parsing line:', line.expr, error);
+        }
+      });
+
+      combinedGraph = new Array(canvas.width + 1).fill(canvas.height);
+      graphLines.forEach(({ points }) => {
+        points.forEach((p) => {
+          if (p.x >= 0 && p.x <= canvas.width) {
+            combinedGraph[Math.round(p.x)] = Math.min(combinedGraph[Math.round(p.x)], p.y);
+          }
+        });
+      });
+
+      lastBuildParams = buildParams;
+      cachedGraphLines = graphLines;
+      cachedCombinedGraph = combinedGraph;
+    }
+
+    function refreshGraph() {
+      buildGraph();
+      drawGraph();
+    }
+
+    let debounceTimer = null;
+    function debouncedRefreshGraph() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(refreshGraph, 100);
+    }
+
+    function zoomGraph(factor) {
+      const xScale = parseFloat(xScaleInput.value) || 1;
+      const yScale = parseFloat(yScaleInput.value) || 1;
+      xScaleInput.value = Math.max(0.1, xScale * factor).toFixed(2);
+      yScaleInput.value = Math.max(0.1, yScale * factor).toFixed(2);
+      refreshGraph();
+    }
+
+    function drawAxes() {
+      const xScale = parseFloat(xScaleInput.value) || 1;
+      const yScale = parseFloat(yScaleInput.value) || 1;
+      const xOffset = parseFloat(xOffsetInput.value) || 0;
+      const yOffset = parseFloat(yOffsetInput.value) || 0;
+
+      const originX = -xOffset * xScale;
+      const originY = canvas.height - yOffset;
+      const gridX = 80;
+      const gridY = 50;
+
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      for (let py = 0; py <= canvas.height; py += gridY) {
+        ctx.beginPath();
+        ctx.moveTo(0, py);
+        ctx.lineTo(canvas.width, py);
+        ctx.stroke();
+      }
+      for (let px = 0; px <= canvas.width; px += gridX) {
+        ctx.beginPath();
+        ctx.moveTo(px, 0);
+        ctx.lineTo(px, canvas.height);
+        ctx.stroke();
+      }
+
+      ctx.setLineDash([]);
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 1.5;
+      if (originY >= 0 && originY <= canvas.height) {
+        ctx.beginPath();
+        ctx.moveTo(0, originY);
+        ctx.lineTo(canvas.width, originY);
+        ctx.stroke();
+      }
+      if (originX >= 0 && originX <= canvas.width) {
+        ctx.beginPath();
+        ctx.moveTo(originX, 0);
+        ctx.lineTo(originX, canvas.height);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#ddd';
+      ctx.font = '12px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for (let px = 0; px <= canvas.width; px += gridX) {
+        const xValue = (px / xScale + xOffset).toFixed(1);
+        ctx.fillText(xValue, px, originY + 6);
+        if (originY >= 0 && originY <= canvas.height) {
+          ctx.beginPath();
+          ctx.moveTo(px, originY - 4);
+          ctx.lineTo(px, originY + 4);
+          ctx.stroke();
+        }
+      }
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      for (let py = 0; py <= canvas.height; py += gridY) {
+        const yValue = ((canvas.height - py - yOffset) / yScale).toFixed(1);
+        ctx.fillText(yValue, originX + 6, py);
+        if (originX >= 0 && originX <= canvas.width) {
+          ctx.beginPath();
+          ctx.moveTo(originX - 4, py);
+          ctx.lineTo(originX + 4, py);
+          ctx.stroke();
+        }
+      }
+
+      if (originY >= 0 && originY <= canvas.height) {
+        ctx.fillText('X', canvas.width - 20, originY + 8);
+      }
+      if (originX >= 0 && originX <= canvas.width) {
+        ctx.fillText('Y', originX + 6, 10);
+      }
+      ctx.restore();
+    }
+
+    function drawGraph() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawAxes();
+
+      if (shadeAreaCheckbox.checked) {
+        ctx.fillStyle = 'rgba(100, 150, 255, 0.3)';
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height);
+        for (let px = 0; px <= canvas.width; px++) {
+          ctx.lineTo(px, combinedGraph[px] || canvas.height);
+        }
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      graphLines.forEach(({ points, color }, index) => {
+        ctx.strokeStyle = color || lines[index]?.color || '#4af';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        points.forEach((p, i) => {
+          if (i === 0) ctx.moveTo(p.x, p.y);
+          else ctx.lineTo(p.x, p.y);
+        });
+        ctx.stroke();
+      });
+
+      // Draw vector fields
+      const gridX = 80;
+      const gridY = 50;
+      vectorFields.forEach(({ fx, fy, color }) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        for (let px = gridX; px < canvas.width; px += gridX) {
+          for (let py = gridY; py < canvas.height; py += gridY) {
+            const x = px / xScale + xOffset;
+            const y = (canvas.height - py - yOffset) / yScale;
+            const vx = fx(x, y);
+            const vy = fy(x, y);
+            if (Number.isFinite(vx) && Number.isFinite(vy)) {
+              const scale = 10;
+              const endX = px + vx * scale;
+              const endY = py - vy * scale;
+              ctx.beginPath();
+              ctx.moveTo(px, py);
+              ctx.lineTo(endX, endY);
+              ctx.stroke();
+              // Arrow head
+              const angle = Math.atan2(endY - py, endX - px);
+              ctx.beginPath();
+              ctx.moveTo(endX, endY);
+              ctx.lineTo(endX - 5 * Math.cos(angle - Math.PI / 6), endY - 5 * Math.sin(angle - Math.PI / 6));
+              ctx.moveTo(endX, endY);
+              ctx.lineTo(endX - 5 * Math.cos(angle + Math.PI / 6), endY - 5 * Math.sin(angle + Math.PI / 6));
+              ctx.stroke();
+            }
+          }
+        }
+      });
+    }
+
+    function drawBalls() {
+      for (const ball of balls) {
+        ctx.fillStyle = ball.color;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function updateBalls() {
+      for (const ball of balls) {
+        ball.vy += gravity;
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        if (ball.x - ball.r < 0) {
+          ball.x = ball.r;
+          ball.vx = -ball.vx * 0.7;
+        }
+        if (ball.x + ball.r > canvas.width) {
+          ball.x = canvas.width - ball.r;
+          ball.vx = -ball.vx * 0.7;
+        }
+        if (ball.y + ball.r > canvas.height) {
+          ball.y = canvas.height - ball.r;
+          ball.vy = -Math.abs(ball.vy) * bounce;
+        }
+
+        const ix = Math.max(0, Math.min(canvas.width, Math.round(ball.x)));
+        const surfaceY = combinedGraph[ix] ?? canvas.height;
+        const overlap = ball.y + ball.r - surfaceY;
+        if (overlap > 0) {
+          ball.y = surfaceY - ball.r;
+          // Compute normal
+          const leftY = combinedGraph[Math.max(0, ix - 1)] ?? surfaceY;
+          const rightY = combinedGraph[Math.min(canvas.width, ix + 1)] ?? surfaceY;
+          const dy = rightY - leftY;
+          const normalX = -dy;
+          const normalY = 2; // since dx=2
+          const length = Math.sqrt(normalX * normalX + normalY * normalY);
+          const nx = normalX / length;
+          const ny = normalY / length;
+          // Reflect velocity
+          const dot = ball.vx * nx + ball.vy * ny;
+          ball.vx -= 2 * dot * nx;
+          ball.vy -= 2 * dot * ny;
+          ball.vx *= 0.99;
+          ball.vy *= 0.99;
+        }
+      }
+    }
+
+    function createBall(x) {
+      balls.push({
+        x,
+        y: 16,
+        vx: (Math.random() - 0.5) * 4,
+        vy: 0,
+        r: 12,
+        color: `hsl(${Math.floor(Math.random() * 360)}, 80%, 60%)`
+      });
+    }
+
+    canvas.addEventListener('mousedown', (event) => {
+      if (event.button === 0) { // Left mouse button
+        isDragging = true;
+        lastMouseX = event.clientX;
+        lastMouseY = event.clientY;
+        event.preventDefault();
+      }
+    });
+
+    canvas.addEventListener('mousemove', (event) => {
+      if (isDragging) {
+        const deltaX = event.clientX - lastMouseX;
+        const deltaY = event.clientY - lastMouseY;
+        const xScale = parseFloat(xScaleInput.value) || 1;
+        const yScale = parseFloat(yScaleInput.value) || 1;
+        const newXOffset = parseFloat(xOffsetInput.value) + deltaX / xScale;
+        const newYOffset = parseFloat(yOffsetInput.value) - deltaY / yScale;
+        xOffsetInput.value = newXOffset.toFixed(2);
+        yOffsetInput.value = newYOffset.toFixed(2);
+        lastMouseX = event.clientX;
+        lastMouseY = event.clientY;
+        refreshGraph();
+      }
+    });
+
+    canvas.addEventListener('mouseup', (event) => {
+      if (event.button === 0) {
+        isDragging = false;
+      }
+    });
+
+    canvas.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+      zoomGraph(zoomFactor);
+    });
+
+    canvas.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      createBall(event.clientX - rect.left);
+    });
+
+    canvas.addEventListener('touchstart', (event) => {
+      if (event.touches.length === 1) {
+        isDragging = true;
+        lastMouseX = event.touches[0].clientX;
+        lastMouseY = event.touches[0].clientY;
+        event.preventDefault();
+      }
+    });
+
+    canvas.addEventListener('touchmove', (event) => {
+      if (isDragging && event.touches.length === 1) {
+        const deltaX = event.touches[0].clientX - lastMouseX;
+        const deltaY = event.touches[0].clientY - lastMouseY;
+        const xScale = parseFloat(xScaleInput.value) || 1;
+        const yScale = parseFloat(yScaleInput.value) || 1;
+        const newXOffset = parseFloat(xOffsetInput.value) + deltaX / xScale;
+        const newYOffset = parseFloat(yOffsetInput.value) - deltaY / yScale;
+        xOffsetInput.value = newXOffset.toFixed(2);
+        yOffsetInput.value = newYOffset.toFixed(2);
+        lastMouseX = event.touches[0].clientX;
+        lastMouseY = event.touches[0].clientY;
+        refreshGraph();
+      }
+      event.preventDefault();
+    });
+
+    canvas.addEventListener('touchend', (event) => {
+      isDragging = false;
+    });
+
+    drawButton.addEventListener('click', refreshGraph);
+    addLineButton.addEventListener('click', () => createLine('cos(x)'));
+    addBallButton.addEventListener('click', () => createBall(canvas.width / 2));
+    resetButton.addEventListener('click', () => {
+      balls = [];
+      refreshGraph();
+    });
+    zoomInButton.addEventListener('click', () => zoomGraph(1.2));
+    zoomOutButton.addEventListener('click', () => zoomGraph(0.8));
+    xScaleInput.addEventListener('input', debouncedRefreshGraph);
+    yScaleInput.addEventListener('input', debouncedRefreshGraph);
+    xOffsetInput.addEventListener('input', debouncedRefreshGraph);
+    yOffsetInput.addEventListener('input', debouncedRefreshGraph);
+    shadeAreaCheckbox.addEventListener('change', drawGraph);
+    window.addEventListener('resize', resizeCanvas);
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = Math.max(320, window.innerHeight - 132);
+      refreshGraph();
+    }
+
+    resizeCanvas();
+    createLine('sin(x)');
+    createLine('cos(x)');
+
+    requestAnimationFrame(function loop() {
+      updateBalls();
+      drawGraph();
+      drawBalls();
+      requestAnimationFrame(loop);
+    });
+  </script>
+</body>
+</html>
