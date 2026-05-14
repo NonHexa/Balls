@@ -88,6 +88,30 @@
         border-color: #0ff;
     }
 
+    #paletteBtn {
+        position: fixed;
+        bottom: 28px;
+        left: 88px;
+        z-index: 102;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.3);
+        background: rgba(20, 20, 30, 0.8);
+        color: #fff;
+        cursor: pointer;
+        font-size: 20px;
+        transition: background 0.15s, border-color 0.15s, color 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #paletteBtn:hover {
+        background: rgba(40, 40, 60, 0.95);
+        border-color: #fff;
+    }
+
     #upgradeOrb {
         position: fixed;
         right: 28px;
@@ -678,6 +702,7 @@
     <button id="backBtn">← Menu</button>
 </div>
 <button id="speedBtn" title="Game Speed">1x</button>
+<button id="paletteBtn" title="Change Palette">🎨</button>
 
 <canvas id="gameCanvas"></canvas>
 
@@ -885,6 +910,20 @@ let postPrestigeUnlocked = false;
 let playerHP = 3;
 let maxHP = 3;
 let damageFlash = 0;
+
+// Progression juice variables
+let waveTransitionTimer = 0;
+let waveTransitionDuration = 180; // 3 seconds at 60fps
+let killStreak = 0;
+let maxKillStreak = 0;
+let backgroundEvolution = 0;
+let currentPalette = 0;
+let unlockedPalettes = [0];
+let bossIntroTimer = 0;
+let bossIntroDuration = 120; // 2 seconds
+let lastDamageTime = 0;
+let lastKillStreakMilestone = 0;
+let transitionState = "playing"; // "playing", "waveTransition", "bossIntro"
 
 let pierceLevel = 0;
 let cryoLevel = 0;
@@ -1114,7 +1153,7 @@ class OrbitBall {
     draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = "#0ff";
+        ctx.fillStyle = palettes[currentPalette].orbitBall;
         ctx.fill();
     }
 }
@@ -1133,6 +1172,85 @@ const enemyTypes = {
     wisp:     { color: "#77ddff", size: 9, gravity: 0.11, life: 1, speedMultiplier: 1.5, pts: 2, jitters: true },
     orbiter:  { color: "#66ffbb", size: 11, gravity: 0.08, life: 3, speedMultiplier: 1.0, pts: 4, orbitsCenter: true }
 };
+
+// Color palettes for progression
+const palettes = [
+    // Default palette
+    {
+        name: "Default",
+        background: "#000",
+        core: "#fff",
+        orbitBall: "#0ff",
+        enemyColors: {
+            fast: "#ff0000", medium: "#ff8800", slow: "#8800ff", zigzag: "#00ff88",
+            shielded: "#ffff00", splitter: "#ff4488", ghost: "#8888ff", hunter: "#ff6677",
+            brute: "#7a3311", bomber: "#ffa500", wisp: "#77ddff", orbiter: "#66ffbb"
+        },
+        bossColors: ["#ff00ff", "#ff2222", "#8800ff", "#00ffaa", "#ffff88"],
+        particleColors: ["#ff00ff", "#00ffff", "#ffff00"],
+        unlockWave: 1
+    },
+    // Neon palette
+    {
+        name: "Neon",
+        background: "#001122",
+        core: "#ffffff",
+        orbitBall: "#00ffff",
+        enemyColors: {
+            fast: "#ff0044", medium: "#ffaa00", slow: "#aa00ff", zigzag: "#00ff44",
+            shielded: "#ffff44", splitter: "#ff44aa", ghost: "#4444ff", hunter: "#ff4444",
+            brute: "#aa4411", bomber: "#ffaa00", wisp: "#44ffff", orbiter: "#44ffaa"
+        },
+        bossColors: ["#ff00ff", "#ff4444", "#aa00ff", "#00ffaa", "#ffff44"],
+        particleColors: ["#ff00ff", "#00ffff", "#ffff44"],
+        unlockWave: 5
+    },
+    // Fire palette
+    {
+        name: "Inferno",
+        background: "#220000",
+        core: "#ffffff",
+        orbitBall: "#ff6600",
+        enemyColors: {
+            fast: "#ff0000", medium: "#ff4400", slow: "#ff8800", zigzag: "#ffaa00",
+            shielded: "#ffff00", splitter: "#ff2244", ghost: "#ff6688", hunter: "#ff3344",
+            brute: "#aa2200", bomber: "#ff5500", wisp: "#ff9966", orbiter: "#ff7744"
+        },
+        bossColors: ["#ff0000", "#ff4400", "#ff8800", "#ffff00", "#ffffff"],
+        particleColors: ["#ff4400", "#ff8800", "#ffff00"],
+        unlockWave: 10
+    },
+    // Ice palette
+    {
+        name: "Frost",
+        background: "#001133",
+        core: "#ffffff",
+        orbitBall: "#66ccff",
+        enemyColors: {
+            fast: "#0088ff", medium: "#44aaff", slow: "#88ccff", zigzag: "#66ddff",
+            shielded: "#aaddff", splitter: "#4499ff", ghost: "#aaccee", hunter: "#3388ff",
+            brute: "#225588", bomber: "#77bbff", wisp: "#bbddff", orbiter: "#88ddff"
+        },
+        bossColors: ["#66ccff", "#44aaff", "#88ccff", "#aaddff", "#ffffff"],
+        particleColors: ["#44aaff", "#88ccff", "#aaddff"],
+        unlockWave: 15
+    },
+    // Void palette
+    {
+        name: "Void",
+        background: "#000011",
+        core: "#ffffff",
+        orbitBall: "#aa00ff",
+        enemyColors: {
+            fast: "#440066", medium: "#660088", slow: "#8800aa", zigzag: "#aa00cc",
+            shielded: "#cc00ff", splitter: "#660044", ghost: "#9944aa", hunter: "#773366",
+            brute: "#331122", bomber: "#994466", wisp: "#bb66aa", orbiter: "#aa44cc"
+        },
+        bossColors: ["#aa00ff", "#cc00ff", "#8800aa", "#bb44ff", "#ffffff"],
+        particleColors: ["#aa00ff", "#cc00ff", "#bb44ff"],
+        unlockWave: 20
+    }
+];
 
 class Enemy {
     constructor(forceType = null) {
@@ -1170,6 +1288,15 @@ class Enemy {
         }
 
         Object.assign(this, JSON.parse(JSON.stringify(t)));
+
+        // Apply current palette colors
+        const palette = palettes[currentPalette];
+        for (const [enemyType, color] of Object.entries(palette.enemyColors)) {
+            if (this.color === enemyTypes[enemyType]?.color) {
+                this.color = color;
+                break;
+            }
+        }
 
         // Scale health with difficulty
         const prestigeStatMul = 1 + prestigeCount * PRESTIGE_ENEMY_STAT_BONUS;
@@ -1323,7 +1450,7 @@ class BossEnemy {
         this.maxGeneration = 2;
 
         this.life = 1; // dies in one hit → triggers split
-        this.color = "#ff00ff";
+        this.color = palettes[currentPalette].bossColors[0]; // Use palette boss color
 
         this.x = x ?? Math.random() * canvas.width;
         this.y = y ?? -50;
@@ -2132,7 +2259,7 @@ function updateShieldCollision(e) {
 
 
 function checkWaveProgression() {
-    if (inBossFight) return;
+    if (inBossFight || transitionState !== "playing") return;
 
     if (enemiesKilledThisWave >= enemiesToNextBoss) {
         startBossFight();
@@ -2151,13 +2278,17 @@ function startBossFight() {
     else if (bossType === 3) enemies.push(new TankBoss());
     else if (bossType === 4) enemies.push(new OrbiterBoss());
     else enemies.push(new PulseBoss());
+
+    // Start boss intro
+    transitionState = "bossIntro";
+    bossIntroTimer = bossIntroDuration;
 }
 
 class FastBoss extends BossEnemy {
     constructor() {
         super();
         this.size = 30;
-        this.color = "#ff2222";
+        this.color = palettes[currentPalette].bossColors[1];
     }
 
     update(dt) {
@@ -2178,7 +2309,7 @@ class TankBoss extends BossEnemy {
         super();
         this.size = 60;
         this.life = 10 + bossLevel * 3;
-        this.color = "#8800ff";
+        this.color = palettes[currentPalette].bossColors[2];
     }
 }
 
@@ -2187,7 +2318,7 @@ class OrbiterBoss extends BossEnemy {
         super(canvas.width / 2 + 200, canvas.height / 2);
         this.size = 35;
         this.life = 12 + bossLevel * 2;
-        this.color = "#00ffaa";
+        this.color = palettes[currentPalette].bossColors[3];
         this.isBoss = true;
         this.orbitAngle = 0;
         this.orbitSpeed = 0.015;
@@ -2229,7 +2360,7 @@ class PulseBoss extends BossEnemy {
         super();
         this.size = 50;
         this.life = 18 + bossLevel * 3;
-        this.color = "#ff8800";
+        this.color = palettes[currentPalette].bossColors[4];
         this.isBoss = true;
         this.pulseTimer = 0;
         this.pulseFlash = 0;
@@ -2299,11 +2430,24 @@ function endBossFight() {
     prestigeStars += 1 + Math.floor(bossLevel / 2);
     document.getElementById("prestigeStarCount").textContent = prestigeStars;
 
+    // Check for palette unlocks
+    checkPaletteUnlocks();
+
+    // Start wave transition
+    transitionState = "waveTransition";
+    waveTransitionTimer = waveTransitionDuration;
+
+    // Stop enemy spawning during transition
+    if (enemyInterval) {
+        clearInterval(enemyInterval);
+        enemyInterval = null;
+    }
+}
+
     // Spawn burst for next wave
     for (let i = 0; i < 3 + wave * 2; i++) {
         enemies.push(new Enemy());
     }
-}
 
 // The upgradesss - now with level-based requirements
 let damageBonus = 0;
@@ -2544,6 +2688,14 @@ speedBtn.onclick = () => {
     speedBtn.textContent = gameSpeed + "x";
     // Restart spawn loop with new speed
     startEnemySpawn();
+};
+
+document.getElementById("paletteBtn").onclick = () => {
+    const unlockedIndex = (unlockedPalettes.indexOf(currentPalette) + 1) % unlockedPalettes.length;
+    currentPalette = unlockedPalettes[unlockedIndex];
+    // Update button text to show current palette
+    const palette = palettes[currentPalette];
+    document.getElementById("paletteBtn").textContent = palette.name[0]; // First letter
 };
 
 let hoveredNode = null;
@@ -3024,6 +3176,8 @@ function checkCollisions() {
                 const hit = e.takeDamage ? e.takeDamage(orbDmg) : (e.life -= orbDmg, true);
                 if (hit) {
                     points += (e.pts || 1);
+                    killStreak++;
+                    if (killStreak > maxKillStreak) maxKillStreak = killStreak;
                     infoDiv.textContent = `Wave ${wave} | Points: ${points}`;
                 }
 
@@ -3049,6 +3203,8 @@ function checkCollisions() {
                     enemies.splice(i, 1);
                     points++;
                     enemiesKilledThisWave++;
+                    killStreak++;
+                    if (killStreak > maxKillStreak) maxKillStreak = killStreak;
                     i--;
                     break;
                 }
@@ -3077,6 +3233,7 @@ function checkCollisions() {
             playerHP--;
             updateHPDisplay();
             shakeTime = 0.25;
+            killStreak = 0; // Reset kill streak on damage
 
             // Red flash
             const overlay = document.getElementById("damageOverlay");
@@ -3118,20 +3275,80 @@ function animate(now = 0) {
     difficultyRamp += 0.00004 * dt;
     if (difficultyRamp > 1) difficultyRamp = 1;
 
+    // Update background evolution
+    backgroundEvolution = Math.min(100, wave * 5 + (enemiesKilledThisWave / enemiesToNextBoss) * 20);
+
     if (isPaused) {
         ctx.restore();
         requestAnimationFrame(animate);
         return;
     }
 
+    // Handle transitions
+    if (transitionState === "waveTransition") {
+        waveTransitionTimer -= dt;
+        if (waveTransitionTimer <= 0) {
+            transitionState = "playing";
+            // Start spawning enemies again
+            if (enemyInterval) clearInterval(enemyInterval);
+            enemyInterval = setInterval(spawnEnemy, Math.max(200, 1200 - (wave * 40) - (difficultyRamp * 400)) / diffSpawnMul);
+        } else {
+            // Draw transition effect
+            drawWaveTransition();
+            ctx.restore();
+            requestAnimationFrame(animate);
+            return;
+        }
+    } else if (transitionState === "bossIntro") {
+        bossIntroTimer -= dt;
+        if (bossIntroTimer <= 0) {
+            transitionState = "playing";
+        } else {
+            // Draw boss intro
+            drawBossIntro();
+            ctx.restore();
+            requestAnimationFrame(animate);
+            return;
+        }
+    }
+
     screenShake(dt);
-    ctx.fillStyle = "#000";
+    
+    // Evolving background based on wave progress
+    const palette = palettes[currentPalette];
+    let bgColor = palette.background;
+    
+    // Add evolution effect - darken background as progress increases
+    if (backgroundEvolution > 0) {
+        const evolutionFactor = Math.min(0.3, backgroundEvolution / 100);
+        // Create a darker version of the background
+        const rgb = hexToRgb(bgColor);
+        if (rgb) {
+            const r = Math.floor(rgb.r * (1 - evolutionFactor));
+            const g = Math.floor(rgb.g * (1 - evolutionFactor));
+            const b = Math.floor(rgb.b * (1 - evolutionFactor));
+            bgColor = `rgb(${r}, ${g}, ${b})`;
+        }
+    }
+    
+    ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Add background evolution effects
+    if (backgroundEvolution > 0) {
+        const alpha = Math.min(0.3, backgroundEvolution / 100);
+        // Add some gradient or particle effects for evolution
+        const gradient = ctx.createRadialGradient(center.x, center.y, 0, center.x, center.y, Math.max(canvas.width, canvas.height) / 2);
+        gradient.addColorStop(0, `rgba(255,255,255,${alpha * 0.1})`);
+        gradient.addColorStop(1, `rgba(0,0,0,0)`);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
     // Core
     ctx.beginPath();
     ctx.arc(center.x, center.y, 20, 0, Math.PI * 2);
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = palette.core;
     ctx.fill();
 
     player.update(mouse.x, mouse.y);
@@ -3230,7 +3447,11 @@ function animate(now = 0) {
             triggerFreezeShatter(e.x, e.y);
         }
 
-        if (!e.isBoss) enemiesKilledThisWave++;
+        if (!e.isBoss) {
+            enemiesKilledThisWave++;
+            killStreak++;
+            if (killStreak > maxKillStreak) maxKillStreak = killStreak;
+        }
         return false;
     });
 
@@ -3255,12 +3476,102 @@ function animate(now = 0) {
     updateWaveProgress();
 
     // Update HUD
-    infoDiv.textContent = `Wave ${wave} | Points: ${points} | Prestige ${prestigeCount}`;
+    infoDiv.textContent = `Wave ${wave} | Points: ${points} | Kill Streak: ${killStreak} | Prestige ${prestigeCount}`;
+
+    // Kill streak effects
+    if (killStreak > 0 && killStreak % 10 === 0 && killStreak <= 50 && killStreak !== lastKillStreakMilestone) {
+        lastKillStreakMilestone = killStreak;
+        // Screen shake for milestones
+        shakeTime = 0.2;
+        // Add celebration particles
+        for (let i = 0; i < 20; i++) {
+            const angle = (Math.PI * 2 / 20) * i;
+            const dist = 100;
+            particles.push(new Particle(
+                center.x + Math.cos(angle) * dist,
+                center.y + Math.sin(angle) * dist,
+                palettes[currentPalette].particleColors[killStreak % palettes[currentPalette].particleColors.length]
+            ));
+        }
+    }
 
     ctx.restore();
 
     if (!gameOver)
         requestAnimationFrame(animate);
+}
+
+function drawWaveTransition() {
+    const palette = palettes[currentPalette];
+    ctx.fillStyle = palette.background;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw "Wave X Complete" text
+    const progress = 1 - (waveTransitionTimer / waveTransitionDuration);
+    const alpha = Math.min(1, progress * 2);
+    
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = palette.core;
+    ctx.font = "48px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`Wave ${wave} Complete!`, center.x, center.y - 50);
+    
+    // Draw progress bar
+    const barWidth = 300;
+    const barHeight = 20;
+    ctx.fillStyle = `rgba(255,255,255,0.2)`;
+    ctx.fillRect(center.x - barWidth/2, center.y, barWidth, barHeight);
+    ctx.fillStyle = palette.core;
+    ctx.fillRect(center.x - barWidth/2, center.y, barWidth * progress, barHeight);
+    
+    ctx.restore();
+}
+
+function drawBossIntro() {
+    const palette = palettes[currentPalette];
+    ctx.fillStyle = palette.background;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw boss name and warning
+    const progress = 1 - (bossIntroTimer / bossIntroDuration);
+    const alpha = Math.min(1, progress * 2);
+    
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = palette.bossColors[bossLevel % 5];
+    ctx.font = "52px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("BOSS INCOMING!", center.x, center.y - 50);
+    
+    // Draw boss preview or effect
+    ctx.beginPath();
+    ctx.arc(center.x, center.y + 50, 40 + Math.sin(Date.now() * 0.01) * 10, 0, Math.PI * 2);
+    ctx.fillStyle = palette.bossColors[bossLevel % 5];
+    ctx.shadowBlur = 30;
+    ctx.shadowColor = palette.bossColors[bossLevel % 5];
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    ctx.restore();
+}
+
+function checkPaletteUnlocks() {
+    palettes.forEach((palette, index) => {
+        if (!unlockedPalettes.includes(index) && wave >= palette.unlockWave) {
+            unlockedPalettes.push(index);
+            // Could add notification here
+        }
+    });
+}
+
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
 }
 
 let player = new PlayerBall();
@@ -3293,6 +3604,16 @@ function startGame() {
     gameOver = false;
     playerHP = maxHP;
 
+    // Reset progression juice variables
+    waveTransitionTimer = 0;
+    killStreak = 0;
+    maxKillStreak = 0;
+    backgroundEvolution = 0;
+    transitionState = "playing";
+    bossIntroTimer = 0;
+    lastKillStreakMilestone = 0;
+    unlockedPalettes = [0]; // Always have default unlocked
+
     enemies = [];
     particles = [];
 
@@ -3301,6 +3622,11 @@ function startGame() {
 
     infoDiv.textContent = `Wave 1 | Points: 0 | Prestige ${prestigeCount}`;
     updateHPDisplay();
+    
+    // Initialize palette button
+    const palette = palettes[currentPalette];
+    document.getElementById("paletteBtn").textContent = palette.name[0];
+    
     startEnemySpawn();
     animate();
 

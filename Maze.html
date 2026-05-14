@@ -600,7 +600,7 @@ function computeOptimalPath() {
     ];
 
     while (queue.length > 0) {
-        const cur = queue.shift();
+        const cur = queue.shift(); // Dequeue the current cell
         if (cur.x === end.x && cur.y === end.y) break;
 
         for (const d of dirs) {
@@ -716,6 +716,48 @@ function win() {
         document.getElementById("winOverlay").style.display = "flex";
     }, 1500);
 }
+function getNearbyWalls(px, py) {
+    const cx = Math.floor(px / cellSize);
+    const cy = Math.floor(py / cellSize);
+
+    const nearby = [];
+
+    for (let y = cy - 1; y <= cy + 1; y++) {
+        for (let x = cx - 1; x <= cx + 1; x++) {
+
+            if (x < 0 || y < 0 || x >= cols || y >= rows) continue;
+
+            const cell = maze[y][x];
+
+            const wx = x * cellSize;
+            const wy = y * cellSize;
+
+            if (cell.walls.top)
+                nearby.push({ x: wx, y: wy, w: cellSize + wallThick, h: wallThick });
+
+            if (cell.walls.left)
+                nearby.push({ x: wx, y: wy, w: wallThick, h: cellSize + wallThick });
+
+            if (cell.walls.right)
+                nearby.push({
+                    x: wx + cellSize,
+                    y: wy,
+                    w: wallThick,
+                    h: cellSize + wallThick
+                });
+
+            if (cell.walls.bottom)
+                nearby.push({
+                    x: wx,
+                    y: wy + cellSize,
+                    w: cellSize + wallThick,
+                    h: wallThick
+                });
+        }
+    }
+
+    return nearby;
+}
 
 // ── Physics ──
 function update() {
@@ -752,7 +794,9 @@ function update() {
 
     // Move X then resolve
     player.x += player.vx;
-    for (const w of walls) {
+    const nearbyWalls = getNearbyWalls(player.x, player.y);
+
+    for (const w of nearbyWalls) {
         if (
             player.x + player.radius > w.x &&
             player.x - player.radius < w.x + w.w &&
@@ -776,7 +820,7 @@ function update() {
 
     // Move Y then resolve
     player.y += player.vy;
-    for (const w of walls) {
+    for (const w of nearbyWalls) {
         if (
             player.x + player.radius > w.x &&
             player.x - player.radius < w.x + w.w &&
@@ -801,6 +845,10 @@ function update() {
     const last = trail[trail.length - 1];
     if (Math.hypot(player.x - last.x, player.y - last.y) > trailSpacing) {
         trail.push({ x: player.x, y: player.y });
+        // Limit trail length to prevent performance issues
+        if (trail.length > 2000) {
+            trail.shift(); // Remove oldest point
+        }
     }
 
     // Track unique cells visited
@@ -911,9 +959,22 @@ function draw() {
     ctx.fillStyle = "#ff00ff";
     ctx.shadowColor = "#ff00ff";
     ctx.shadowBlur = showingResult ? 2 : 6;
+    const viewLeft   = cam.x - canvas.width  / (2 * camZoom) - 100;
+    const viewRight  = cam.x + canvas.width  / (2 * camZoom) + 100;
+    const viewTop    = cam.y - canvas.height / (2 * camZoom) - 100;
+    const viewBottom = cam.y + canvas.height / (2 * camZoom) + 100;
+
     for (const w of walls) {
-        ctx.fillRect(w.x, w.y, w.w, w.h);
-    }
+
+    if (
+        w.x + w.w < viewLeft ||
+        w.x > viewRight ||
+        w.y + w.h < viewTop ||
+        w.y > viewBottom
+    ) continue;
+
+    ctx.fillRect(w.x, w.y, w.w, w.h);
+}
     ctx.shadowBlur = 0;
 
     // Goal glow
