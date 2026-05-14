@@ -111,8 +111,10 @@ canvas {
     display: none;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    background: rgba(0,0,0,0.8);
+    justify-content: flex-start;
+    padding-top: 80px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(3px);
 }
 
 #winOverlay h2 {
@@ -925,22 +927,28 @@ function draw() {
             ctx.lineTo(trail[i].x, trail[i].y);
         }
         if (showingResult) {
-            ctx.strokeStyle = "#ff00ff";
-            ctx.lineWidth = 3;
+            ctx.strokeStyle = "#ff88ff";
+            ctx.lineWidth = 6;
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
-            ctx.globalAlpha = 0.8;
+            ctx.shadowBlur = 14;
+            ctx.shadowColor = "#ff00ff";
+            ctx.globalAlpha = 0.95;
             ctx.stroke();
+            ctx.shadowBlur = 0;
             ctx.globalAlpha = 1;
         } else {
-            ctx.strokeStyle = "rgba(0,255,255)";
-            ctx.lineWidth = 3;
+            ctx.strokeStyle = "#ff66ff";
+            ctx.lineWidth = 6;
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
+            ctx.shadowBlur = 14;
+            ctx.shadowColor = "#ff00ff";
             ctx.stroke();
+            ctx.shadowBlur = 0;
 
             // Brighter near the head
-            const headLen = Math.min(trail.length, 20);
+            const headLen = Math.min(trail.length, 24);
             if (headLen > 1) {
                 ctx.beginPath();
                 ctx.moveTo(trail[trail.length - headLen].x, trail[trail.length - headLen].y);
@@ -948,9 +956,12 @@ function draw() {
                     ctx.lineTo(trail[i].x, trail[i].y);
                 }
                 ctx.lineTo(player.x, player.y);
-                ctx.strokeStyle = "rgba(255,0,255,0.7)";
-                ctx.lineWidth = 3;
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 4;
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = "#ff88ff";
                 ctx.stroke();
+                ctx.shadowBlur = 0;
             }
         }
     }
