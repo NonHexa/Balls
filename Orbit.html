@@ -675,15 +675,15 @@
 
 <div id="difficultyMenu">
     <h1>Choose Person</h1>
-    <button class="diffBtn bethan" onclick="chooseDifficulty('bethan')">
+    <button class="diffBtn bethan" data-mode="bethan">
         Bethan
         <div class="diffDesc">Chill vibes mhm very</div>
     </button>
-    <button class="diffBtn normal" onclick="chooseDifficulty('normal')">
+    <button class="diffBtn normal" data-mode="normal">
         Normal people (Lizzy)
         <div class="diffDesc">Balanced (Normal)</div>
     </button>
-    <button class="diffBtn curtis" onclick="chooseDifficulty('curtis')">
+    <button class="diffBtn curtis" data-mode="curtis">
         <span style="position:relative;display:inline-block;">
             <span style="position:absolute;top:-18px;left:-10px;font-size:16px;transform:rotate(-20deg);">😈</span>
             Curtis
@@ -871,11 +871,5 @@
 </div>
 
 <script type="module" src="./js/main.js"></script>
-<script>
-function chooseDifficulty(mode) {
-    document.getElementById('difficultyMenu').style.display = 'none';
-    window.startGame?.();
-}
-</script>
 </body>
 </html>

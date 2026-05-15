@@ -52,6 +52,7 @@ function initRefs() {
     refs.pRadius = document.getElementById('pRadius');
     refs.zoomLevelEl = document.getElementById('zoomLevel');
     refs.difficultyMenu = document.getElementById('difficultyMenu');
+    refs.difficultyButtons = [...document.querySelectorAll('.diffBtn')];
     refs.customCols = document.getElementById('customCols');
     refs.customRows = document.getElementById('customRows');
     refs.upgradeNodes = [...document.querySelectorAll('.upgradeNode')];
@@ -76,12 +77,20 @@ function bindUI() {
         window.location.href = 'index.html';
     };
 
-    treeViewport.addEventListener('mousedown', (e) => {
+    refs.viewport.addEventListener('mousedown', (e) => {
         if (e.target.closest('.upgradeNode')) return;
         gameState.isDraggingTree = true;
         gameState.dragMoved = false;
         gameState.lastX = e.clientX;
         gameState.lastY = e.clientY;
+    });
+
+    refs.difficultyButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const mode = button.dataset.mode;
+            refs.difficultyMenu.style.display = 'none';
+            startGame(mode);
+        });
     });
 
     window.addEventListener('mousemove', (e) => {
@@ -100,7 +109,7 @@ function bindUI() {
         gameState.isDraggingTree = false;
     });
 
-    treeViewport.addEventListener('wheel', (e) => {
+    refs.viewport.addEventListener('wheel', (e) => {
         e.preventDefault();
         const zoomSpeed = 0.1;
         gameState.scale += e.deltaY < 0 ? zoomSpeed : -zoomSpeed;
@@ -300,11 +309,24 @@ function checkPaletteUnlocks() {
     });
 }
 
-function startGame() {
+export function startGame(mode = null) {
+    if (mode) {
+        gameState.difficultyMode = mode;
+        const preset = difficultyPresets[mode] || difficultyPresets.normal;
+        gameState.diffSpawnMul = preset.spawnMul;
+        gameState.diffSpeedMul = preset.speedMul;
+        gameState.maxHP = preset.hp;
+    }
+    setCanvasSize();
     gameState.spawnCount = 0;
     gameState.points = 0;
     gameState.gameOver = false;
-    gameState.playerHP = gameState.maxHP;
+    gameState.wave = 1;
+    gameState.bossLevel = 0;
+    gameState.enemiesToNextBoss = 30;
+    gameState.difficultyRamp = 0;
+    gameState.inBossFight = false;
+    gameState.enemiesKilledThisWave = 0;
     gameState.waveTransitionTimer = 0;
     gameState.killStreak = 0;
     gameState.maxKillStreak = 0;
@@ -315,14 +337,15 @@ function startGame() {
     gameState.unlockedPalettes = [0];
     gameState.enemies = [];
     gameState.particles = [];
-    gameState.player = new PlayerBall();
-    gameState.orbitBalls = [new OrbitBall(0)];
+    rebuildFromUpgrades();
+    gameState.playerHP = gameState.maxHP;
     refs.infoDiv.textContent = `Wave 1 | Points: 0 | Prestige ${gameState.prestigeCount}`;
     updateHPDisplay();
     refs.paletteBtn.textContent = palettes[gameState.currentPalette].name[0];
+    gameState.isPaused = false;
+    lastFrameTime = 0;
     startEnemySpawn();
     animate();
-    openUpgradeMenu();
 }
 
 function restartAfterDeath() {
@@ -980,6 +1003,11 @@ function init() {
     bindUI();
     initAudio();
     initGame();
+    window.startGame = startGame;
+    window.chooseDifficulty = (mode) => {
+        refs.difficultyMenu.style.display = 'none';
+        startGame(mode);
+    };
 }
 
 init();
