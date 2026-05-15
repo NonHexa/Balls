@@ -149,5 +149,6 @@ export const refs = {
     zoomLevelEl: null,
     difficultyMenu: null,
     customCols: null,
-    customRows: null
+    customRows: null,
+    waveProgress: null
 };

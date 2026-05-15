@@ -183,6 +183,30 @@ export function updateBars() {
     refs.prestigeOrbEl.style.display = allMaxed ? 'block' : 'none';
 }
 
+export function updateHPDisplay() {
+    const hpBar = refs.hpBar;
+    if (!hpBar) return;
+    hpBar.innerHTML = '';
+    for (let i = 0; i < gameState.maxHP; i++) {
+        const heart = document.createElement('div');
+        heart.className = 'hpHeart';
+        heart.textContent = '♥';
+        if (i >= gameState.playerHP) {
+            heart.classList.add('empty');
+        }
+        hpBar.appendChild(heart);
+    }
+}
+
+export function updateWaveProgress() {
+    const waveProgress = refs.waveProgress;
+    if (!waveProgress) return;
+    const progress = gameState.enemiesToNextBoss > 0 
+        ? (gameState.enemiesKilledThisWave / gameState.enemiesToNextBoss) * 100 
+        : 100;
+    waveProgress.style.width = Math.min(100, progress) + '%';
+}
+
 export function applyUpgrade(name) {
     const u = upgrades.find(x => x.name === name);
     if (!u || !canBuyUpgrade(u)) return;

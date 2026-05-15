@@ -1,6 +1,6 @@
 import { gameState, refs } from './state.js';
 import { difficultyPresets, enemyTypes, palettes, upgrades, prestigeUpgrades, PRESTIGE_ENEMY_STAT_BONUS, PRESTIGE_SPAWN_BONUS, ENEMY_MAX_SPEED } from './config.js';
-import { PlayerBall, OrbitBall, Enemy, BossEnemy, startEnemySpawn, stopEnemySpawn, updateLaserSystem, drawLaserBeams, rebuildFromUpgrades } from './entities.js';
+import { PlayerBall, OrbitBall, Enemy, BossEnemy, startEnemySpawn, stopEnemySpawn, updateLaserSystem, drawLaserBeams, rebuildFromUpgrades, applyGravityWell } from './entities.js';
 import { Particle, updateParticles, drawParticles, spawnUpgradeParticles } from './particles.js';
 import { initAudio, ensureAudio, playCollisionTone } from './audio.js';
 import { isUpgradeAvailable, canBuyUpgrade, canBuyPrestigeUpgrade, getUpgradeCost, applyUpgrade, applyPrestigeUpgrade, updateBars, updatePrestigeBars, updatePrestigeResetButton, doPrestigeReset, updateHPDisplay, updateWaveProgress } from './upgrades.js';
@@ -57,6 +57,7 @@ function initRefs() {
     refs.customRows = document.getElementById('customRows');
     refs.upgradeNodes = [...document.querySelectorAll('.upgradeNode')];
     refs.prestigeNodes = [...document.querySelectorAll('.prestigeNode')];
+    refs.waveProgress = document.getElementById('waveProgress');
     lineCanvas = document.getElementById('lineCanvas');
     prestigeLineCanvas = document.getElementById('prestigeLineCanvas');
     upgradeStarContainer = document.getElementById('upgradeStarContainer');

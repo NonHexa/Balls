@@ -1,5 +1,13 @@
 import { gameState } from './state.js';
-import { ENEMY_MAX_SPEED, collisionChordDict } from './config.js';
+import { ENEMY_MAX_SPEED } from './config.js';
+
+const collisionChordDict = [
+    { root: 220, semitones: [0, 4, 7] },
+    { root: 246.94, semitones: [0, 3, 7] },
+    { root: 261.63, semitones: [0, 4, 7, 11] },
+    { root: 293.66, semitones: [0, 5, 9] },
+    { root: 329.63, semitones: [0, 4, 7] }
+];
 
 export function createReverbBuffer(ctx, duration, decay) {
     const rate = ctx.sampleRate;

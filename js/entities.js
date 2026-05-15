@@ -1,5 +1,5 @@
 import { gameState, refs } from './state.js';
-import { enemyTypes, palettes, PRESTIGE_ENEMY_STAT_BONUS, PRESTIGE_SPAWN_BONUS, ENEMY_MAX_SPEED, upgrades, prestigeUpgrades } from './config.js';
+import { enemyTypes, palettes, PRESTIGE_ENEMY_STAT_BONUS, PRESTIGE_SPAWN_BONUS, ENEMY_MAX_SPEED, upgrades, prestigeUpgrades, difficultyPresets } from './config.js';
 import { playCollisionTone } from './audio.js';
 import { Particle, spawnUpgradeParticles } from './particles.js';
 
