@@ -203,6 +203,7 @@ function closeUpgradeMenu() {
             restartAfterDeath();
         } else {
             gameState.isPaused = false;
+            gameState.shakeTime = 0;
             ensureAudio();
         }
     }, 300);
@@ -223,6 +224,7 @@ function closePrestigeMenu() {
     refs.prestigeGlass.classList.remove('open');
     setTimeout(() => {
         refs.prestigeGlass.style.display = 'none';
+        gameState.shakeTime = 0;
         gameState.isPaused = false;
     }, 300);
 }
@@ -338,6 +340,8 @@ export function startGame(mode = null) {
     gameState.unlockedPalettes = [0];
     gameState.enemies = [];
     gameState.particles = [];
+    gameState.shakeTime = 0;
+    gameState.laserCooldown = 0;
     rebuildFromUpgrades();
     gameState.playerHP = gameState.maxHP;
     refs.infoDiv.textContent = `Wave 1 | Points: 0 | Prestige ${gameState.prestigeCount}`;
@@ -987,6 +991,7 @@ function initGame() {
     gameState.maxHP = preset.hp;
     gameState.playerHP = gameState.maxHP;
     gameState.player = new PlayerBall();
+    gameState.isPaused = true;
     rebuildFromUpgrades();
     gameState.playerHP = gameState.maxHP;
     updateHPDisplay();
@@ -995,7 +1000,6 @@ function initGame() {
     updateBars();
     updatePrestigeBars();
     updatePrestigeResetButton();
-    startEnemySpawn();
     animate();
 }
 

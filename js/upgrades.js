@@ -4,7 +4,25 @@ import { rebuildFromUpgrades, startEnemySpawn, PlayerBall, OrbitBall } from './e
 import { spawnUpgradeParticles } from './particles.js';
 
 export function isUpgradeAvailable(u) {
-    return !u.postPrestige || gameState.postPrestigeUnlocked;
+    if (u.postPrestige && !gameState.postPrestigeUnlocked) return false;
+    
+    const minPrestigeForUpgrade = {
+        'Overcharge': 0,
+        'Fortress': 0,
+        'Vortex': 1,
+        'Chain': 1,
+        'Hyper': 1,
+        'Starfire': 2,
+        'PulseArmor': 2,
+        'RiftMine': 2,
+        'BloodNova': 3,
+        'FreezeShatter': 3,
+        'OrbitEcho': 3,
+        'PhaseShield': 4
+    };
+    
+    const minPrestige = minPrestigeForUpgrade[u.name] || 0;
+    return gameState.prestigeCount >= minPrestige;
 }
 
 export function canBuyUpgrade(u) {
@@ -217,17 +235,17 @@ export function applyUpgrade(name) {
         u.level++;
         if (name === 'Damage') {
             gameState.damageBonus = u.level;
-            gameState.orbitBalls.forEach(o => { o.damage = 0.25 + gameState.damageBonus * 0.25; });
+            gameState.orbitBalls.forEach(o => { o.damage = 0.5 + gameState.damageBonus * 0.6; });
         }
         if (name === 'Laser') {
-            gameState.laserDamage = 0.25 + u.level * 0.25;
-            gameState.laserFireDelay = Math.max(2000, 5000 - u.level * 400);
+            gameState.laserDamage = 0.75 + u.level * 0.75;
+            gameState.laserFireDelay = Math.max(1500, 5000 - u.level * 600);
         }
         if (name === 'Shield') {
             gameState.shieldLevel++;
-            gameState.shieldBounce += 1.5;
-            gameState.shieldDamage += 0.5;
-            gameState.shieldBounceCooldown = (21 - gameState.shieldLevel) * 1000;
+            gameState.shieldBounce += 2.5;
+            gameState.shieldDamage += 1;
+            gameState.shieldBounceCooldown = Math.max(4000, (21 - gameState.shieldLevel) * 1000);
             gameState.shieldBounceTimer = 0;
         }
         if (name === 'Dual' && !gameState.player2) gameState.player2 = new PlayerBall();

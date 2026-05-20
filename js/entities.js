@@ -171,7 +171,7 @@ export class Enemy {
         const dx = tx - this.x;
         const dy = ty - this.y;
         const dist = Math.hypot(dx, dy) || 1;
-        const speedScale = (0.35 + (gameState.difficultyRamp * 0.4)) * gameState.diffSpeedMul;
+        const speedScale = (0.5 + (gameState.difficultyRamp * 0.5)) * gameState.diffSpeedMul;
         this.vx += dx / dist * this.gravity * this.speedMultiplier * speedScale * dt;
         this.vy += dy / dist * this.gravity * this.speedMultiplier * speedScale * dt;
 
