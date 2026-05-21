@@ -155,6 +155,15 @@ export function applyPrestigeUpgrade(name) {
                 o.damage = 0.25 + upgrades.find(u => u.name === 'Damage').level * 0.25 + u.level * 0.125;
             });
         }
+        if (name === 'OrbitControl') gameState.orbitControlActive = true;
+        if (name === 'ExtraOrbit') {
+            gameState.extraOrbitCount++;
+            const speedLvl = prestigeUpgrades.find(x => x.name === 'Speed').level;
+            const o = new OrbitBall(Math.random() * Math.PI * 2);
+            o.angularSpeed += speedLvl * 0.015;
+            o.damage = 0.25 + upgrades.find(u => u.name === 'Damage').level * 0.25 + speedLvl * 0.125;
+            gameState.orbitBalls.push(o);
+        }
         const node = document.querySelector(`.prestigeNode[data-name="${name}"]`);
         if (node) {
             node.classList.add('unlocked');
@@ -326,6 +335,12 @@ export function applyUpgrade(name) {
             gameState.phaseShieldLevel = u.level;
             gameState.phaseShieldReady = true;
             gameState.phaseShieldCooldownTimer = 0;
+        }
+        if (name === 'LifeForce') {
+            gameState.lifeForceLevel = u.level;
+            gameState.maxHP += 1;
+            gameState.playerHP = gameState.maxHP;
+            updateHPDisplay();
         }
         const node = refs.upgradeNodes.find(n => n.dataset.name === u.name);
         if (node) {

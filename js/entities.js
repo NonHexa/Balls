@@ -44,23 +44,44 @@ export class OrbitBall {
     }
 
     update(centerAngle, i, total, dt) {
-        const spreadOffset = gameState.player2 ? Math.PI / total : 0;
-        const baseTarget = centerAngle + spreadOffset + i * (Math.PI * 2 / total);
-        this.angle += ((baseTarget - this.angle) * 0.1 + this.angularSpeed) * dt;
-        this.angle += Math.sin(Date.now() * 0.002 + i) * 0.01 * dt;
-
-        if (gameState.magnetLevel > 0 && gameState.enemies.length > 0) {
-            let nearest = null;
-            let nd = Infinity;
-            for (const e of gameState.enemies) {
-                const d = Math.hypot(e.x - this.x, e.y - this.y);
-                if (d < nd) { nd = d; nearest = e; }
+        if (gameState.orbitControlActive) {
+            // Orbit slowly around center instead of following
+            this.angle += this.angularSpeed * 0.3 * dt;
+            
+            if (gameState.magnetLevel > 0 && gameState.enemies.length > 0) {
+                let nearest = null;
+                let nd = Infinity;
+                for (const e of gameState.enemies) {
+                    const d = Math.hypot(e.x - this.x, e.y - this.y);
+                    if (d < nd) { nd = d; nearest = e; }
+                }
+                if (nearest) {
+                    const desired = Math.atan2(nearest.y - this.y, nearest.x - this.x);
+                    let diff = desired - this.angle;
+                    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+                    this.angle += diff * gameState.magnetStrength * dt;
+                }
             }
-            if (nearest) {
-                const desired = Math.atan2(nearest.y - this.y, nearest.x - this.x);
-                let diff = desired - this.angle;
-                diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-                this.angle += diff * gameState.magnetStrength * dt;
+        } else {
+            // Original behavior: follow player
+            const spreadOffset = gameState.player2 ? Math.PI / total : 0;
+            const baseTarget = centerAngle + spreadOffset + i * (Math.PI * 2 / total);
+            this.angle += ((baseTarget - this.angle) * 0.1 + this.angularSpeed) * dt;
+            this.angle += Math.sin(Date.now() * 0.002 + i) * 0.01 * dt;
+
+            if (gameState.magnetLevel > 0 && gameState.enemies.length > 0) {
+                let nearest = null;
+                let nd = Infinity;
+                for (const e of gameState.enemies) {
+                    const d = Math.hypot(e.x - this.x, e.y - this.y);
+                    if (d < nd) { nd = d; nearest = e; }
+                }
+                if (nearest) {
+                    const desired = Math.atan2(nearest.y - this.y, nearest.x - this.x);
+                    let diff = desired - this.angle;
+                    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+                    this.angle += diff * gameState.magnetStrength * dt;
+                }
             }
         }
         this.x = gameState.center.x + Math.cos(this.angle) * this.orbitRadius;
@@ -959,11 +980,14 @@ export function rebuildFromUpgrades() {
     const orbitLevel = prestigeUpgrades.find(u => u.name === 'Orbit').level;
     const radiusLevel = prestigeUpgrades.find(u => u.name === 'Radius').level;
     const speedLevel = prestigeUpgrades.find(u => u.name === 'Speed').level;
+    const orbitControlLevel = prestigeUpgrades.find(u => u.name === 'OrbitControl').level;
+    const extraOrbitLevel = prestigeUpgrades.find(u => u.name === 'ExtraOrbit').level;
     const dualLevel = upgrades.find(u => u.name === 'Dual').level;
     const dUp = upgrades.find(u => u.name === 'Damage').level;
     gameState.points = gameState.points;
 
-    for (let i = 0; i < 1 + orbitLevel; i++) {
+    const totalBalls = 1 + orbitLevel + extraOrbitLevel;
+    for (let i = 0; i < totalBalls; i++) {
         const o = new OrbitBall(Math.random() * Math.PI * 2);
         o.angularSpeed += speedLevel * 0.015;
         o.damage = 0.25 + dUp * 0.25 + speedLevel * 0.125;
@@ -972,6 +996,8 @@ export function rebuildFromUpgrades() {
 
     gameState.player.orbitRadius = 150 + radiusLevel * 25;
     gameState.player2 = dualLevel > 0 ? new PlayerBall() : null;
+    gameState.orbitControlActive = orbitControlLevel > 0;
+    gameState.extraOrbitCount = extraOrbitLevel;
 
     const laserLevel = upgrades.find(u => u.name === 'Laser').level;
     gameState.laserDamage = 0.25 + laserLevel * 0.25;
@@ -1061,6 +1087,9 @@ export function rebuildFromUpgrades() {
     gameState.phaseShieldReady = gameState.phaseShieldLevel > 0;
     gameState.phaseShieldCooldownTimer = 0;
     gameState.centerInvulnTimer = 0;
+
+    const lfUp = upgrades.find(u => u.name === 'LifeForce');
+    gameState.lifeForceLevel = lfUp ? lfUp.level : 0;
 
     gameState.mines = [];
     gameState.orbitEchoes = [];

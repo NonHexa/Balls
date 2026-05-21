@@ -198,12 +198,12 @@ function closeUpgradeMenu() {
     refs.glass.classList.remove('open');
     setTimeout(() => {
         refs.glass.style.display = 'none';
+        gameState.shakeTime = 0;
         if (gameState.restartAfterMenu) {
             gameState.restartAfterMenu = false;
             restartAfterDeath();
         } else {
             gameState.isPaused = false;
-            gameState.shakeTime = 0;
             ensureAudio();
         }
     }, 300);
@@ -358,15 +358,13 @@ function restartAfterDeath() {
     gameState.isPaused = false;
     gameState.enemies = [];
     gameState.particles = [];
-    gameState.player = new PlayerBall();
-    gameState.orbitBalls = [new OrbitBall(0)];
     gameState.spawnCount = 0;
     gameState.wave = 1;
     gameState.bossLevel = 0;
     gameState.enemiesToNextBoss = 30;
     gameState.difficultyRamp = 0;
     gameState.inBossFight = false;
-    gameState.points = Math.floor(gameState.savedPoints * 0.7) + 5;
+    gameState.points = 5;
     refs.infoDiv.textContent = `Wave 1 | Points: ${gameState.points}`;
     gameState.lastFrameTime = 0;
     gameState.laserCooldown = 0;
@@ -380,8 +378,10 @@ function restartAfterDeath() {
     gameState.centerInvulnTimer = 0;
     gameState.phaseShieldReady = gameState.phaseShieldLevel > 0;
     gameState.phaseShieldCooldownTimer = 0;
-    updateHPDisplay();
     gameState.enemiesKilledThisWave = 0;
+    rebuildFromUpgrades();
+    gameState.playerHP = gameState.maxHP;
+    updateHPDisplay();
     startEnemySpawn();
     ensureAudio();
     animate();

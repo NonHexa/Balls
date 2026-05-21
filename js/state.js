@@ -82,6 +82,9 @@ export const gameState = {
     centerInvulnTimer: 0,
     mines: [],
     orbitEchoes: [],
+    orbitControlActive: false,
+    extraOrbitCount: 0,
+    lifeForceLevel: 0,
 
     lastFrameTime: 0,
     offsetX: 0,

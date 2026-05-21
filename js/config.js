@@ -119,11 +119,14 @@ export const upgrades = [
     { name: "BloodNova",  cost: 55, level: 0, max: 3, requires: [{name:"Starfire", level:1}, {name:"Regen", level:2}], postPrestige: true },
     { name: "FreezeShatter", cost: 44, level: 0, max: 3, requires: [{name:"Cryo", level:3}, {name:"Vortex", level:1}], postPrestige: true },
     { name: "OrbitEcho",  cost: 52, level: 0, max: 3, requires: [{name:"Hyper", level:1}, {name:"Overcharge", level:1}], postPrestige: true },
-    { name: "PhaseShield", cost: 64, level: 0, max: 2, requires: [{name:"Fortress", level:2}, {name:"Regen", level:2}], postPrestige: true }
+    { name: "PhaseShield", cost: 64, level: 0, max: 2, requires: [{name:"Fortress", level:2}, {name:"Regen", level:2}], postPrestige: true },
+    { name: "LifeForce", cost: 50, level: 0, max: 2, requires: [{name:"Fortress", level:2}], postPrestige: true }
 ];
 
 export const prestigeUpgrades = [
     { name: "Orbit",  cost: 1, level: 0, max: 5, requires: [] },
     { name: "Speed",  cost: 1, level: 0, max: 5, requires: [{name:"Orbit", level:1}] },
-    { name: "Radius", cost: 1, level: 0, max: 5, requires: [{name:"Orbit", level:1}] }
+    { name: "Radius", cost: 1, level: 0, max: 5, requires: [{name:"Orbit", level:1}] },
+    { name: "OrbitControl", cost: 2, level: 0, max: 1, requires: [{name:"Orbit", level:1}] },
+    { name: "ExtraOrbit", cost: 2, level: 0, max: 3, requires: [{name:"Orbit", level:2}] }
 ];
