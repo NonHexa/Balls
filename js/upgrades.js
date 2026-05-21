@@ -90,12 +90,15 @@ export function doPrestigeReset() {
     rebuildFromUpgrades();
     gameState.playerHP = gameState.maxHP;
 
-    refs.prestigeGlass.classList.remove('open');
-    refs.prestigeGlass.style.display = 'none';
-    refs.infoDiv.textContent = `Wave ${gameState.wave} | Points: ${gameState.points} | Prestige ${gameState.prestigeCount}`;
-    updateBars();
-    startEnemySpawn();
-    if (gameState.audioStarted) gameState.audioCtx.resume();
+     refs.prestigeGlass.classList.remove('open');
+     refs.prestigeGlass.style.display = 'none';
+     refs.infoDiv.textContent = `Wave ${gameState.wave} | Points: ${gameState.points} | Prestige ${gameState.prestigeCount}`;
+     updateBars();
+     gameState.isPaused = true;
+     refs.glass.style.display = 'flex';
+     requestAnimationFrame(() => refs.glass.classList.add('open'));
+     startEnemySpawn();
+     if (gameState.audioStarted) gameState.audioCtx.resume();
 }
 
 export function updatePrestigeBars() {
