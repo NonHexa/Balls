@@ -848,7 +848,7 @@ function update() {
     if (Math.hypot(player.x - last.x, player.y - last.y) > trailSpacing) {
         trail.push({ x: player.x, y: player.y });
         // Limit trail length to prevent performance issues
-        if (trail.length > 2000) {
+        if (trail.length > 200) {
             trail.shift(); // Remove oldest point
         }
     }
